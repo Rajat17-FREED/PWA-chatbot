@@ -1,0 +1,18 @@
+.pwa-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pwa-main {
+  flex: 1;
+  padding: 0 0 80px;
+}
+
+.pwa-footer {
+  background: var(--freed-blue);
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+}

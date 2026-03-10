@@ -1,0 +1,28 @@
+.freed-starters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+  margin-left: 40px;
+  margin-bottom: 16px;
+}
+
+.freed-starters__chip {
+  display: block;
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--white);
+  border: 1.5px solid var(--bot-bubble);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.freed-starters__chip:hover {
+  border-color: var(--freed-orange);
+  background: var(--freed-peach);
+  color: var(--freed-navy);
+}

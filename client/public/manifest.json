@@ -1,0 +1,16 @@
+{
+  "name": "FREED Assistant",
+  "short_name": "FREED Chat",
+  "description": "FREED's AI-powered financial wellness assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1B2B65",
+  "theme_color": "#1B2B65",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

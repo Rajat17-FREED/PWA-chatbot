@@ -1,0 +1,31 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--freed-bg);
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.dashboard__content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: dashTabFade 0.25s ease-out;
+}
+
+@keyframes dashTabFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Desktop: add subtle border/shadow to feel like a phone frame */
+@media (min-width: 769px) {
+  .dashboard {
+    box-shadow: 0 0 40px rgba(27, 43, 101, 0.08);
+    border-left: 1px solid rgba(0, 0, 0, 0.04);
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+  }
+}

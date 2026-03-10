@@ -1,0 +1,1591 @@
+FREED — Company Overview
+1. What is FREED?
+FREED is a Indias’ first and most trusted debt relief platform that helps consumers
+eliminate their debt. The platform is designed for individuals who are struggling with
+multiple loans, high interest payments, or financial hardship.
+
+The company provides structured programs, credit insights, and financial guidance
+to help borrowers regain control over their financial lives and become debt-free.
+(freed.care)
+
+FREED positions itself as India’s first comprehensive debt relief platform, focused on
+helping borrowers resolve unsecured debt such as credit cards and personal loans.
+(freed.care)
+
+The platform combines:
+
+•   Credit Insights
+•   Debt counselling
+•   Debt settlement
+•   Debt consolidation
+•   Structured repayment strategies for DEP
+•   Guidance on good credit practices
+
+Through these services, FREED aims to help consumers transition from financial stress
+to financial freedom.
+
+2. Vision
+FREED’s vision is, To be the most trusted and result-driven loan settlement company,
+empowering individuals to live free from financial stress. (freed.care)
+
+3. Mission
+FREED’s mission is:
+To help loan-burdened consumers resolve their obligations, rebuild their credit health,
+and regain true financial freedom. (freed.care)
+
+The company focuses on three key outcomes:
+
+1. Resolving existing debt
+2. Restoring financial stability
+3. Improving long-term credit health
+
+4. The Problem FREED Solves
+Consumer debt in India has grown rapidly due to:
+
+•   Easy availability of personal loans
+•   Credit card penetration
+•   Buy Now Pay Later products
+•   App-based lending platforms
+
+Many consumers fall into a debt cycle, where they:
+
+1. Take new loans to repay old loans
+2. Pay only minimum dues
+3. Face increasing interest costs
+4. Eventually fall into delinquency.
+
+FREED’s founders observed that many borrowers lack structured guidance to deal
+with debt and end up trapped in a cycle of borrowing. (freed.care). Traditional lenders
+focus on issuing loans, but very few institutions help borrowers recover from debt
+stress. FREED was built to fill this gap.
+
+5. Philosophy Behind FREED
+One of the core principles of FREED is:
+
+Breaking the debt cycle instead of extending it.
+
+Unlike many financial platforms, FREED does not provide new loans directly to help
+repay old loans. Instead, it focuses on:
+
+•   Negotiation with creditors
+•   Structured repayment planning
+•   Financial discipline
+
+6. FREED’s Approach to Debt Relief
+FREED uses a structured approach to help customers become debt-free.
+
+The process generally includes:
+
+Step 1 — Financial Assessment
+
+The customer’s financial situation is analyzed using:
+
+•   Credit report
+•   Outstanding loans and their monthly payments
+•   Repayment capacity
+•   Delinquency status
+
+Step 2 — Program Eligibility
+
+Based on the customer’s profile, they are recommended one of FREED’s programs.
+
+Step 3 — Debt Strategy
+
+A tailored plan is created that may include:
+
+•   Debt consolidation
+•   Debt settlement
+•   Debt Elimination
+
+Step 4 — Execution
+
+FREED works with creditors and financial institutions to execute the plan.
+
+Step 5 — Debt Resolution
+
+The customer gradually eliminates outstanding debt.
+
+7. Core Values
+FREED operates on three core values:
+Empathy
+
+Understanding the emotional and financial stress caused by debt.
+
+Passion
+
+A strong commitment to helping customers regain financial control.
+
+Service
+
+Providing transparent and responsible financial guidance. These values guide the
+company’s interactions with customers and its product design. (freed.care)
+
+8. Products and Services Offered by
+FREED
+FREED offers several solutions to address different types of financial situations.
+
+Debt Elimination Program (DEP)
+
+A structured plan to accelerate debt repayment and reduce interest.
+
+Debt Consolidation Program (DCP)
+
+Combines multiple debts into a single loan with a lower EMI.
+
+Debt Resolution Program (DRP)
+
+Negotiates settlements with lenders for customers facing severe financial hardship.
+
+These programs are supported by:
+
+•   Credit insights
+•   Financial goal tracking
+•   Debt counseling
+•   Financial education
+9. Customers Served
+FREED primarily serves individuals with:
+
+•   Personal loans
+•   Credit card debt
+•   BNPL debt
+•   App-based lending debt
+•   Secured loans (strictly only in case of Debt elimination)
+•   Individuals figuring out ways to understand their credit better.
+
+Unsecured loans, which means they are not backed by collateral.
+
+Customers may range from:
+
+•   Individuals managing multiple loans
+•   Borrowers struggling with EMIs
+•   People facing delinquency
+•   Individuals looking to manage their credit well.
+
+10. Impact and Scale
+According to the company’s website:
+
+•   20,00,000+ customers counselled
+•   ₹3,200+ crore debt managed
+•   15,000+ accounts settled
+•   4.7 / 5 customer rating (3000+ reviews) (freed.care)
+
+These metrics demonstrate FREED’s scale in helping Indian borrowers manage debt.
+
+11. Customer Support and Counselling
+FREED provides access to debt counsellors who guide customers through the debt
+relief process.
+
+Customers can:
+•   Speak with counsellors
+•   Get financial advice
+•   Understand debt relief options
+•   Receive help managing creditor interactions
+
+The counselling process is designed to help customers make informed decisions about
+their financial future. (freed.care)
+
+12. Operating Model
+FREED operates as a technology-enabled debt relief platform.
+
+Key aspects of its model include:
+
+•   Digital onboarding through app and website
+•   Credit report analysis
+•   Personalized debt strategies
+•   Negotiation with lenders
+•   Structured repayment programs
+
+The platform combines technology, financial expertise, and counselling to deliver
+debt relief solutions.
+
+Section 2 — Customer Segments
+Customers on the FREED platform are categorized into different segments based on their
+credit report data, repayment capacity, and delinquency status.
+
+This segmentation helps FREED determine:
+
+•   Which financial programs the customer qualifies for
+•   What insights or tools should be shown on the dashboard
+•   What recovery or optimization strategy is most suitable
+
+Segmentation is primarily derived using:
+
+•   Credit score
+•   Number of active loans
+•   Loan types
+•   Delinquency status
+•   Total outstanding debt
+•   Monthly obligations
+•   FOIR (Fixed Obligation to Income Ratio)
+
+1. NTC (New to Credit)
+Description
+NTC refers to consumers who do not have any credit history in the credit bureau. These
+individuals have never taken a loan or credit card, or their credit record has not yet been
+established in the bureau systems.
+
+Since there is no credit history available, the platform cannot analyze their credit
+behaviour or offer debt-related solutions.
+
+These users are typically first-time borrowers or individuals exploring credit options.
+
+Eligibility Criteria
+A customer is classified as NTC if:
+
+•   No credit accounts are present in the credit report
+•   No loan history exists in the bureau data
+•   Credit score is unavailable or not generated
+
+2. Others
+Description
+The Others segment includes consumers who have credit history but do not currently
+have any active loans or credit card balances.
+
+These users may have borrowed in the past and repaid their obligations, but they
+currently do not carry any outstanding debt. For these users, FREED focuses on credit
+awareness and improvement tools rather than debt programs.
+Eligibility Criteria
+A customer is classified as Others if:
+
+•   Credit history exists
+•   No active loan accounts are present
+•   No active credit card balances exist
+•   No current EMI or minimum dues appear in the credit report
+
+3. DEP (Debt                             Elimination                 Program
+Segment)
+Description
+The DEP segment includes consumers who have active loans or credit card balances
+and have the financial capacity to repay them comfortably.
+
+These users are not delinquent and can benefit from a structured repayment strategy
+to reduce interest, tenure and become debt-free faster. They have a FOIR less than
+50%
+
+The DEP program focuses on optimizing repayments rather than restructuring or
+settling debt.
+
+Eligibility Criteria
+A customer is classified under the DEP segment if:
+
+•   Active loans or credit card balances exist
+•   Repayment behaviour is strictly regular
+•   FOIR is less than 50%
+•   No delinquency
+•   Customer has the financial capacity to allocate surplus funds toward accelerated
+repayment
+4. DRP Eligible
+Description
+DRP Eligible customers are consumers who are experiencing severe financial distress
+and are unable to repay their debt obligations in full.
+
+These customers typically have delinquencies on their credit accounts and may
+already be facing collections or legal pressure from lenders.
+
+For such users, FREED offers the Debt Resolution Program (DRP), which focuses on
+negotiating settlements with lenders.
+
+Eligibility Criteria
+A customer is classified as DRP Eligible if:
+
+•   One or more unsecured loans are delinquent
+•   Payment defaults are recorded in the credit report
+•   Outstanding debt is significantly high relative to repayment capacity
+•   FOIR is extremely high or repayment capacity is insufficient
+•   The customer may already be in collections or late payment cycles
+
+5. DRP Ineligible
+Description
+DRP Ineligible customers are consumers who may have debt but do not meet the
+criteria required for debt settlement programs.
+
+Their credit behaviour or financial profile may still have the capacity to repay their
+loans without requiring settlement. Or They have delinquency on creditors which
+FREED do not service or the creditors with delinquency could be a secured creditor Or
+the total outstanding in unsecured loan is less than the minimum required outstanding
+to be enrolled into the debt settlement program.
+
+Eligibility Criteria
+A customer is classified as DRP Ineligible if:
+
+•   They have delinquency
+•   The user may still have repayment capacity
+•   Unserviceable creditors
+•   Delinquency on secured creditors
+•   Outstanding amount not enough to be enrolled.
+
+6. DCP Eligible
+Description
+DCP Eligible customers are consumers who have multiple loans or credit card
+balances and are facing difficulty managing multiple interest EMIs.
+
+While they may still be making payments, their monthly repayment burden is too high
+relative to their income FOIR greater than 50%
+
+For these users, FREED offers the Debt Consolidation Program (DCP), which combines
+multiple debts into a single structured repayment plan.
+
+Eligibility Criteria
+A customer is classified as DCP Eligible if:
+
+•   Multiple loan accounts or credit cards exist
+•   Monthly EMI burden is high
+•   FOIR exceeds manageable levels (greater than 50%)
+•   Customer is still largely current on repayments
+•   Consolidation into a single structured loan can reduce EMI stress
+•   Credit score is greater than 700
+•   Minimum unsecured debt required for enrolment ₹1,50,000
+7. DCP Ineligible
+Description
+DCP Ineligible customers are consumers who have debt but do not meet the criteria for
+loan consolidation.
+
+This could occur because:
+
+•   They have credit score less than 700
+•   They have an outstanding debt less than ₹1,50,000
+
+Such customers may instead be directed toward credit insights product.
+
+Eligibility Criteria
+A customer is classified as DCP Ineligible if:
+
+•   No unsecured loan
+•   Credit score less than 700
+•   Total outstanding unsecured debt less than ₹1,50,000
+
+15. Brand Positioning
+FREED positions itself as:
+
+“Your partner for debt freedom.”
+
+The company aims to help consumers move from:
+
+Debt Stress → Structured Recovery → Financial Freedom
+
+Below is a structured draft for Section 3 of the knowledge base. I’ve kept it clear,
+factual, and neutral (important because these programs affect consumers’ credit and
+finances). The explanations are aligned with how the programs are described in the
+product flow and program logic.
+Section 3 — FREED Programs
+FREED offers three primary programs designed to help consumers deal with debt
+depending on their financial health, repayment capacity, and delinquency status.
+
+These programs are:
+
+•   DEP — Debt Elimination Program
+•   DCP — Debt Consolidation Program
+•   DRP — Debt Resolution Program
+
+Each program serves a different stage of financial stress.
+
+Financial Stage               Program
+Healthy but may be paying high           DEP
+interest, FOIR < 50%
+Struggling with multiple high interest   DCP
+EMIs, FOIR > 50%
+Already delinquent and unable to         DRP
+repay
+
+The system determines eligibility using the consumer’s credit report, income,
+outstanding debt, and FOIR (Fixed Obligation to Income Ratio).
+
+1. DEP — Debt Elimination Program
+What is DEP?
+The Debt Elimination Program (DEP) is a structured repayment strategy that helps
+consumers pay off their loans faster and reduce the total interest paid.
+
+Instead of paying only the scheduled EMI or minimum dues, DEP encourages consumers
+to allocate additional funds toward debt repayment, which accelerates loan closure.
+
+The system analyzes all active loans and credit card balances and generates a
+customized repayment plan.
+Who is it for?
+DEP is designed for consumers who:
+
+•   Have active loans or credit cards
+•   Are currently able to make their payments
+•   Want to reduce interest burden
+•   Want to become debt-free faster
+•   Have some surplus monthly income
+•   FOIR less than 50%
+
+Typical users:
+
+•   Salaried individuals with multiple loans (secured and unsecured) & credit cards
+•   People paying only minimum dues on credit cards
+•   Consumers paying high interest on unsecured loans
+
+Process
+
+Step 1 — Credit Analysis
+
+The platform analyzes the consumer’s credit report, including:
+
+•   Active loans
+•   Outstanding balances
+•   EMIs
+•   Interest rates
+
+Step 2 — Income and Commitment
+
+The consumer enters:
+
+•   Monthly income
+•   Monthly amount they can allocate for debt repayment
+
+Step 3 — Program Simulation
+
+The system calculates:
+
+•   Optimized repayment sequence
+•   Potential interest savings
+•   New debt-free timeline
+
+Step 4 — Plan Generation
+
+The consumer generates their personalized DEP plan.
+
+Step 5 — Execution
+
+The consumer follows the repayment strategy suggested by the platform.
+
+Advantages for Consumers
+1. Faster debt repayment
+
+Loans can be paid off earlier than the original schedule.
+
+2. Reduced interest cost
+
+Paying down principal faster reduces total interest paid.
+
+3. Better credit health
+
+Lower outstanding balances improve credit utilization.
+
+4. Structured plan
+
+Consumers receive a clear repayment roadmap.
+
+Disadvantages for Consumers
+1. Requires financial discipline
+
+Consumers must consistently allocate surplus funds.
+
+2. Reduced short-term liquidity
+
+Higher repayments may reduce monthly spending capacity.
+2. DCP — Debt Consolidation Program
+What is DCP?
+The Debt Consolidation Program (DCP) helps consumers combine multiple high
+interest debts into one consolidated loan with a single EMI.
+
+This reduces the complexity of managing several loans and can potentially lower the
+overall monthly repayment burden.
+
+Instead of managing many EMIs and credit card dues, the consumer pays one
+structured EMI.
+
+Who is it for?
+DCP is suitable for consumers who:
+
+•   Have multiple high interest loans or credit cards debts
+•   Are struggling to manage several EMIs
+•   Have high monthly repayment obligations
+•   Still have sufficient creditworthiness to qualify for consolidation
+•   FOIR greater than 50%
+
+Typical users:
+
+•   People with 3–6 personal loans
+•   Consumers with high credit card balances
+•   Borrowers with rising EMI stress
+
+Process
+
+Step 1 — Debt Assessment
+
+The platform identifies:
+
+•   All outstanding debts
+•   Current EMIs
+•   Interest rates
+Step 2 — Consolidation Simulation
+
+The system estimates a consolidated loan that covers the total outstanding amount.
+
+Step 3 — EMI Calculation
+
+A new EMI is calculated based on:
+
+•   Consolidated principal
+•   Tenure
+•   Interest rate
+
+Step 4 — Enrollment
+
+The consumer enrolls in the consolidation program.
+
+Step 5 — Loan Issuance
+
+The consolidated loan replaces multiple debts.
+
+Advantages for Consumers
+1. Single EMI
+
+Easier debt management.
+
+2. Lower monthly burden
+
+Consolidation may reduce monthly repayment obligations.
+
+3. Reduced complexity
+
+Consumers deal with one payment instead of multiple lenders.
+
+4. Structured repayment schedule
+
+Disadvantages for Consumers
+1. Longer repayment tenure
+Consolidation may extend the loan duration.
+
+2. Total interest may increase
+
+A longer tenure can increase total interest paid.
+
+3. DRP — Debt Resolution Program
+What is DRP?
+The Debt Resolution Program (DRP) helps consumers settle their outstanding debts
+for less than the total amount owed.
+
+This program is typically used by consumers who are already facing serious financial
+hardship and cannot repay their loans in full.
+
+The platform negotiates with lenders to reach a settlement agreement.
+
+The repayment with FREED is estimated as a combination of:
+
+•   Settlement amount
+•   Service fee
+•   Applicable taxes.
+
+Other than this, the consumers are charged a one-time evaluation fee for a thorough
+evaluation of their profiles which includes credit report analysis, financial options
+evaluation, settlement plan creation.
+
+Who is it for?
+DRP is intended for consumers who:
+
+•   Have already missed payments
+•   Are facing collections
+•   Cannot repay their full outstanding debt
+•   Are experiencing severe financial distress
+
+Typical users:
+
+•   Borrowers with delinquent credit card debt
+•   Individuals facing loan recovery calls
+•   Consumers whose EMI burden is no longer manageable
+Process
+
+DRP (Debt                      Resolution                Program)               —
+Process
+The Debt Resolution Program (DRP) helps consumers settle their outstanding loans for
+a reduced amount through structured negotiation with lenders.
+
+The process is designed to move consumers from financial distress to structured debt
+resolution.
+
+Below is the step-by-step journey.
+
+Step 1 — Free Credit Assessment
+The process begins with a free credit check and debt assessment.
+
+During this step, the platform evaluates:
+
+•   All active loans and credit cards
+•   Total outstanding balances
+•   Repayment history
+•   Delinquency status
+•   Consumer repayment capacity
+
+This helps determine whether the consumer is eligible for the Debt Resolution Program
+and what settlement opportunities may exist.
+
+Outcome
+
+•   Debt profile created
+•   Eligibility for settlement assessed
+Step 2 — Personalised Debt Resolution
+Plan
+Once the assessment is complete, FREED creates a personalized repayment and
+settlement strategy.
+
+The plan determines:
+
+•   Which accounts can potentially be settled
+•   Estimated settlement amount
+•   Monthly contribution required from the customer
+•   Estimated timeline to complete settlements
+
+The strategy ensures the settlement plan fits within the customer’s financial capacity.
+
+Outcome
+
+•   Structured debt settlement roadmap
+•   Monthly savings or payment commitment defined
+
+Step 3 — No Upfront Fees
+FREED does not charge any upfront program fees.
+
+Instead, program fees are typically structured so that customers pay in stages as the
+settlement process progresses.
+
+This aligns incentives between the customer and the service provider.
+
+Outcome
+
+•   Customers can begin the process without large upfront costs
+•   Fees are linked to progress in the settlement journey
+Step 4 — Harassment Support
+Many consumers entering debt resolution face frequent recovery calls from lenders or
+collection agencies.
+
+FREED provides support to help customers manage these situations.
+
+This may include:
+
+•   Guidance on handling recovery calls
+•   Escalation support
+•   Pre-dispute assistance with lenders
+
+The goal is to reduce stress while the settlement process is underway.
+
+Outcome
+
+•   Reduced pressure from recovery interactions
+•   Customers receive structured guidance
+
+Step 5 — FREED Shield Protection
+During the program, customers may receive access to FREED Shield, which provides
+additional support in handling harassment or disputes.
+
+Customers can:
+
+•   Upload proof of harassment
+•   Escalate complaints to lenders
+•   Seek assistance in addressing unfair collection practices
+
+This provides an additional layer of support while negotiations are ongoing.
+
+Outcome
+
+•   Customers receive protection mechanisms
+•   Complaints can be escalated directly
+Step 6 — Negotiated Settlement with
+Lenders
+The core part of the program involves negotiating with lenders to reduce the total
+amount owed.
+
+The settlement negotiation typically aims to:
+
+•   Reduce the outstanding balance
+•   Reach a mutually acceptable settlement amount
+•   Close the loan account through a settlement agreement
+
+Once an agreement is reached, the customer pays the negotiated settlement amount.
+
+Outcome
+
+•   Debt settled for a reduced amount
+•   Loan account closed with the lender
+
+End Result for the Consumer
+At the end of the process:
+
+•   The outstanding debt is resolved
+•   The customer clears the negotiated settlement amount
+•   The loan account is closed
+
+This provides a path for the consumer to move toward financial recovery and rebuild
+their financial life.
+
+Advantages for Consumers
+1. Reduced debt burden
+
+Consumers may settle for less than the total outstanding.
+
+2. Structured settlement process
+Professional negotiation with lenders.
+
+3. Relief from financial pressure
+
+4. Clear path toward financial recovery
+
+Disadvantages for Consumers
+1. Credit score impact
+
+Settlement may negatively affect credit score.
+
+2. Settlement remarks in credit report
+
+3. Future credit access may be more difficult
+
+4. Requires discipline during settlement process
+
+Program Comparison
+Feature                 DEP                     DCP                DRP
+Target users      Financially stable        EMI-stressed         Delinquent
+borrowers                 borrowers            borrowers
+Debt reduction    No                        No                   Yes
+Credit score      Positive                  Neutral              Negative
+impact
+Number of EMIs Multiple                     Single               Settlement
+payments
+Focus             Faster repayment          EMI simplification   Debt settlement
+
+Section 4 — Product Offerings
+FREED offers a set of digital tools and programs designed to help consumers understand
+their credit, manage debt, and improve their financial health.
+
+These offerings combine credit intelligence, repayment optimisation, and financial
+guidance.
+The key offerings include:
+
+•   Credit Insights
+•   Debt Elimination Program (DEP)
+•   Debt Consolidation Program (DCP)
+•   Debt Resolution Program (DRP)
+•   Goal Tracker
+•   FREED Shield
+•   Payment Reminders
+•   Credit Report Details
+
+Each offering serves a specific purpose in helping users move toward financial stability
+and long-term credit health.
+
+1. Credit Insights
+Credit Insights is a personal credit coaching product offered at ₹99 per month. It is
+designed for anyone who has taken any form of credit—or plans to in the future.
+
+Upon subscribing, users gain access to their latest credit score along with a clear
+explanation of what it means. The platform highlights what is positively or negatively
+impacting the score, helping users focus on the right areas for improvement.
+
+Each month, subscribers receive a personalised video that breaks down their credit
+report in simple, easy-to-understand language.
+
+A built-in Goal Tracker helps users plan for credit growth, loan readiness, or other
+financial goals, while a detailed Credit Wrap report every six months offers a
+comprehensive view of progress.
+
+Credit Insights functions like a health check-up for credit—empowering users to take
+control of their financial journey, one step at a time.
+
+Key Features
+
+Credit                                   Score                                   Access
+Users can view their latest credit score and understand its meaning.
+
+Score                                  Factor                                    Analysis
+The platform explains the key factors affecting the user’s credit score, including:
+•   Payment history
+•   Credit utilisation
+•   Credit mix
+•   Credit age
+•   Credit enquiries
+
+Personalised                                Credit                             Video
+Every month, users receive a video explaining:
+
+•   changes in their credit report
+•   factors affecting their score
+•   recommended actions
+
+Credit                                                                           Wrap
+A detailed report generated every six months summarising the user’s credit journey.
+
+Goal                                                                         Tracker
+Helps users track and achieve credit-related goals.
+
+5. Goal Tracker
+The Goal Tracker helps users set and achieve credit-related goals such as:
+
+•   improving credit score
+•   qualifying for a loan
+•   reducing credit utilisation.
+
+The tracker creates a six-month roadmap for credit improvement based on the user’s
+credit profile.
+
+Features
+
+•   Visual progress tracking
+•   Actionable credit improvement steps
+•   Score improvement projections
+
+If the goal is not achieved within the suggested period, the system recalibrates and
+generates a new goal plan based on the updated credit profile.
+6. FREED Shield
+FREED Shield provides users with tools to handle harassment or unfair practices from
+recovery agents or lenders.
+
+This feature is particularly useful for consumers who are facing collections or dispute
+situations.
+
+Features
+
+•   Upload harassment proof
+•   Escalate complaints to lenders
+•   Support in handling recovery communications
+
+This feature helps provide peace of mind and protection during difficult financial
+situations.
+
+Below is a structured knowledge-base writeup for FREED Shield based on the sections
+you specified. I’ve written it in a neutral, documentation-style tone so it fits well into
+your FREED internal knowledge base.
+
+1. What is FREED Shield?
+FREED Shield is a support feature offered by FREED to help borrowers handle
+harassment or unfair practices from recovery agents and lenders. It is designed to
+provide consumers with a safe and structured way to report incidents of harassment and
+escalate them to the appropriate parties.
+
+When borrowers fall behind on loan or credit card payments, they may face repeated
+recovery calls or aggressive collection practices. FREED Shield helps users deal with
+such situations by enabling them to document and report harassment directly
+through the platform.
+
+The feature allows users to upload evidence such as call recordings, screenshots, or
+other documentation of harassment. Once submitted, these reports can be reviewed
+and escalated to the concerned lender or appropriate authority if necessary.
+
+FREED Shield aims to ensure that borrowers are treated fairly and that collection
+practices remain ethical and compliant with regulatory guidelines.
+2. How FREED Shield Works
+FREED Shield provides a simple process that allows users to report and escalate
+harassment incidents.
+
+Step 1 — Report the Incident
+
+If a borrower experiences harassment from a recovery agent or lender, they can report
+the incident through the FREED Shield section within the platform.
+
+Step 2 — Upload Supporting Evidence
+
+Users can upload evidence related to the incident. This may include:
+
+•   call recordings
+•   screenshots of messages
+•   photos
+•   written descriptions of the event.
+
+Providing evidence helps strengthen the complaint and enables proper evaluation of the
+incident.
+
+Step 3 — Review and Escalation
+
+Once the evidence is submitted, the case is reviewed. If required, the complaint can be
+escalated to the concerned lender or relevant authority for further action.
+
+Step 4 — Resolution Support
+
+The borrower receives guidance on how to manage the situation and what steps may
+follow.
+
+This process helps ensure that recovery practices are conducted within the legal and
+ethical framework defined for lenders and recovery agents.
+3. Understanding Types of Harassment
+Borrowers may encounter different forms of harassment during loan recovery processes.
+FREED Shield helps users report such incidents when recovery practices become
+inappropriate or abusive.
+
+Some common types of harassment include:
+
+Repeated or Excessive Calls
+
+Recovery agents calling repeatedly within short intervals or contacting the borrower at
+inappropriate times.
+
+Abusive or Threatening Language
+
+Using offensive language, threats, or intimidation while communicating with the
+borrower.
+
+Public Embarrassment or Pressure
+
+Contacting family members, colleagues, or neighbors in a way that causes
+embarrassment or social pressure.
+
+Misrepresentation or False Claims
+
+Recovery agents providing misleading information about legal consequences or falsely
+claiming authority.
+
+Unauthorized Visits
+
+Recovery agents visiting the borrower’s home or workplace in an intimidating or
+inappropriate manner.
+
+FREED Shield enables borrowers to report such incidents so they can be reviewed and
+addressed appropriately.
+4. Know Your Legal Rights as a Borrower
+Borrowers in India are protected by guidelines issued by the Reserve Bank of India (RBI)
+regarding fair practices in debt recovery.
+
+Some important rights include:
+
+Right to Respectful Communication
+
+Recovery agents must communicate with borrowers in a professional and respectful
+manner. Harassment, threats, or abusive language are not permitted.
+
+Restricted Calling Hours
+
+Recovery agents are generally expected to contact borrowers only during reasonable
+hours, typically between 7:00 AM and 7:00 PM.
+
+No Public Humiliation
+
+Recovery agents are not allowed to publicly shame or embarrass borrowers by
+contacting unrelated individuals or spreading information about the borrower’s debt.
+
+Identity Disclosure
+
+Recovery agents must clearly identify themselves and the lender they represent when
+contacting borrowers.
+
+Fair Collection Practices
+
+Collection efforts must follow ethical standards and cannot involve intimidation,
+coercion, or unlawful actions.
+
+If borrowers experience behavior that violates these guidelines, they may raise
+complaints with the lender or escalate the matter through appropriate channels.
+
+Role of FREED Shield
+FREED Shield acts as a support system for borrowers, helping them:
+•   document harassment incidents
+•   escalate complaints to lenders
+•   understand their rights during recovery processes
+•   receive guidance on handling difficult recovery situations.
+
+By providing these tools, FREED Shield helps borrowers navigate debt recovery situations
+with greater confidence and protection.
+
+7. Payment Reminders
+Payment reminders help users stay on track with their financial obligations.
+
+Users receive alerts for:
+
+•   upcoming EMIs
+•   credit card due dates
+•   repayment milestones.
+
+These reminders are designed to reduce missed payments, which can negatively
+impact credit scores.
+
+8. Credit Report Details
+Users can also view detailed information from their credit report, including:
+
+•   active loan accounts
+•   credit card balances
+•   repayment history
+•   credit limits
+•   lender details.
+
+This transparency helps users better understand their current financial obligations and
+credit behaviour.
+Great. I’ve consolidated all the questions you collected + the answers from the FREED
+site into a single structured FAQ knowledge base.
+
+This format works well for Notion / Confluence / Zendesk / AI training datasets.
+
+FREED Knowledge Base — FAQs
+
+1. Credit Insights / Credit Score FAQs
+What distinguishes a credit report from a credit score?
+
+A credit report is a detailed record of your credit history, including all loans, credit cards,
+repayment behaviour, outstanding balances, and enquiries made by lenders.
+
+A credit score is a three-digit numerical summary derived from the credit report. It
+indicates how likely you are to repay credit on time and helps lenders evaluate your
+creditworthiness.
+
+If I check my credit score, will it decrease?
+
+No. Checking your own credit score is considered a soft inquiry, which does not affect
+your credit score.
+
+Only hard inquiries, such as when you apply for a loan or credit card, may temporarily
+impact your score.
+
+Will my credit score remain consistent across all credit bureaus?
+
+No. Credit scores may differ across bureaus such as Experian, CIBIL, Equifax, and CRIF
+because:
+
+•   lenders may report data at different times
+•   each bureau uses slightly different scoring models.
+
+How frequently can my credit score change?
+
+Your credit score can change whenever new credit information is reported to the
+bureau.
+
+Typically, lenders update records every 30–45 days, so your score may change monthly
+depending on your repayment activity and credit usage.
+
+Does my credit score get impacted by late payments?
+
+Yes. Late payments are one of the most significant factors affecting your credit score.
+
+Missing EMIs or credit card payments can lead to a noticeable drop in your credit score
+and may remain on your credit report for several years.
+
+Will my credit score decrease if I apply for a new credit card?
+
+It may decrease slightly. When you apply for a credit card, the lender performs a hard
+inquiry, which may temporarily reduce your score.
+
+However, responsible usage and timely payments can improve your score over time.
+
+Does my credit record reflect that I am a guarantor on a loan?
+
+Yes. If you act as a guarantor on a loan, that obligation may appear in your credit report.
+
+If the primary borrower misses payments, it can also impact your credit profile.
+
+Why don't I have a credit score?
+
+You may not have a credit score if:
+•   you have never taken credit before
+•   your credit accounts are very new
+•   your credit accounts have been inactive for a long period.
+
+Such individuals are often categorized as NTC (New to Credit).
+
+2. Debt Resolution Program (DRP) FAQs
+How does your Loan Settlement Program work?
+
+FREED’s Debt Resolution Program is designed for people who are facing financial
+hardship and are unable to repay their unsecured debts such as credit cards or personal
+loans.
+
+FREED evaluates the customer’s financial situation and negotiates with lenders to settle
+debts for a reduced amount through a structured repayment process.
+
+How do I know if loan settlement is the best option for me?
+
+Loan settlement is typically suitable for individuals who:
+
+•   have already missed loan payments
+•   are struggling to meet EMIs
+•   are facing recovery calls
+•   cannot repay their loans in full.
+
+FREED evaluates your financial profile to determine whether settlement is an
+appropriate solution.
+
+Why do we charge a Platform Fee?
+
+The platform fee supports services provided during the program, including:
+
+•   debt counseling
+•   negotiation with lenders
+•   harassment support
+•   access to the FREED platform
+•   credit monitoring tools
+•   program management.
+
+The fee helps ensure that the settlement process progresses effectively.
+
+Do you guarantee that you will settle all of my loans for a certain
+percentage?
+
+No. No organization can guarantee settlement for a specific percentage because each
+lender has its own policies and negotiation outcomes vary.
+
+Settlement results depend on multiple factors including the lender, the account status,
+and the customer’s repayment behaviour during the program.
+
+Is loan settlement legitimate / is it legal?
+
+Yes. Debt settlement is a legitimate financial solution in India for borrowers who cannot
+repay their loans in full.
+
+It involves negotiating with lenders to accept a reduced payment as full settlement of the
+outstanding loan.
+
+Who controls the Special Purpose Account where my funds are held
+while I await settlement?
+
+The funds are held in a Special Purpose Account (SPA) managed by an independent
+trustee.
+
+The customer retains control over the funds and must authorise payments when
+settlements are finalized.
+What is a Special Purpose Account?
+
+A Special Purpose Account is a dedicated account used to accumulate funds that will be
+used to settle debts with lenders.
+
+Customers make monthly contributions to this account until sufficient funds are
+available to negotiate settlements.
+
+Will the loan settlement program affect my credit score?
+
+Yes. Loan settlement can negatively impact your credit score because settled accounts
+may be reported differently than fully paid accounts.
+
+However, once debts are resolved, customers can begin rebuilding their credit profile.
+
+Should I include all my credit cards and personal loans in the program?
+
+This depends on your financial situation and the strategy developed during the program.
+
+In many cases, including multiple debts can help create a more effective settlement plan.
+
+Do interest and late fees continue after I enroll?
+
+Interest and penalties may continue to accrue until a settlement agreement is reached
+with the lender.
+
+The goal of the program is to negotiate a final settlement that resolves the account.
+3. Debt Consolidation Program (DCP)
+FAQs
+What is FREED's loan consolidation program?
+
+FREED’s loan consolidation program combines multiple debts into a single structured
+loan with one EMI, making repayment simpler and easier to manage.
+
+What is a loan consolidation?
+
+Loan consolidation is the process of replacing multiple loans or credit card balances
+with a single loan, allowing the borrower to manage one payment instead of several.
+
+What are the uses of a loan consolidation loan?
+
+A consolidation loan can be used to:
+
+•   combine multiple debts
+•   reduce EMI stress
+•   simplify repayments
+•   potentially lower interest costs.
+
+What type of loans can I consolidate with FREED's loan consolidation
+program?
+
+Typically, unsecured debts such as:
+
+•   credit card balances
+•   personal loans
+•   app-based lending loans
+
+may be consolidated depending on eligibility.
+Can loan consolidation save me money?
+
+In some cases, yes. Consolidation can reduce the monthly EMI burden and simplify
+repayment, though total savings depend on the loan terms and tenure.
+
+Why should I get a consolidated loan to pay off my credit cards?
+
+Credit cards often have very high interest rates. Consolidating them into a structured
+loan can help reduce interest costs and simplify repayment.
+
+Can I keep using my credit cards while enrolled in the program?
+
+In most cases, customers are advised to avoid taking additional credit while enrolled
+in the program to prevent further debt accumulation.
+
+How will loan consolidation affect my credit score?
+
+Consolidation itself does not harm your credit score. In fact, successfully managing the
+consolidated loan and making timely payments may improve your credit profile.
+
+Can I get a consolidated loan with a low credit score?
+
+Eligibility depends on lender policies. Some borrowers with lower scores may still qualify
+depending on their financial profile and repayment capacity.
+
+How long does it take to get approved for the loan consolidation
+program?
+
+Approval timelines vary based on lender processes and documentation requirements.
+4. FREED Shield FAQs
+What is FREED Shield?
+
+FREED Shield is a support feature designed to help customers handle harassment or
+unfair recovery practices by lenders or recovery agents.
+
+How does FREED Shield protect me from harassment?
+
+Customers can report harassment incidents and upload supporting evidence, which can
+then be escalated to lenders for review and resolution.
+
+What types of recovery agent harassment can I report through FREED
+Shield?
+
+Customers can report incidents such as:
+
+•   threatening phone calls
+•   abusive language
+•   repeated harassment
+•   unprofessional recovery behaviour.
+
+What happens after I upload proof of recovery agent harassment?
+
+The submitted evidence is reviewed and may be escalated to the lender to address the
+issue.
+
+Is FREED Shield a legal service?
+
+FREED Shield provides support and escalation mechanisms but is not a legal
+representation service.
+Can FREED Shield help if recovery agents visit my home or office?
+
+The feature provides guidance and escalation support for such situations, helping
+customers report inappropriate recovery practices.
+
+Will my evidence be shared with my lender automatically?
+
+Evidence may be reviewed and escalated to lenders when necessary to address the issue.
+
+Is uploading evidence of recovery agent harassment mandatory?
+
+No. Uploading evidence is optional but can help strengthen a complaint.
+
+What formats can I upload as proof of harassment?
+
+Customers may upload screenshots, call recordings, messages, or other relevant
+documents.
+
+Will reporting recovery agent harassment affect my credit score?
+
+No. Reporting harassment through FREED Shield does not impact your credit score.
+
+Below is a clean knowledge-base section on Credit Score that fits well with the rest of
+your FREED documentation. I structured it so it can work for customers, internal teams,
+and AI assistants.
+Credit Score — Understanding Your
+Credit Health
+1. What is a Credit Score?
+A credit score is a three-digit number that represents a person’s creditworthiness,
+meaning how likely they are to repay borrowed money on time.
+
+Lenders such as banks, NBFCs, and fintech companies use this score to evaluate the
+risk of lending money to an individual. A higher credit score generally indicates
+responsible credit behavior and increases the chances of loan or credit card approval.
+
+Credit scores are calculated based on information from your credit report, which
+includes details such as your loans, credit cards, repayment history, and credit
+utilization.
+
+2. What is the Credit Score Range?
+In India, most credit bureaus use a credit score range between 300 and 900.
+
+Score Range     Credit Standing
+750 – 900       Excellent
+700 – 749       Good
+650 – 699       Fair
+550 – 649       Poor
+300 – 549       Very Poor
+-1 / NH         No Credit History
+
+Higher scores indicate lower credit risk to lenders.
+3. What                  Each           Credit Score Range
+Indicates
+750 – 900 (Excellent)
+
+•   Indicates very strong credit behavior.
+•   High probability of loan approval.
+•   Borrowers may qualify for lower interest rates and better credit terms.
+
+Typical profile:
+
+•   Consistent EMI payments
+•   Low credit card utilization
+•   Long credit history.
+
+700 – 749 (Good)
+
+•   Considered a good credit score by most lenders.
+•   Loan approvals are likely, though interest rates may vary.
+
+Typical profile:
+
+•   Mostly timely repayments
+•   Moderate credit usage.
+
+650 – 699 (Fair)
+
+•   Credit profile shows moderate risk.
+•   Some lenders may approve loans but may charge higher interest rates.
+
+Typical profile:
+
+•   Occasional late payments
+•   High credit utilization.
+550 – 649 (Poor)
+
+•   Indicates significant credit risk.
+•   Loan approvals become difficult.
+
+Typical profile:
+
+•   Multiple late payments
+•   High outstanding balances.
+
+300 – 549 (Very Poor)
+
+•   Very high credit risk.
+•   Most lenders will reject loan applications.
+
+Typical profile:
+
+•   Defaults
+•   Write-offs or settlements.
+
+-1 or NH (No History)
+
+•   No credit history exists for the borrower.
+•   This category is often referred to as NTC (New to Credit).
+
+Typical profile:
+
+•   Never taken a loan or credit card.
+
+4. Key Factors That Affect Your Credit
+Score
+Credit bureaus calculate your credit score based on several key factors.
+1. Payment History
+This is the most important factor affecting your credit score.
+
+It reflects whether you pay your EMIs and credit card bills on time.
+
+Example:
+
+Behavior                    Impact
+Paying EMIs on time every month Positive
+Missing credit card payments    Negative
+Loan defaults                   Major negative
+impact
+
+2. Credit Utilization Ratio
+This measures how much of your available credit you are using.
+
+Example:
+
+If your credit card limit is ₹1,00,000:
+
+Spending Utilization    Impact
+₹20,000  20%         Healthy
+₹50,000  50%         Moderate
+₹90,000  90%         Negative
+
+Experts recommend keeping utilization below 30–40% of your credit limit.
+
+3. Credit Mix
+Lenders prefer borrowers who have experience managing different types of credit.
+
+Examples of credit types:
+
+Secured Loans
+
+•   Home loan
+•   Auto loan
+•   Gold loan
+Unsecured Loans
+
+•   Personal loan
+•   Credit card
+•   BNPL loans
+
+A balanced mix of secured and unsecured credit can improve your credit profile.
+
+4. Length of Credit History
+The longer your credit history, the more reliable your credit profile appears.
+
+Example:
+
+Credit Age        Impact
+6 months   Limited credit history
+3–5 years  Stable credit
+behavior
+10+ years  Strong credit profile
+
+Closing old credit accounts may reduce the average credit age.
+
+5. Credit Enquiries
+Every time you apply for a loan or credit card, the lender performs a hard inquiry on your
+credit report.
+
+Example:
+
+Activity                        Impact
+Checking your own score                     No impact
+Applying for multiple loans in a short      Negative
+time                                        impact
+
+Too many loan applications can signal financial stress to lenders.
+5. Where Can You Check Your Credit
+Score?
+Consumers in India can check their credit score through several credit bureaus.
+
+India has four licensed credit bureaus.
+
+Credit Bureau                              Description
+CIBIL (TransUnion CIBIL)       Most widely used bureau in India
+Experian                       Global credit bureau with operations in India
+Equifax                        One of the oldest global credit bureaus
+CRIF High Mark                 Often used by NBFCs and microfinance
+institutions
+
+Consumers can check their credit score through bureau websites or financial platforms.
+
+Why Monitoring Your Credit Score Matters
+Regularly checking your credit score helps you:
+
+•   detect errors in your credit report
+•   track improvements in your credit health
+•   prepare for loan applications
+•   understand how financial behavior affects your credit profile.
+
+Monitoring your credit score is similar to a financial health check, helping you stay
+informed and make better credit decisions.
+
+Here is a knowledge-base section you can add after the Credit Score explanation.
+
+10 Common Mistakes That Can Damage
+Your Credit Score
+Many borrowers unknowingly hurt their credit score through everyday financial behavior.
+Understanding these common mistakes can help you maintain a healthy credit profile
+and improve your chances of getting loans at better interest rates.
+1. Missing EMI or Credit Card Payments
+Payment history is the most important factor affecting your credit score.
+
+Missing even a single EMI or credit card payment can significantly lower your score.
+
+Example
+
+If your credit card bill is due on the 5th of the month and you pay it on the 25th, the lender
+may report the payment as late, which can negatively impact your credit score.
+
+Tip:
+
+Set payment reminders or enable auto-debit for EMIs.
+
+2. Paying Only the Minimum Amount on
+Credit Cards
+Paying only the minimum due amount may prevent late fees, but the remaining balance
+continues to accumulate interest.
+
+Over time, this increases your credit utilization ratio, which can lower your credit score.
+
+Example
+
+If your credit card limit is ₹1,00,000 and your outstanding balance is ₹80,000, your
+utilization ratio becomes 80%, which is considered risky by lenders.
+
+Tip:
+
+Try to keep credit utilization below 30–40% of your limit.
+3. Using Too Much of Your Credit Limit
+High credit utilization signals that you may be financially stretched.
+
+Example
+
+Credit Limit    Outstanding Utilization
+₹1,00,000       ₹30,000     Healthy
+₹1,00,000       ₹90,000     High risk
+
+High utilization over long periods can reduce your credit score.
+
+4. Applying for Too Many Loans or Credit
+Cards
+Each time you apply for credit, the lender performs a hard inquiry on your credit report.
+
+Multiple loan applications within a short time can signal financial stress.
+
+Example
+
+Applying for 5 credit cards in one month may lead to multiple credit inquiries and
+temporarily lower your score.
+
+5. Closing Old Credit Cards
+Older credit accounts contribute to the length of your credit history, which positively
+impacts your credit score.
+
+Closing your oldest credit card may reduce your average credit age.
+
+Example
+
+If your oldest credit card is 10 years old and you close it, your average credit history may
+drop significantly.
+6. Becoming a Guarantor for Risky Loans
+When you act as a guarantor, the loan becomes part of your financial responsibility.
+
+If the primary borrower fails to repay the loan, it may negatively affect your credit score.
+
+Example
+
+If a friend defaults on a loan where you are the guarantor, the lender may report the
+default in your credit report.
+
+7. Ignoring Errors in Your Credit Report
+Credit reports may sometimes contain incorrect or outdated information.
+
+Common errors include:
+
+•   loans marked unpaid despite full repayment
+•   duplicate loan entries
+•   incorrect personal details.
+
+Such errors can harm your credit score.
+
+Tip:
+
+Check your credit report periodically and dispute incorrect entries.
+
+8. Defaulting or Settling Loans
+Loan defaults or settlements can significantly reduce your credit score.
+
+When a loan is marked as settled instead of fully paid, it indicates that the lender
+accepted less than the full amount owed.
+Example
+
+If you settle a loan of ₹1,00,000 by paying ₹60,000, the account may be reported as
+settled, which can negatively impact your credit profile.
+
+9. Not Using Credit at All
+Surprisingly, not using credit at all may also prevent you from building a strong credit
+score.
+
+If lenders cannot see any credit history, they cannot evaluate your repayment behavior.
+
+This situation is often categorized as NTC (New to Credit).
+
+10. Co-Signing or Joint Loans Without
+Care
+In joint loans or co-signed loans, both borrowers share responsibility for repayment.
+
+If the other borrower misses payments, it can affect both credit profiles.
+
+Example
+
+If you take a joint home loan and your co-borrower misses EMIs, your credit score may
+also be affected.
+
+How to Maintain a Healthy Credit Score
+To maintain a good credit profile:
+
+•   Pay EMIs and credit card bills on time
+•   Keep credit card utilization below 30–40%
+•   Avoid applying for multiple loans simultaneously
+•   Maintain older credit accounts when possible
+•   Monitor your credit report regularly.
+
+Healthy credit habits help build a strong financial profile and increase the likelihood of
+loan approvals, better interest rates, and higher credit limits.

@@ -1,0 +1,88 @@
+.freed-chat-panel {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 400px;
+  height: 620px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  animation: freed-panel-enter 0.3s ease-out;
+  transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease, border-radius 0.3s ease;
+}
+
+@keyframes freed-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile: always full screen */
+@media (max-width: 768px) {
+  .freed-chat-panel {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+/* Desktop: center panel over the 480px app container */
+@media (min-width: 769px) {
+  .freed-chat-panel {
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    bottom: 24px;
+    width: 400px;
+    height: min(620px, calc(100vh - 48px));
+    animation: freed-panel-enter-desktop 0.3s ease-out;
+  }
+
+  @keyframes freed-panel-enter-desktop {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  /* Maximized state on desktop */
+  .freed-chat-panel--maximized {
+    width: 480px;
+    height: calc(100vh - 48px);
+    top: 24px;
+    bottom: 24px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Maximized state on mobile (same as default full-screen) */
+@media (max-width: 768px) {
+  .freed-chat-panel--maximized {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}

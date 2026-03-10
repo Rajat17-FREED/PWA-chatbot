@@ -1,0 +1,241 @@
+.program-tab {
+  background: var(--freed-bg);
+  min-height: 100%;
+}
+
+.program-tab__section {
+  padding: 0 16px 20px;
+}
+
+/* ==================== HERO ==================== */
+.program-tab__hero {
+  padding: 32px 20px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--white) 0%, var(--freed-bg) 100%);
+}
+
+.program-tab__badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: var(--freed-peach);
+  color: var(--freed-orange);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.program-tab__title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--freed-navy);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.program-tab__tagline {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* ==================== PREMIUM CARD ==================== */
+.premium-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.premium-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.premium-card__label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--freed-navy);
+  letter-spacing: 4px;
+}
+
+.premium-card__star {
+  font-size: 14px;
+}
+
+.premium-card__sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.premium-card__pulse {
+  font-size: 26px;
+  color: var(--freed-navy);
+  display: block;
+  margin-bottom: 20px;
+}
+
+.premium-card__price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.premium-card__tag {
+  background: var(--freed-navy);
+  color: white;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.premium-card__amount {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--freed-navy);
+}
+
+.premium-card__amount span {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.premium-card__billing {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ==================== FEATURES ==================== */
+.program-features {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.program-features__header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.program-features__header span {
+  color: var(--freed-navy);
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.program-features__header strong {
+  font-size: 16px;
+  color: var(--freed-navy);
+  display: block;
+  margin-top: 4px;
+}
+
+.program-feature {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.program-feature:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.program-feature__icon {
+  width: 44px;
+  height: 44px;
+  background: var(--freed-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.program-feature__content strong {
+  font-size: 14px;
+  color: var(--freed-navy);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.program-feature__content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ==================== BOOST OFFER ==================== */
+.boost-offer {
+  background: linear-gradient(135deg, #F0F4FF 0%, #FAFBFF 100%);
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.boost-offer p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.boost-offer strong {
+  font-size: 16px;
+  color: var(--freed-navy);
+  display: block;
+  margin: 8px 0;
+}
+
+.boost-offer__sub {
+  font-size: 14px;
+}
+
+.boost-offer__sub strong {
+  font-size: 14px;
+  display: inline;
+  color: var(--freed-orange);
+}
+
+/* ==================== CTA ==================== */
+.program-tab__cta {
+  width: 100%;
+  padding: 16px;
+  background: var(--freed-navy);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.program-tab__cta:hover {
+  background: var(--freed-navy-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.program-tab__secure {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}

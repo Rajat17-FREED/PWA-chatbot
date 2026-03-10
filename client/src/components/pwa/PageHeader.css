@@ -1,0 +1,32 @@
+.pwa-page-header {
+  background: linear-gradient(135deg, var(--freed-blue) 0%, #2A3F7E 100%);
+  padding: 48px 24px;
+}
+
+.pwa-page-header__inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pwa-page-header__title {
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pwa-page-header__subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .pwa-page-header {
+    padding: 32px 20px;
+  }
+  .pwa-page-header__title {
+    font-size: 24px;
+  }
+}

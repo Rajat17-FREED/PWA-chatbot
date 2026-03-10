@@ -1,0 +1,304 @@
+.program-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.program-section {
+  margin-bottom: 48px;
+}
+
+.program-section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--bot-bubble);
+}
+
+.program-section p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* Score Table */
+.score-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: 120px 100px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E5E7EB;
+}
+
+.score-range {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.score-badge {
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.score-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Factors */
+.factors-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.factor-card {
+  padding: 20px;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid #E5E7EB;
+}
+
+.factor-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.factor-card h3 {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.factor-card p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.factor-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--bot-bubble);
+  color: var(--freed-blue);
+  font-weight: 600;
+}
+
+/* FAQ Accordion */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faq-item {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.faq-item summary {
+  padding: 14px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.faq-item summary::after {
+  content: '+';
+  font-size: 20px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.faq-item[open] summary::after {
+  content: '−';
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item p {
+  padding: 0 20px 16px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Tips List */
+.tips-list {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tips-list li {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Process Steps */
+.process-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.process-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.process-step__number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--freed-light-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.process-step__content h3 {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.process-step__content p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Eligibility Criteria */
+.eligibility-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.eligibility-item {
+  padding: 14px 16px;
+  background: white;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E5E7EB;
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eligibility-item::before {
+  content: '✓';
+  color: var(--freed-light-blue);
+  font-weight: 700;
+}
+
+/* Advantages/Disadvantages */
+.pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.pros-col h3, .cons-col h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.pros-col h3 { color: #10B981; }
+.cons-col h3 { color: #F59E0B; }
+
+.pros-col ul, .cons-col ul {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+
+.pros-col li::before { content: '✅ '; }
+.cons-col li::before { content: '⚠️ '; }
+
+.pros-col li, .cons-col li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Progress mockup */
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progress-item {
+  background: white;
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  border: 1px solid #E5E7EB;
+}
+
+.progress-item__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--freed-light-blue);
+  transition: width 0.5s ease;
+}
+
+@media (max-width: 768px) {
+  .program-content { padding: 24px 16px; }
+  .score-row { grid-template-columns: 1fr; gap: 6px; }
+  .eligibility-grid { grid-template-columns: 1fr; }
+  .pros-cons { grid-template-columns: 1fr; }
+}

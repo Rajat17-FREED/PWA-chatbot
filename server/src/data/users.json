@@ -1,0 +1,1798 @@
+{
+  "users": [
+    {
+      "leadRefId": "69270eb0ec6fe446eb97ba10",
+      "firstName": "Mohd",
+      "lastName": "Bilal Saifi",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 670,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 7575,
+      "emiMissed": null,
+      "foirPercentage": 25.0,
+      "financialGoal": "Settle my loan",
+      "creditPull": {
+        "pulledDate": "Feb 11, 2026, 5:30 AM",
+        "creditScore": 670,
+        "accountsActiveCount": 8,
+        "accountsDelinquentCount": 5,
+        "accountsClosedCount": 13,
+        "accountsTotalOutstanding": 110846,
+        "unsecuredAccountsTotalOutstanding": 110846,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 81929,
+        "unsecuredAccountsActiveCount": 8,
+        "unsecuredAccountsDelinquentCount": 5
+      }
+    },
+    {
+      "leadRefId": "69341f81d07fd33b5efaaa96",
+      "firstName": "Abadhesh",
+      "lastName": "Kumar",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 760,
+      "monthlyIncome": 10000.0,
+      "monthlyObligation": 11687,
+      "emiMissed": null,
+      "foirPercentage": 116.0,
+      "financialGoal": "Settle my loan",
+      "creditPull": {
+        "pulledDate": "Feb 5, 2026, 5:30 AM",
+        "creditScore": 760,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 8,
+        "accountsTotalOutstanding": 169687,
+        "unsecuredAccountsTotalOutstanding": 169687,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 165764,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "68f4ce718c61064a6952f4e6",
+      "firstName": "Vahid",
+      "lastName": "Rangrej",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 772,
+      "monthlyIncome": 55000.0,
+      "monthlyObligation": 126799,
+      "emiMissed": null,
+      "foirPercentage": 230.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 26, 2025, 5:30 AM",
+        "creditScore": 772,
+        "accountsActiveCount": 24,
+        "accountsDelinquentCount": 16,
+        "accountsClosedCount": 76,
+        "accountsTotalOutstanding": 2419262,
+        "unsecuredAccountsTotalOutstanding": 1931853,
+        "securedAccountsTotalOutstanding": 487409,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 1349569,
+        "unsecuredAccountsActiveCount": 22,
+        "unsecuredAccountsDelinquentCount": 14
+      }
+    },
+    {
+      "leadRefId": "691d75b42f3a0b14f4e28f6e",
+      "firstName": "Minakshiben",
+      "lastName": "PANCHAL",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 602,
+      "monthlyIncome": 12000.0,
+      "monthlyObligation": 9520,
+      "emiMissed": null,
+      "foirPercentage": 82.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 19, 2026, 5:30 AM",
+        "creditScore": 602,
+        "accountsActiveCount": 7,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 2,
+        "accountsTotalOutstanding": 200870,
+        "unsecuredAccountsTotalOutstanding": 171624,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 68460,
+        "unsecuredAccountsActiveCount": 6,
+        "unsecuredAccountsDelinquentCount": 5
+      }
+    },
+    {
+      "leadRefId": "69227e3565bc017d909e5bd3",
+      "firstName": "Sanjay",
+      "lastName": "Kumar",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 735,
+      "monthlyIncome": 35000.0,
+      "monthlyObligation": 27639,
+      "emiMissed": null,
+      "foirPercentage": 78.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 23, 2025, 5:30 AM",
+        "creditScore": 735,
+        "accountsActiveCount": 9,
+        "accountsDelinquentCount": 7,
+        "accountsClosedCount": 4,
+        "accountsTotalOutstanding": 509489,
+        "unsecuredAccountsTotalOutstanding": 443930,
+        "securedAccountsTotalOutstanding": 65559,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 280557,
+        "unsecuredAccountsActiveCount": 8,
+        "unsecuredAccountsDelinquentCount": 6
+      }
+    },
+    {
+      "leadRefId": "69270800ec6fe446eb97b39c",
+      "firstName": "Robin",
+      "lastName": "Kumar",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 543,
+      "monthlyIncome": 30000.0,
+      "monthlyObligation": 8962,
+      "emiMissed": null,
+      "foirPercentage": 29.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 26, 2025, 5:30 AM",
+        "creditScore": 543,
+        "accountsActiveCount": 3,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 5,
+        "accountsTotalOutstanding": 182508,
+        "unsecuredAccountsTotalOutstanding": 137449,
+        "securedAccountsTotalOutstanding": 45059,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 137449,
+        "unsecuredAccountsActiveCount": 1,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "69288123e43c2e1b12fea30c",
+      "firstName": "Parveen",
+      "lastName": "Shaik",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 733,
+      "monthlyIncome": 80000.0,
+      "monthlyObligation": 41530,
+      "emiMissed": null,
+      "foirPercentage": 51.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 27, 2025, 5:30 AM",
+        "creditScore": 733,
+        "accountsActiveCount": 10,
+        "accountsDelinquentCount": 7,
+        "accountsClosedCount": 23,
+        "accountsTotalOutstanding": 770876,
+        "unsecuredAccountsTotalOutstanding": 765578,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 702901,
+        "unsecuredAccountsActiveCount": 9,
+        "unsecuredAccountsDelinquentCount": 7
+      }
+    },
+    {
+      "leadRefId": "6929534a3d988a0d62d0f9e3",
+      "firstName": "Anup",
+      "lastName": "Kolhapure",
+      "segment": "DRP_Eligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 770,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 275729,
+      "emiMissed": null,
+      "foirPercentage": 551.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 28, 2025, 5:30 AM",
+        "creditScore": 770,
+        "accountsActiveCount": 15,
+        "accountsDelinquentCount": 14,
+        "accountsClosedCount": 28,
+        "accountsTotalOutstanding": 6609710,
+        "unsecuredAccountsTotalOutstanding": 1938822,
+        "securedAccountsTotalOutstanding": 4670888,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 921412,
+        "unsecuredAccountsActiveCount": 12,
+        "unsecuredAccountsDelinquentCount": 11
+      }
+    },
+    {
+      "leadRefId": "6928562ae43c2e1b12fe70a2",
+      "firstName": "SHANKAR",
+      "lastName": "SHILVANTH",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 711,
+      "monthlyIncome": 30000.0,
+      "monthlyObligation": 10007,
+      "emiMissed": null,
+      "foirPercentage": 48.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 711,
+        "accountsActiveCount": 8,
+        "accountsDelinquentCount": 4,
+        "accountsClosedCount": 21,
+        "accountsTotalOutstanding": 784081,
+        "unsecuredAccountsTotalOutstanding": 73315,
+        "securedAccountsTotalOutstanding": 710766,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 68315,
+        "unsecuredAccountsActiveCount": 7,
+        "unsecuredAccountsDelinquentCount": 4
+      }
+    },
+    {
+      "leadRefId": "68a868c05a22f04be691676a",
+      "firstName": "Santosh",
+      "lastName": "Bodke",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 723,
+      "monthlyIncome": 10000.0,
+      "monthlyObligation": 4181,
+      "emiMissed": null,
+      "foirPercentage": 41.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 29, 2025, 5:30 AM",
+        "creditScore": 723,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 5,
+        "accountsClosedCount": 35,
+        "accountsTotalOutstanding": 81356,
+        "unsecuredAccountsTotalOutstanding": 81356,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 81356,
+        "unsecuredAccountsActiveCount": 5,
+        "unsecuredAccountsDelinquentCount": 5
+      }
+    },
+    {
+      "leadRefId": "692ace6f2e9d896071666627",
+      "firstName": "Md",
+      "lastName": "Rijaul",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 709,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 1539,
+      "emiMissed": null,
+      "foirPercentage": 6.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Nov 29, 2025, 5:30 AM",
+        "creditScore": 709,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 15374,
+        "unsecuredAccountsTotalOutstanding": 15374,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 9374,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "692d52e22e9d89607168416c",
+      "firstName": "Fardil",
+      "lastName": "Hoque",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 767,
+      "monthlyIncome": 18000.0,
+      "monthlyObligation": 5978,
+      "emiMissed": null,
+      "foirPercentage": 33.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Dec 1, 2025, 5:30 AM",
+        "creditScore": 767,
+        "accountsActiveCount": 12,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 28,
+        "accountsTotalOutstanding": 48866,
+        "unsecuredAccountsTotalOutstanding": 48866,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 13980,
+        "unsecuredAccountsActiveCount": 12,
+        "unsecuredAccountsDelinquentCount": 6
+      }
+    },
+    {
+      "leadRefId": "694845370637f0012bbe10f4",
+      "firstName": "Atul",
+      "lastName": "Gupta",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 749,
+      "monthlyIncome": 12000.0,
+      "monthlyObligation": 21733,
+      "emiMissed": null,
+      "foirPercentage": 181.0,
+      "financialGoal": null,
+      "creditPull": {
+        "pulledDate": "Dec 22, 2025, 5:30 AM",
+        "creditScore": 749,
+        "accountsActiveCount": 20,
+        "accountsDelinquentCount": 14,
+        "accountsClosedCount": 384,
+        "accountsTotalOutstanding": 295581,
+        "unsecuredAccountsTotalOutstanding": 293553,
+        "securedAccountsTotalOutstanding": 2028,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 125673,
+        "unsecuredAccountsActiveCount": 19,
+        "unsecuredAccountsDelinquentCount": 13
+      }
+    },
+    {
+      "leadRefId": "64ea02bda5726b226a8e2359",
+      "firstName": "Lokesh",
+      "lastName": "Murthy",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 607,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 16341,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 6, 2026, 5:30 AM",
+        "creditScore": 607,
+        "accountsActiveCount": 6,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 86,
+        "accountsTotalOutstanding": 156037,
+        "unsecuredAccountsTotalOutstanding": 156037,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 22465,
+        "unsecuredAccountsActiveCount": 6,
+        "unsecuredAccountsDelinquentCount": 6
+      }
+    },
+    {
+      "leadRefId": "65b64e4d12aaa75071762487",
+      "firstName": "Harpreet",
+      "lastName": "Singh",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 539,
+      "monthlyIncome": 75000.0,
+      "monthlyObligation": 8761,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 14, 2026, 5:30 AM",
+        "creditScore": 539,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 21,
+        "accountsTotalOutstanding": 168282,
+        "unsecuredAccountsTotalOutstanding": 8789,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 8789,
+        "unsecuredAccountsActiveCount": 1,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "661676f70d6a2d3365673e72",
+      "firstName": "Babulal",
+      "lastName": "Yadav",
+      "segment": "DRP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 687,
+      "monthlyIncome": 150000.0,
+      "monthlyObligation": 68201,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 15, 2026, 5:30 AM",
+        "creditScore": 687,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 102,
+        "accountsTotalOutstanding": 774213,
+        "unsecuredAccountsTotalOutstanding": 58851,
+        "securedAccountsTotalOutstanding": 682213,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 18552,
+        "unsecuredAccountsActiveCount": 3,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "63fa70631261cc45b450efab",
+      "firstName": "Rishi",
+      "lastName": "Anand Dubey",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 749,
+      "monthlyIncome": 75000.0,
+      "monthlyObligation": 132012,
+      "emiMissed": null,
+      "foirPercentage": 176.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 23, 2026, 5:30 AM",
+        "creditScore": 749,
+        "accountsActiveCount": 20,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 300,
+        "accountsTotalOutstanding": 1166873,
+        "unsecuredAccountsTotalOutstanding": 810810,
+        "securedAccountsTotalOutstanding": 356063,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 503197,
+        "unsecuredAccountsActiveCount": 19,
+        "unsecuredAccountsDelinquentCount": 6
+      }
+    },
+    {
+      "leadRefId": "65eab7f0a5cb9c4dfb7bdea5",
+      "firstName": "Bibhu Prasad",
+      "lastName": "Mohanty",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 594,
+      "monthlyIncome": 23000.0,
+      "monthlyObligation": 37980,
+      "emiMissed": null,
+      "foirPercentage": 180.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 25, 2026, 5:30 AM",
+        "creditScore": 594,
+        "accountsActiveCount": 14,
+        "accountsDelinquentCount": 9,
+        "accountsClosedCount": 288,
+        "accountsTotalOutstanding": 236636,
+        "unsecuredAccountsTotalOutstanding": 236636,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 112861,
+        "unsecuredAccountsActiveCount": 14,
+        "unsecuredAccountsDelinquentCount": 9
+      }
+    },
+    {
+      "leadRefId": "66f51e87f77320105ee3b7c9",
+      "firstName": "Rajesh",
+      "lastName": "Kumar",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 706,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 16062,
+      "emiMissed": null,
+      "foirPercentage": 32.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 11, 2026, 5:30 AM",
+        "creditScore": 706,
+        "accountsActiveCount": 10,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 74,
+        "accountsTotalOutstanding": 287174,
+        "unsecuredAccountsTotalOutstanding": 258863,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 225688,
+        "unsecuredAccountsActiveCount": 8,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "678902ae7ba7af28e19cf25f",
+      "firstName": "Laxman",
+      "lastName": "Rathor",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 727,
+      "monthlyIncome": 94000.0,
+      "monthlyObligation": 104721,
+      "emiMissed": null,
+      "foirPercentage": 111.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 28, 2026, 5:30 AM",
+        "creditScore": 727,
+        "accountsActiveCount": 13,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 28,
+        "accountsTotalOutstanding": 1346404,
+        "unsecuredAccountsTotalOutstanding": 1346404,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 1168393,
+        "unsecuredAccountsActiveCount": 13,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "67a31d427877e605c587b558",
+      "firstName": "Mohamed",
+      "lastName": "Javed",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 781,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 20975,
+      "emiMissed": null,
+      "foirPercentage": 41.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 11, 2026, 5:30 AM",
+        "creditScore": 781,
+        "accountsActiveCount": 8,
+        "accountsDelinquentCount": 4,
+        "accountsClosedCount": 36,
+        "accountsTotalOutstanding": 351133,
+        "unsecuredAccountsTotalOutstanding": 351133,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 117999,
+        "unsecuredAccountsActiveCount": 8,
+        "unsecuredAccountsDelinquentCount": 4
+      }
+    },
+    {
+      "leadRefId": "67cb39c62b49622675c89b35",
+      "firstName": "PRAKASH",
+      "lastName": "PANCHAL",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 783,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 177800,
+      "emiMissed": null,
+      "foirPercentage": 355.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Mar 4, 2026, 5:30 AM",
+        "creditScore": 783,
+        "accountsActiveCount": 10,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 10,
+        "accountsTotalOutstanding": 2912476,
+        "unsecuredAccountsTotalOutstanding": 2353179,
+        "securedAccountsTotalOutstanding": 559297,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 2353179,
+        "unsecuredAccountsActiveCount": 8,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "6833fac335a26c6edb07afed",
+      "firstName": "Dhanraj",
+      "lastName": "Shetty",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 737,
+      "monthlyIncome": 150000.0,
+      "monthlyObligation": 32195,
+      "emiMissed": null,
+      "foirPercentage": 21.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 9, 2026, 5:30 AM",
+        "creditScore": 737,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 7,
+        "accountsTotalOutstanding": 761224,
+        "unsecuredAccountsTotalOutstanding": 761224,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 617224,
+        "unsecuredAccountsActiveCount": 5,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "685cc470186e146d7da64fea",
+      "firstName": "Amit",
+      "lastName": "Saha",
+      "segment": "DCP_Eligible",
+      "leadSourceCode": "migration",
+      "creditScore": 673,
+      "monthlyIncome": 12000.0,
+      "monthlyObligation": 22069,
+      "emiMissed": null,
+      "foirPercentage": 169.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 19, 2026, 5:30 AM",
+        "creditScore": 673,
+        "accountsActiveCount": 13,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 41,
+        "accountsTotalOutstanding": 444905,
+        "unsecuredAccountsTotalOutstanding": 257037,
+        "securedAccountsTotalOutstanding": 187868,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 213635,
+        "unsecuredAccountsActiveCount": 11,
+        "unsecuredAccountsDelinquentCount": 5
+      }
+    },
+    {
+      "leadRefId": "650ba2738b14a76fb9aec457",
+      "firstName": "Mohd Nasim Khan",
+      "lastName": "Mohd Nasim Khan",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 704,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 28329,
+      "emiMissed": null,
+      "foirPercentage": 56.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 704,
+        "accountsActiveCount": 15,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 136,
+        "accountsTotalOutstanding": 703185,
+        "unsecuredAccountsTotalOutstanding": 302966,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 114057,
+        "unsecuredAccountsActiveCount": 14,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "66db39dcafd4b019e5a21462",
+      "firstName": "Nanjibhai",
+      "lastName": "Thakor",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 626,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 113918,
+      "emiMissed": null,
+      "foirPercentage": 227.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 16, 2026, 5:30 AM",
+        "creditScore": 626,
+        "accountsActiveCount": 12,
+        "accountsDelinquentCount": 7,
+        "accountsClosedCount": 45,
+        "accountsTotalOutstanding": 3251022,
+        "unsecuredAccountsTotalOutstanding": 13617,
+        "securedAccountsTotalOutstanding": 3065961,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 13617,
+        "unsecuredAccountsActiveCount": 3,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "66e52a6f9e8fbc357b273e45",
+      "firstName": "Shiv",
+      "lastName": "Saw",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 631,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 19907,
+      "emiMissed": null,
+      "foirPercentage": 79.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Mar 2, 2026, 5:30 AM",
+        "creditScore": 631,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 12,
+        "accountsTotalOutstanding": 321526,
+        "unsecuredAccountsTotalOutstanding": 165001,
+        "securedAccountsTotalOutstanding": 156525,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 1,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "6787c0514dffa24d5fd2d5ac",
+      "firstName": "Vijay",
+      "lastName": "Sothiya",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 626,
+      "monthlyIncome": 40000.0,
+      "monthlyObligation": 53418,
+      "emiMissed": null,
+      "foirPercentage": 133.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 626,
+        "accountsActiveCount": 8,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 20,
+        "accountsTotalOutstanding": 989439,
+        "unsecuredAccountsTotalOutstanding": 414936,
+        "securedAccountsTotalOutstanding": 574503,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 228180,
+        "unsecuredAccountsActiveCount": 6,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "68269f71311408196c732a58",
+      "firstName": "Parmar",
+      "lastName": "Bhavesh",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 619,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 19002,
+      "emiMissed": null,
+      "foirPercentage": 76.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 619,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 36,
+        "accountsTotalOutstanding": 151572,
+        "unsecuredAccountsTotalOutstanding": 9478,
+        "securedAccountsTotalOutstanding": 142094,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "684ca5993061ac75f6877da8",
+      "firstName": "Ajay",
+      "lastName": "Gupat",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 747,
+      "monthlyIncome": 22000.0,
+      "monthlyObligation": 16340,
+      "emiMissed": null,
+      "foirPercentage": 74.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 23, 2026, 5:30 AM",
+        "creditScore": 747,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 94,
+        "accountsTotalOutstanding": 96641,
+        "unsecuredAccountsTotalOutstanding": 96641,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 55209,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "68557335a5c01224a041dad8",
+      "firstName": "Gurmukh",
+      "lastName": "Singh",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 770,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 5163,
+      "emiMissed": null,
+      "foirPercentage": 41.0,
+      "financialGoal": "Combine multiple EMIs into 1",
+      "creditPull": {
+        "pulledDate": "Feb 27, 2026, 5:30 AM",
+        "creditScore": 770,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 16,
+        "accountsTotalOutstanding": 60928,
+        "unsecuredAccountsTotalOutstanding": 60928,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 42759,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "68597ed140b4f258cda26598",
+      "firstName": "Bikramjit",
+      "lastName": "Halder",
+      "segment": "DCP_Ineligible",
+      "leadSourceCode": "migration",
+      "creditScore": 642,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 1403,
+      "emiMissed": null,
+      "foirPercentage": 5.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 642,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 1,
+        "accountsTotalOutstanding": 36830,
+        "unsecuredAccountsTotalOutstanding": 36830,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 35393,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "6926a9f74b5803785c83d1d7",
+      "firstName": "Abhayjeet",
+      "lastName": "Gupta",
+      "segment": "DEP",
+      "leadSourceCode": "ios_direct",
+      "creditScore": 768,
+      "monthlyIncome": 190000.0,
+      "monthlyObligation": 72792,
+      "emiMissed": null,
+      "foirPercentage": 38.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 25, 2026, 5:30 AM",
+        "creditScore": 768,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 9,
+        "accountsTotalOutstanding": 2945616,
+        "unsecuredAccountsTotalOutstanding": 2945616,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 2945616,
+        "unsecuredAccountsActiveCount": 5,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "692d79702e9d896071687967",
+      "firstName": "Abhishek",
+      "lastName": "Verma",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 799,
+      "monthlyIncome": 150000.0,
+      "monthlyObligation": 9056,
+      "emiMissed": null,
+      "foirPercentage": 6.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Mar 2, 2026, 5:30 AM",
+        "creditScore": 799,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 8,
+        "accountsTotalOutstanding": 645770,
+        "unsecuredAccountsTotalOutstanding": 645770,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 645770,
+        "unsecuredAccountsActiveCount": 5,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "6931d44ba2fc153ab73e8391",
+      "firstName": "Dharmendra",
+      "lastName": "Pandey",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 588,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 4428,
+      "emiMissed": null,
+      "foirPercentage": 17.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Mar 5, 2026, 5:30 AM",
+        "creditScore": 588,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 7,
+        "accountsTotalOutstanding": 47054,
+        "unsecuredAccountsTotalOutstanding": 47054,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "6931edf3a2fc153ab73e94a4",
+      "firstName": "MAHOMMAD AFTAB",
+      "lastName": "AFTAB",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 652,
+      "monthlyIncome": 75000.0,
+      "monthlyObligation": 2669,
+      "emiMissed": null,
+      "foirPercentage": 3.0,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Mar 6, 2026, 5:30 AM",
+        "creditScore": 652,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 5,
+        "accountsTotalOutstanding": 13396,
+        "unsecuredAccountsTotalOutstanding": 13396,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 4362,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "6931ee93a2fc153ab73e9557",
+      "firstName": "Saurabh",
+      "lastName": "Shetty",
+      "segment": "DEP",
+      "leadSourceCode": "ios_direct",
+      "creditScore": 773,
+      "monthlyIncome": 50000.0,
+      "monthlyObligation": 10185,
+      "emiMissed": null,
+      "foirPercentage": 20.0,
+      "financialGoal": "Save Interest",
+      "creditPull": {
+        "pulledDate": "Mar 6, 2026, 5:30 AM",
+        "creditScore": 773,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 3,
+        "accountsTotalOutstanding": 149604,
+        "unsecuredAccountsTotalOutstanding": 149604,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 64263,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "69322b5ca2fc153ab73ea83e",
+      "firstName": "Surendra",
+      "lastName": "Bamania",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 595,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 4524,
+      "emiMissed": null,
+      "foirPercentage": 18.0,
+      "financialGoal": "Improve Credit Score",
+      "creditPull": {
+        "pulledDate": "Mar 6, 2026, 5:30 AM",
+        "creditScore": 595,
+        "accountsActiveCount": 6,
+        "accountsDelinquentCount": 4,
+        "accountsClosedCount": 1,
+        "accountsTotalOutstanding": 68490,
+        "unsecuredAccountsTotalOutstanding": 68490,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 15659,
+        "unsecuredAccountsActiveCount": 6,
+        "unsecuredAccountsDelinquentCount": 4
+      }
+    },
+    {
+      "leadRefId": "69323f7ca2fc153ab73ebe4b",
+      "firstName": "Govind",
+      "lastName": "Kumar",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 756,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 1753,
+      "emiMissed": null,
+      "foirPercentage": 7.0,
+      "financialGoal": "Save Interest",
+      "creditPull": {
+        "pulledDate": "Mar 6, 2026, 5:30 AM",
+        "creditScore": 756,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 1,
+        "accountsTotalOutstanding": 50968,
+        "unsecuredAccountsTotalOutstanding": 50968,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 39399,
+        "unsecuredAccountsActiveCount": 5,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "69324895a2fc153ab73ec5ab",
+      "firstName": "Thabira",
+      "lastName": "Putel",
+      "segment": "DEP",
+      "leadSourceCode": "android_direct",
+      "creditScore": 599,
+      "monthlyIncome": 25000.0,
+      "monthlyObligation": 2922,
+      "emiMissed": null,
+      "foirPercentage": 11.0,
+      "financialGoal": "Save Interest",
+      "creditPull": {
+        "pulledDate": "Mar 6, 2026, 5:30 AM",
+        "creditScore": 599,
+        "accountsActiveCount": 7,
+        "accountsDelinquentCount": 6,
+        "accountsClosedCount": 11,
+        "accountsTotalOutstanding": 24501,
+        "unsecuredAccountsTotalOutstanding": 24501,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 10999,
+        "unsecuredAccountsActiveCount": 7,
+        "unsecuredAccountsDelinquentCount": 6
+      }
+    },
+    {
+      "leadRefId": "68c2e8fe9f395c4a414a3d3a",
+      "firstName": "Jatinder",
+      "lastName": "Kumar",
+      "segment": "NTC",
+      "leadSourceCode": "migration",
+      "creditScore": 662,
+      "monthlyIncome": 75000.0,
+      "monthlyObligation": 15544,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 18, 2026, 5:30 AM",
+        "creditScore": 662,
+        "accountsActiveCount": 5,
+        "accountsDelinquentCount": 5,
+        "accountsClosedCount": 14,
+        "accountsTotalOutstanding": 328065,
+        "unsecuredAccountsTotalOutstanding": 180839,
+        "securedAccountsTotalOutstanding": 147226,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 162018,
+        "unsecuredAccountsActiveCount": 4,
+        "unsecuredAccountsDelinquentCount": 4
+      }
+    },
+    {
+      "leadRefId": "68cd39d426276910e6ff16dd",
+      "firstName": "SATISH KACHIRAM",
+      "lastName": "GAIKWAD",
+      "segment": "NTC",
+      "leadSourceCode": "migration",
+      "creditScore": 536,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 50685,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 17, 2026, 5:30 AM",
+        "creditScore": 536,
+        "accountsActiveCount": 11,
+        "accountsDelinquentCount": 11,
+        "accountsClosedCount": 19,
+        "accountsTotalOutstanding": 642003,
+        "unsecuredAccountsTotalOutstanding": 452586,
+        "securedAccountsTotalOutstanding": 189417,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 10,
+        "unsecuredAccountsDelinquentCount": 10
+      }
+    },
+    {
+      "leadRefId": "68efc57046ec2f2a1aad6260",
+      "firstName": "Mostakima Khatun",
+      "lastName": "Bibi",
+      "segment": "NTC",
+      "leadSourceCode": "migration",
+      "creditScore": 783,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 1862,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 17, 2026, 5:30 AM",
+        "creditScore": 783,
+        "accountsActiveCount": 1,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 19999,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 19999,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "68f0659446ec2f2a1abec6a6",
+      "firstName": "Vicky",
+      "lastName": "Kumar",
+      "segment": "NTC",
+      "leadSourceCode": "migration",
+      "creditScore": 488,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 1004,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 18, 2026, 5:30 AM",
+        "creditScore": 488,
+        "accountsActiveCount": 4,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 2,
+        "accountsTotalOutstanding": 20601,
+        "unsecuredAccountsTotalOutstanding": 2529,
+        "securedAccountsTotalOutstanding": 18072,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 1,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "68f236798c61064a69fe255f",
+      "firstName": "Abubakker",
+      "lastName": "Nasaf",
+      "segment": "NTC",
+      "leadSourceCode": "migration",
+      "creditScore": 729,
+      "monthlyIncome": 125000.0,
+      "monthlyObligation": 264424,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 20, 2026, 5:30 AM",
+        "creditScore": 729,
+        "accountsActiveCount": 23,
+        "accountsDelinquentCount": 17,
+        "accountsClosedCount": 66,
+        "accountsTotalOutstanding": 4873512,
+        "unsecuredAccountsTotalOutstanding": 1629454,
+        "securedAccountsTotalOutstanding": 2174858,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 1466988,
+        "unsecuredAccountsActiveCount": 20,
+        "unsecuredAccountsDelinquentCount": 16
+      }
+    },
+    {
+      "leadRefId": "691d732f2f3a0b14f4e28c3b",
+      "firstName": "Shalu",
+      "lastName": "Kumar",
+      "segment": "NTC",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 602,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 1392,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 28, 2026, 5:30 AM",
+        "creditScore": 602,
+        "accountsActiveCount": 3,
+        "accountsDelinquentCount": 3,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 3010,
+        "unsecuredAccountsTotalOutstanding": 3010,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 1496,
+        "unsecuredAccountsActiveCount": 3,
+        "unsecuredAccountsDelinquentCount": 3
+      }
+    },
+    {
+      "leadRefId": "691dcd8cb4dea42e98f19988",
+      "firstName": "Toton",
+      "lastName": "Mondal",
+      "segment": "NTC",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 783,
+      "monthlyIncome": 125000.0,
+      "monthlyObligation": 2241,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 26, 2026, 5:30 AM",
+        "creditScore": 783,
+        "accountsActiveCount": 1,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 24069,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 24069,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "69208a72b27a4437f7d60a0c",
+      "firstName": "Azra",
+      "lastName": "Fatima",
+      "segment": "NTC",
+      "leadSourceCode": "pwa_direct",
+      "creditScore": 750,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 11357,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 21, 2026, 5:30 AM",
+        "creditScore": 750,
+        "accountsActiveCount": 7,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 32,
+        "accountsTotalOutstanding": 86654,
+        "unsecuredAccountsTotalOutstanding": 86654,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 31637,
+        "unsecuredAccountsActiveCount": 7,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "6637da3887950b5169053890",
+      "firstName": "Abhay",
+      "lastName": "Kanawat",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 783,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Build My Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 20, 2026, 5:30 AM",
+        "creditScore": 783,
+        "accountsActiveCount": 0,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 1,
+        "accountsTotalOutstanding": 0,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "66a4aa51037a4b187983ae36",
+      "firstName": "Rohit",
+      "lastName": "Kumar",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 465,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 1600,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 6, 2026, 5:30 AM",
+        "creditScore": 465,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 4,
+        "accountsTotalOutstanding": 15071,
+        "unsecuredAccountsTotalOutstanding": 15071,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "66f836ad99f3736911d81504",
+      "firstName": "Ruhan",
+      "lastName": "Khan",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 659,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Build My Credit Score",
+      "creditPull": {
+        "pulledDate": "Feb 9, 2026, 5:30 AM",
+        "creditScore": 659,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 1,
+        "accountsClosedCount": 6,
+        "accountsTotalOutstanding": 20596,
+        "unsecuredAccountsTotalOutstanding": 20596,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 16596,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 1
+      }
+    },
+    {
+      "leadRefId": "67b9ab6800dfe43a97fff463",
+      "firstName": "Yuvraj",
+      "lastName": "Bodanayuvraj",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 583,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 4173,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Jan 31, 2026, 5:30 AM",
+        "creditScore": 583,
+        "accountsActiveCount": 2,
+        "accountsDelinquentCount": 2,
+        "accountsClosedCount": 14,
+        "accountsTotalOutstanding": 82341,
+        "unsecuredAccountsTotalOutstanding": 82341,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 41989,
+        "unsecuredAccountsActiveCount": 2,
+        "unsecuredAccountsDelinquentCount": 2
+      }
+    },
+    {
+      "leadRefId": "685230c2ab769165001c35f9",
+      "firstName": "Vengam",
+      "lastName": "Naidu",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 739,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Build My Credit Score",
+      "creditPull": {
+        "pulledDate": "Jan 29, 2026, 5:30 AM",
+        "creditScore": 739,
+        "accountsActiveCount": 0,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 0,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "6856e0637ad1cd038073b575",
+      "firstName": "Mohammed",
+      "lastName": "Mustak",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 764,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Build My Credit Score",
+      "creditPull": {
+        "pulledDate": "Mar 5, 2026, 5:30 AM",
+        "creditScore": 764,
+        "accountsActiveCount": 0,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 1,
+        "accountsTotalOutstanding": 0,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "685a492740b4f258cdb1fcb9",
+      "firstName": "Sumit",
+      "lastName": "Verma",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 785,
+      "monthlyIncome": 37500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Feb 27, 2026, 5:30 AM",
+        "creditScore": 785,
+        "accountsActiveCount": 0,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 0,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    },
+    {
+      "leadRefId": "685c3590186e146d7d9e9a9c",
+      "firstName": "Deepika",
+      "lastName": "Panday",
+      "segment": "Others",
+      "leadSourceCode": "migration",
+      "creditScore": 521,
+      "monthlyIncome": 12500.0,
+      "monthlyObligation": 0,
+      "emiMissed": null,
+      "foirPercentage": null,
+      "financialGoal": "Get a Loan",
+      "creditPull": {
+        "pulledDate": "Jan 31, 2026, 5:30 AM",
+        "creditScore": 521,
+        "accountsActiveCount": 0,
+        "accountsDelinquentCount": 0,
+        "accountsClosedCount": 0,
+        "accountsTotalOutstanding": 0,
+        "unsecuredAccountsTotalOutstanding": 0,
+        "securedAccountsTotalOutstanding": 0,
+        "unsecuredDRPServicableAccountsTotalOutstanding": 0,
+        "unsecuredAccountsActiveCount": 0,
+        "unsecuredAccountsDelinquentCount": 0
+      }
+    }
+  ],
+  "nameIndex": {
+    "mohd bilal saifi": [
+      "69270eb0ec6fe446eb97ba10"
+    ],
+    "mohd": [
+      "69270eb0ec6fe446eb97ba10"
+    ],
+    "abadhesh kumar": [
+      "69341f81d07fd33b5efaaa96"
+    ],
+    "abadhesh": [
+      "69341f81d07fd33b5efaaa96"
+    ],
+    "vahid rangrej": [
+      "68f4ce718c61064a6952f4e6"
+    ],
+    "vahid": [
+      "68f4ce718c61064a6952f4e6"
+    ],
+    "minakshiben panchal": [
+      "691d75b42f3a0b14f4e28f6e"
+    ],
+    "minakshiben": [
+      "691d75b42f3a0b14f4e28f6e"
+    ],
+    "sanjay kumar": [
+      "69227e3565bc017d909e5bd3"
+    ],
+    "sanjay": [
+      "69227e3565bc017d909e5bd3"
+    ],
+    "robin kumar": [
+      "69270800ec6fe446eb97b39c"
+    ],
+    "robin": [
+      "69270800ec6fe446eb97b39c"
+    ],
+    "parveen shaik": [
+      "69288123e43c2e1b12fea30c"
+    ],
+    "parveen": [
+      "69288123e43c2e1b12fea30c"
+    ],
+    "anup kolhapure": [
+      "6929534a3d988a0d62d0f9e3"
+    ],
+    "anup": [
+      "6929534a3d988a0d62d0f9e3"
+    ],
+    "shankar shilvanth": [
+      "6928562ae43c2e1b12fe70a2"
+    ],
+    "shankar": [
+      "6928562ae43c2e1b12fe70a2"
+    ],
+    "santosh bodke": [
+      "68a868c05a22f04be691676a"
+    ],
+    "santosh": [
+      "68a868c05a22f04be691676a"
+    ],
+    "md rijaul": [
+      "692ace6f2e9d896071666627"
+    ],
+    "md": [
+      "692ace6f2e9d896071666627"
+    ],
+    "fardil hoque": [
+      "692d52e22e9d89607168416c"
+    ],
+    "fardil": [
+      "692d52e22e9d89607168416c"
+    ],
+    "atul gupta": [
+      "694845370637f0012bbe10f4"
+    ],
+    "atul": [
+      "694845370637f0012bbe10f4"
+    ],
+    "lokesh murthy": [
+      "64ea02bda5726b226a8e2359"
+    ],
+    "lokesh": [
+      "64ea02bda5726b226a8e2359"
+    ],
+    "harpreet singh": [
+      "65b64e4d12aaa75071762487"
+    ],
+    "harpreet": [
+      "65b64e4d12aaa75071762487"
+    ],
+    "babulal yadav": [
+      "661676f70d6a2d3365673e72"
+    ],
+    "babulal": [
+      "661676f70d6a2d3365673e72"
+    ],
+    "rishi anand dubey": [
+      "63fa70631261cc45b450efab"
+    ],
+    "rishi": [
+      "63fa70631261cc45b450efab"
+    ],
+    "bibhu prasad mohanty": [
+      "65eab7f0a5cb9c4dfb7bdea5"
+    ],
+    "bibhu prasad": [
+      "65eab7f0a5cb9c4dfb7bdea5"
+    ],
+    "rajesh kumar": [
+      "66f51e87f77320105ee3b7c9"
+    ],
+    "rajesh": [
+      "66f51e87f77320105ee3b7c9"
+    ],
+    "laxman rathor": [
+      "678902ae7ba7af28e19cf25f"
+    ],
+    "laxman": [
+      "678902ae7ba7af28e19cf25f"
+    ],
+    "mohamed javed": [
+      "67a31d427877e605c587b558"
+    ],
+    "mohamed": [
+      "67a31d427877e605c587b558"
+    ],
+    "prakash panchal": [
+      "67cb39c62b49622675c89b35"
+    ],
+    "prakash": [
+      "67cb39c62b49622675c89b35"
+    ],
+    "dhanraj shetty": [
+      "6833fac335a26c6edb07afed"
+    ],
+    "dhanraj": [
+      "6833fac335a26c6edb07afed"
+    ],
+    "amit saha": [
+      "685cc470186e146d7da64fea"
+    ],
+    "amit": [
+      "685cc470186e146d7da64fea"
+    ],
+    "mohd nasim khan mohd nasim khan": [
+      "650ba2738b14a76fb9aec457"
+    ],
+    "mohd nasim khan": [
+      "650ba2738b14a76fb9aec457"
+    ],
+    "nanjibhai thakor": [
+      "66db39dcafd4b019e5a21462"
+    ],
+    "nanjibhai": [
+      "66db39dcafd4b019e5a21462"
+    ],
+    "shiv saw": [
+      "66e52a6f9e8fbc357b273e45"
+    ],
+    "shiv": [
+      "66e52a6f9e8fbc357b273e45"
+    ],
+    "vijay sothiya": [
+      "6787c0514dffa24d5fd2d5ac"
+    ],
+    "vijay": [
+      "6787c0514dffa24d5fd2d5ac"
+    ],
+    "parmar bhavesh": [
+      "68269f71311408196c732a58"
+    ],
+    "parmar": [
+      "68269f71311408196c732a58"
+    ],
+    "ajay gupat": [
+      "684ca5993061ac75f6877da8"
+    ],
+    "ajay": [
+      "684ca5993061ac75f6877da8"
+    ],
+    "gurmukh singh": [
+      "68557335a5c01224a041dad8"
+    ],
+    "gurmukh": [
+      "68557335a5c01224a041dad8"
+    ],
+    "bikramjit halder": [
+      "68597ed140b4f258cda26598"
+    ],
+    "bikramjit": [
+      "68597ed140b4f258cda26598"
+    ],
+    "abhayjeet gupta": [
+      "6926a9f74b5803785c83d1d7"
+    ],
+    "abhayjeet": [
+      "6926a9f74b5803785c83d1d7"
+    ],
+    "abhishek verma": [
+      "692d79702e9d896071687967"
+    ],
+    "abhishek": [
+      "692d79702e9d896071687967"
+    ],
+    "dharmendra pandey": [
+      "6931d44ba2fc153ab73e8391"
+    ],
+    "dharmendra": [
+      "6931d44ba2fc153ab73e8391"
+    ],
+    "mahommad aftab aftab": [
+      "6931edf3a2fc153ab73e94a4"
+    ],
+    "mahommad aftab": [
+      "6931edf3a2fc153ab73e94a4"
+    ],
+    "saurabh shetty": [
+      "6931ee93a2fc153ab73e9557"
+    ],
+    "saurabh": [
+      "6931ee93a2fc153ab73e9557"
+    ],
+    "surendra bamania": [
+      "69322b5ca2fc153ab73ea83e"
+    ],
+    "surendra": [
+      "69322b5ca2fc153ab73ea83e"
+    ],
+    "govind kumar": [
+      "69323f7ca2fc153ab73ebe4b"
+    ],
+    "govind": [
+      "69323f7ca2fc153ab73ebe4b"
+    ],
+    "thabira putel": [
+      "69324895a2fc153ab73ec5ab"
+    ],
+    "thabira": [
+      "69324895a2fc153ab73ec5ab"
+    ],
+    "jatinder kumar": [
+      "68c2e8fe9f395c4a414a3d3a"
+    ],
+    "jatinder": [
+      "68c2e8fe9f395c4a414a3d3a"
+    ],
+    "satish kachiram gaikwad": [
+      "68cd39d426276910e6ff16dd"
+    ],
+    "satish kachiram": [
+      "68cd39d426276910e6ff16dd"
+    ],
+    "mostakima khatun bibi": [
+      "68efc57046ec2f2a1aad6260"
+    ],
+    "mostakima khatun": [
+      "68efc57046ec2f2a1aad6260"
+    ],
+    "vicky kumar": [
+      "68f0659446ec2f2a1abec6a6"
+    ],
+    "vicky": [
+      "68f0659446ec2f2a1abec6a6"
+    ],
+    "abubakker nasaf": [
+      "68f236798c61064a69fe255f"
+    ],
+    "abubakker": [
+      "68f236798c61064a69fe255f"
+    ],
+    "shalu kumar": [
+      "691d732f2f3a0b14f4e28c3b"
+    ],
+    "shalu": [
+      "691d732f2f3a0b14f4e28c3b"
+    ],
+    "toton mondal": [
+      "691dcd8cb4dea42e98f19988"
+    ],
+    "toton": [
+      "691dcd8cb4dea42e98f19988"
+    ],
+    "azra fatima": [
+      "69208a72b27a4437f7d60a0c"
+    ],
+    "azra": [
+      "69208a72b27a4437f7d60a0c"
+    ],
+    "abhay kanawat": [
+      "6637da3887950b5169053890"
+    ],
+    "abhay": [
+      "6637da3887950b5169053890"
+    ],
+    "rohit kumar": [
+      "66a4aa51037a4b187983ae36"
+    ],
+    "rohit": [
+      "66a4aa51037a4b187983ae36"
+    ],
+    "ruhan khan": [
+      "66f836ad99f3736911d81504"
+    ],
+    "ruhan": [
+      "66f836ad99f3736911d81504"
+    ],
+    "yuvraj bodanayuvraj": [
+      "67b9ab6800dfe43a97fff463"
+    ],
+    "yuvraj": [
+      "67b9ab6800dfe43a97fff463"
+    ],
+    "vengam naidu": [
+      "685230c2ab769165001c35f9"
+    ],
+    "vengam": [
+      "685230c2ab769165001c35f9"
+    ],
+    "mohammed mustak": [
+      "6856e0637ad1cd038073b575"
+    ],
+    "mohammed": [
+      "6856e0637ad1cd038073b575"
+    ],
+    "sumit verma": [
+      "685a492740b4f258cdb1fcb9"
+    ],
+    "sumit": [
+      "685a492740b4f258cdb1fcb9"
+    ],
+    "deepika panday": [
+      "685c3590186e146d7d9e9a9c"
+    ],
+    "deepika": [
+      "685c3590186e146d7d9e9a9c"
+    ]
+  }
+}

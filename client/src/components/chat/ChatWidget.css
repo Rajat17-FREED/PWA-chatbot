@@ -1,0 +1,195 @@
+/* ===== Circular Avatar Button (AskDisha-style) ===== */
+.freed-chat-avatar {
+  position: fixed;
+  width: 88px;
+  height: 88px;
+  border: none;
+  background: none;
+  cursor: grab;
+  z-index: 9998;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s ease;
+  touch-action: none; /* Needed for pointer events on mobile */
+  user-select: none;
+}
+
+.freed-chat-avatar:hover {
+  filter: brightness(1.04);
+}
+
+.freed-chat-avatar--dragging {
+  cursor: grabbing;
+  z-index: 10001;
+}
+
+.freed-chat-avatar--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.5);
+}
+
+/* Outer ring container */
+.freed-chat-avatar__ring {
+  position: relative;
+  width: 88px;
+  height: 88px;
+}
+
+/* Inner circle with logo */
+.freed-chat-avatar__inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2.5px solid var(--freed-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(232, 115, 42, 0.25);
+  z-index: 2;
+}
+
+.freed-chat-avatar__logo {
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Rotating ring text */
+.freed-chat-avatar__ring-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: ringRotate 15s linear infinite;
+  z-index: 1;
+}
+
+.freed-chat-avatar__ring-text text {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--freed-navy);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes ringRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Pulse animation behind */
+.freed-chat-avatar__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--freed-orange);
+  opacity: 0;
+  animation: avatarPulse 2.5s ease-out infinite;
+  z-index: 0;
+}
+
+@keyframes avatarPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* ===== Speech Bubble Invite ===== */
+.chat-invite-bubble {
+  position: fixed;
+  bottom: 200px;
+  right: 16px;
+  background: var(--white);
+  border-radius: 16px 16px 4px 16px;
+  padding: 14px 38px 14px 16px;
+  max-width: 260px;
+  box-shadow: 0 8px 32px rgba(27, 43, 101, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 9998;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px) scale(0.9);
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.chat-invite-bubble--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.chat-invite-bubble__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.chat-invite-bubble__wave {
+  font-size: 20px;
+  flex-shrink: 0;
+  animation: inviteWave 2s ease-in-out infinite;
+}
+
+@keyframes inviteWave {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-8deg); }
+  45% { transform: rotate(14deg); }
+  60% { transform: rotate(-4deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.chat-invite-bubble__text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--freed-navy);
+  line-height: 1.45;
+}
+
+/* Dismiss button (minus circle) */
+.chat-invite-bubble__dismiss {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.chat-invite-bubble__dismiss:hover {
+  opacity: 1;
+}
+
+/* Speech bubble tail */
+.chat-invite-bubble__tail {
+  position: absolute;
+  bottom: -8px;
+  right: 24px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid var(--white);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+}

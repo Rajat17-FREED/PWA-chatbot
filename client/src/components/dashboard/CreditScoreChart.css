@@ -1,0 +1,125 @@
+.credit-chart {
+  padding: 24px 16px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ==================== HEADING ==================== */
+.credit-chart__heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--freed-navy);
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.credit-chart__rating {
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.credit-chart__sparkle {
+  color: var(--freed-navy);
+  font-size: 18px;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* ==================== SUBTITLE ==================== */
+.credit-chart__subtitle {
+  margin-bottom: 8px;
+}
+
+.credit-chart__subtitle-light {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.credit-chart__subtitle-bold {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--freed-navy);
+  margin-bottom: 2px;
+}
+
+.credit-chart__subtitle-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ==================== CHART CONTAINER ==================== */
+.credit-chart__container {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.credit-chart__svg {
+  width: 72%;
+  height: 72%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ==================== FACTOR LABELS ==================== */
+.credit-chart__factor {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.credit-chart__factor-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.credit-chart__factor-lock {
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+/* Top - Credit Utilization */
+.credit-chart__factor--top {
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Right top - Enquiries */
+.credit-chart__factor--right-top {
+  top: 28%;
+  right: 0;
+}
+
+/* Right bottom - Credit Mix */
+.credit-chart__factor--right-bottom {
+  bottom: 20%;
+  right: 0;
+}
+
+/* Left bottom - Payment History */
+.credit-chart__factor--left-bottom {
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Left top - Credit Age */
+.credit-chart__factor--left-top {
+  top: 28%;
+  left: 0;
+}

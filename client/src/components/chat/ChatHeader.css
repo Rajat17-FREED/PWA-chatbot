@@ -1,0 +1,67 @@
+.freed-chat-header {
+  background: var(--freed-navy);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.freed-chat-header__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.freed-chat-header__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.freed-chat-header__logo {
+  width: 28px;
+  height: auto;
+  object-fit: contain;
+}
+
+.freed-chat-header__title {
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.freed-chat-header__subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.freed-chat-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.freed-chat-header__action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  opacity: 0.85;
+}
+
+.freed-chat-header__action-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  opacity: 1;
+}

@@ -1,0 +1,258 @@
+.shield-tab {
+  background: var(--freed-bg);
+  min-height: 100%;
+}
+
+.shield-tab__section {
+  padding: 0 16px 20px;
+}
+
+.shield-tab__heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--freed-navy);
+  margin-bottom: 14px;
+}
+
+/* ==================== HERO ==================== */
+.shield-tab__hero {
+  text-align: center;
+  padding: 32px 20px;
+  background: linear-gradient(180deg, #FFF5EE 0%, var(--freed-bg) 100%);
+}
+
+.shield-tab__icon-wrap {
+  width: 80px;
+  height: 80px;
+  background: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 20px rgba(27, 43, 101, 0.1);
+}
+
+.shield-tab__title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--freed-navy);
+  margin-bottom: 8px;
+}
+
+.shield-tab__subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* ==================== SHIELD CARD ==================== */
+.shield-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.shield-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--freed-navy);
+  margin-bottom: 8px;
+}
+
+.shield-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ==================== HARASSMENT GRID ==================== */
+.harassment-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.harassment-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.harassment-card__icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.harassment-card strong {
+  font-size: 14px;
+  color: var(--freed-navy);
+  flex: 1;
+  min-width: 150px;
+}
+
+.harassment-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  width: 100%;
+  padding-left: 36px;
+  line-height: 1.4;
+}
+
+/* ==================== SHIELD STEPS ==================== */
+.shield-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.shield-step {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.shield-step:last-child {
+  border-bottom: none;
+}
+
+.shield-step__number {
+  width: 40px;
+  height: 40px;
+  background: var(--freed-navy);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.shield-step__content strong {
+  font-size: 14px;
+  color: var(--freed-navy);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.shield-step__content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ==================== RBI CARD ==================== */
+.rbi-card {
+  background: linear-gradient(135deg, #FFF5EE 0%, #FFF9F5 100%);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1.5px solid rgba(232, 115, 42, 0.2);
+}
+
+.rbi-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--freed-navy);
+  margin-bottom: 12px;
+}
+
+.rbi-card__list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rbi-card__list li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding-left: 20px;
+  position: relative;
+}
+
+.rbi-card__list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #10B981;
+  font-weight: 700;
+}
+
+/* ==================== CTA ==================== */
+.shield-tab__cta {
+  width: 100%;
+  padding: 16px;
+  background: var(--freed-orange);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.shield-tab__cta:hover {
+  background: #D4651F;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ==================== DISPUTE CARD ==================== */
+.dispute-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dispute-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--freed-navy);
+  margin-bottom: 8px;
+}
+
+.dispute-card > p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.dispute-card__errors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dispute-card__tag {
+  padding: 6px 12px;
+  background: var(--freed-bg);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  color: var(--freed-navy);
+  font-weight: 500;
+}
+
+.dispute-card__timeline {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
