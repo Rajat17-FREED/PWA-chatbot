@@ -73,6 +73,8 @@ export function useChat() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const auth = useAuth();
   const hasInitRef = useRef(false);
+  // Tracks the intent of the first starter chip clicked — persists for entire conversation
+  const activeIntentRef = useRef<string | undefined>(undefined);
 
   // When auth changes (user logs in via login modal), pre-populate chat
   useEffect(() => {
@@ -92,6 +94,7 @@ export function useChat() {
       });
     } else if (!auth.isLoggedIn && hasInitRef.current) {
       hasInitRef.current = false;
+      activeIntentRef.current = undefined;
       dispatch({
         type: 'RESET',
         messages: [defaultGreeting],
@@ -182,7 +185,10 @@ export function useChat() {
     }
   }, []);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, intentTag?: string) => {
+    // If a starter chip was clicked (has intentTag), lock it in for the whole conversation
+    if (intentTag) activeIntentRef.current = intentTag;
+
     dispatch({ type: 'CLEAR_STARTERS' });
     dispatch({ type: 'ADD_MESSAGE', message: createMessage('user', text) });
     dispatch({ type: 'SET_LOADING', isLoading: true });
@@ -191,7 +197,7 @@ export function useChat() {
       const leadRefId = state.user?.leadRefId || '';
       // Count only user messages for messageCount (assistant messages don't count)
       const userMessageCount = state.messages.filter(m => m.role === 'user').length;
-      const result = await api.sendChatMessage(text, leadRefId, state.messages, userMessageCount);
+      const result = await api.sendChatMessage(text, leadRefId, state.messages, userMessageCount, activeIntentRef.current);
 
       dispatch({
         type: 'ADD_MESSAGE',
@@ -199,6 +205,7 @@ export function useChat() {
           redirectUrl: result.redirectUrl,
           redirectLabel: result.redirectLabel,
           followUps: result.followUps,
+          tooltips: result.tooltips,
         }),
       });
     } catch {
@@ -226,6 +233,7 @@ export function useChat() {
   );
 
   const clearConversation = useCallback(() => {
+    activeIntentRef.current = undefined; // reset intent when conversation clears
     if (state.user) {
       // If logged in, keep user but restart conversation with starters
       dispatch({

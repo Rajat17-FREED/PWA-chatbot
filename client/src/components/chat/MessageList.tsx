@@ -13,7 +13,7 @@ interface MessageListProps {
   candidates: Array<{ leadRefId: string; firstName: string; lastName: string; segment: Segment }>;
   starters: ConversationStarter[];
   onSelectUser: (leadRefId: string) => void;
-  onStarterClick: (text: string) => void;
+  onStarterClick: (text: string, intentTag?: string) => void;
   onFollowUpClick: (text: string) => void;
 }
 
@@ -42,9 +42,11 @@ export default function MessageList({
           key={msg.id}
           content={msg.content}
           role={msg.role}
+          timestamp={msg.timestamp}
           redirectUrl={msg.redirectUrl}
           redirectLabel={msg.redirectLabel}
           followUps={msg.followUps}
+          tooltips={msg.tooltips}
           isLatest={idx === lastAssistantIdx && !isLoading && phase === 'chatting'}
           onFollowUpClick={onFollowUpClick}
         />

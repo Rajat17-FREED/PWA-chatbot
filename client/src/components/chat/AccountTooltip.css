@@ -1,0 +1,179 @@
+/* ── Wrapper — inline so it sits within text flow ─────────────────────────── */
+.freed-acct-tooltip-wrapper {
+  position: relative;
+  display: inline;
+}
+
+/* ── Trigger — the bold number that gets the dashed underline ──────────────── */
+.freed-acct-trigger {
+  font-weight: 700;
+  color: var(--freed-navy);
+  border-bottom: 1.5px dashed var(--freed-orange);
+  cursor: help;
+  border-radius: 2px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  padding-bottom: 1px;
+}
+
+.freed-acct-trigger:hover {
+  color: var(--freed-orange);
+  background-color: var(--freed-peach, #fff5ee);
+  border-radius: 3px;
+}
+
+/* ── Tooltip card ─────────────────────────────────────────────────────────── */
+.freed-acct-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: #fff;
+  border: 1.5px solid var(--border-light, #e8eaf0);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.10),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 10px 13px 11px;
+  min-width: 200px;
+  max-width: 300px;
+  white-space: normal;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+/* Position: open above the trigger */
+.freed-acct-tooltip--above {
+  bottom: calc(100% + 9px);
+}
+
+/* Position: open below the trigger */
+.freed-acct-tooltip--below {
+  top: calc(100% + 9px);
+}
+
+/* ── Arrow pointing toward the trigger ─────────────────────────────────────── */
+.freed-acct-tooltip--above::after,
+.freed-acct-tooltip--below::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background: #fff;
+}
+
+.freed-acct-tooltip--above::after {
+  bottom: -5px;
+  border-right: 1.5px solid var(--border-light, #e8eaf0);
+  border-bottom: 1.5px solid var(--border-light, #e8eaf0);
+}
+
+.freed-acct-tooltip--below::before {
+  top: -5px;
+  border-left: 1.5px solid var(--border-light, #e8eaf0);
+  border-top: 1.5px solid var(--border-light, #e8eaf0);
+}
+
+/* ── Header label ─────────────────────────────────────────────────────────── */
+.freed-acct-tooltip__label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--freed-orange, #f07428);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-light, #e8eaf0);
+}
+
+/* ── Account list ─────────────────────────────────────────────────────────── */
+.freed-acct-tooltip__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.freed-acct-tooltip__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--freed-navy, #1a2460);
+  line-height: 1.3;
+}
+
+.freed-acct-tooltip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--freed-orange, #f07428);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+/* ── Enriched account content ──────────────────────────────────────────────── */
+.freed-acct-tooltip__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.freed-acct-tooltip__name {
+  font-weight: 600;
+  color: var(--freed-navy, #1a2460);
+  font-size: 12px;
+}
+
+.freed-acct-tooltip__type {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-secondary, #7a7f9a);
+}
+
+.freed-acct-tooltip__amounts {
+  display: flex;
+  gap: 8px;
+  font-size: 10.5px;
+  margin-top: 1px;
+}
+
+.freed-acct-tooltip__amount {
+  font-weight: 600;
+  color: var(--freed-navy, #1a2460);
+}
+
+.freed-acct-tooltip__overdue {
+  font-weight: 600;
+  color: #e74c3c;
+  font-size: 10px;
+}
+
+.freed-acct-tooltip__more {
+  font-size: 11px;
+  color: var(--text-secondary, #7a7f9a);
+  font-style: italic;
+  margin-top: 2px;
+  padding-left: 11px;
+}
+
+/* ── Mobile: ensure tooltip doesn't overflow the chat bubble ──────────────── */
+@media (max-width: 480px) {
+  .freed-acct-tooltip {
+    min-width: 180px;
+    max-width: 250px;
+  }
+
+  .freed-acct-tooltip__name {
+    font-size: 11px;
+  }
+
+  .freed-acct-tooltip__type,
+  .freed-acct-tooltip__amounts {
+    font-size: 10px;
+  }
+}

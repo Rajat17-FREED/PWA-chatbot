@@ -111,6 +111,7 @@ export interface ChatRequest {
   leadRefId: string;
   history: ChatMessage[];
   messageCount?: number; // total messages in conversation so far (for early redirect)
+  intentTag?: string;   // intent from the clicked starter chip (e.g. INTENT_HARASSMENT)
 }
 
 export interface CreditorAccount {
@@ -133,9 +134,97 @@ export interface CreditorAccount {
   suitFiledWilfulDefault: string;
 }
 
+// ── Enriched Credit Report (extracted from full bureau JSON) ────────────────
+
+/** Compact DPD (Days Past Due) summary for a single account */
+export interface DPDSummary {
+  maxDPD: number;              // worst-ever DPD (e.g. 90 = 3 months late)
+  currentDPD: number;          // most recent month's DPD
+  monthsWithDPD: number;       // total months where DPD > 0
+  totalMonths: number;         // total history length
+  recentTrend: number[];       // last 6 months DPD [newest → oldest]
+  improving: boolean;          // is DPD trending downward?
+  worstPeriod: string | null;  // e.g. "2023-05" — month of worst DPD
+}
+
+/** A single account from the enriched credit report — stripped of PII */
+export interface EnrichedAccount {
+  lenderName: string;
+  status: 'ACTIVE' | 'CLOSED' | string;
+  accountType: string;         // UNSECURED / SECURED / OTHERS
+  debtType: string;            // Personal Loan, Credit Card, Consumer Loan, etc.
+  outstandingAmount: number | null;
+  overdueAmount: number | null;
+  creditLimit: number | null;  // for credit cards — utilization calc
+  sanctionedAmount: number | null;
+  roi: number | null;          // interest rate %
+  repaymentTenure: number | null;
+  estimatedEMI: number | null; // sanctioned / tenure (rough estimate)
+  openDate: string | null;
+  closedDate: string | null;
+  lastPaymentDate: string | null;
+  delinquency: number | null;
+  writtenOffStatus: string | null;
+  suitFiled: string | null;
+  dpd: DPDSummary;             // compact DPD history (replaces raw accountHistoryList)
+}
+
+/** Pre-computed portfolio-level summaries */
+export interface PortfolioSummary {
+  activeCount: number;
+  closedCount: number;
+  delinquentCount: number;
+  totalOutstanding: number;
+  securedOutstanding: number;
+  unsecuredOutstanding: number;
+  securedActiveCount: number;
+  unsecuredActiveCount: number;
+  creditCardCount: number;
+  personalLoanCount: number;
+  highestROI: { lender: string; rate: number } | null;
+  lowestROI: { lender: string; rate: number } | null;
+  largestDebt: { lender: string; amount: number; type: string } | null;
+  worstDPDAccount: { lender: string; maxDPD: number; type: string } | null;
+}
+
+/** The complete enriched credit report for one user */
+export interface EnrichedCreditReport {
+  creditScore: number | null;
+  bureau: string;
+  reportDate: string;
+  summary: PortfolioSummary;
+  accounts: EnrichedAccount[];          // ACTIVE accounts first, sorted by outstanding desc
+  enquiries: Array<{ reason: string; amount: number | null }>;
+}
+
+/** Detailed info for a single account in a tooltip hover group */
+export interface TooltipAccountDetail {
+  name: string;                    // e.g. "HDFC Bank Ltd"
+  debtType?: string;               // e.g. "Personal Loan", "Credit Card"
+  outstanding?: number | null;     // outstanding amount
+  overdue?: number | null;         // overdue amount (for missed-payment groups)
+}
+
+/** A named group of accounts shown on hover over a bold number in the chat */
+export interface TooltipGroup {
+  label: string;       // e.g. "Accounts with missed payments"
+  accounts: string[];  // simple name list (backward compat)
+  details?: TooltipAccountDetail[];  // richer data for enhanced tooltip display
+  rawCount?: number;   // pre-dedup account count (AI may reference this number)
+}
+
+/** Tooltip lookup keyed by account category — sent alongside each chat reply */
+export interface MessageTooltips {
+  overdue?: TooltipGroup;    // accounts with overdueAmount > 0
+  active?: TooltipGroup;     // open (non-closed) accounts
+  secured?: TooltipGroup;    // home / vehicle / mortgage loans
+  unsecured?: TooltipGroup;  // personal loans, credit cards
+}
+
 export interface ChatResponse {
   reply: string;
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
+  tooltips?: MessageTooltips;
 }

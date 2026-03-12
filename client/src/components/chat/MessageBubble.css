@@ -70,9 +70,10 @@
   color: var(--freed-navy);
 }
 
+/* ── List styling for structured responses ──────────────────────────────────── */
 .freed-message__list {
-  margin: 8px 0;
-  padding-left: 20px;
+  margin: 6px 0;
+  padding-left: 18px;
 }
 
 .freed-message__list--ordered {
@@ -80,7 +81,40 @@
 }
 
 .freed-message__list-item {
-  margin: 4px 0;
+  margin: 5px 0;
+  line-height: 1.45;
+}
+
+/* Style nested bold within list items */
+.freed-message__list-item .freed-message__bold {
+  font-weight: 700;
+}
+
+/* Tighter spacing between text and lists */
+.freed-message__text + .freed-message__list {
+  margin-top: 4px;
+}
+
+.freed-message__list + .freed-message__text {
+  margin-top: 6px;
+}
+
+/* ── Timestamp ──────────────────────────────────────────────────────────────── */
+.freed-message__timestamp {
+  font-size: 10px;
+  color: var(--text-secondary, #7a7f9a);
+  opacity: 0.7;
+  margin-top: -4px;
+  padding: 0 4px;
+}
+
+.freed-message__timestamp--assistant {
+  margin-left: 44px;
+}
+
+.freed-message__timestamp--user {
+  margin-right: 4px;
+  text-align: right;
 }
 
 /* Follow-up suggestion chips */

@@ -3,7 +3,7 @@ import './ConversationStarters.css';
 
 interface ConversationStartersProps {
   starters: ConversationStarter[];
-  onStarterClick: (text: string) => void;
+  onStarterClick: (text: string, intentTag?: string) => void;
 }
 
 export default function ConversationStarters({ starters, onStarterClick }: ConversationStartersProps) {
@@ -15,7 +15,7 @@ export default function ConversationStarters({ starters, onStarterClick }: Conve
         <button
           key={i}
           className="freed-starters__chip"
-          onClick={() => onStarterClick(starter.text)}
+          onClick={() => onStarterClick(starter.text, starter.intentTag)}
         >
           {starter.text}
         </button>

@@ -10,6 +10,21 @@ function getClient(): OpenAI {
   return client;
 }
 
+// ─── Marketing Phrase Mapper ─────────────────────────────────────────────────
+
+/** Map internal program names to user-friendly marketing phrases for follow-up chips */
+function toMarketingPhrase(programName: string): string {
+  const PHRASES: Record<string, string> = {
+    'DRP': 'debt relief options',
+    'DCP': 'single-EMI plan',
+    'DEP': 'faster payoff plan',
+    'FREED Shield': 'call protection',
+    'Credit Insights': 'credit tracking',
+    'Goal Tracker': 'score goals',
+  };
+  return PHRASES[programName] || programName;
+}
+
 // ─── Entity Extraction ───────────────────────────────────────────────────────
 
 /** Extract specific entities (lenders, amounts, programs, topics) from reply text */
@@ -24,6 +39,7 @@ function extractEntities(reply: string) {
     'Bandhan Bank', 'HDB Financial', 'Suryoday', 'Ananya Finance', 'Yes Bank',
     'IndusInd', 'RBL Bank', 'Tata Capital', 'Muthoot', 'Manappuram',
     'Capital First', 'Piramal', 'L&T Finance', 'Mahindra Finance',
+    'Krazybee', 'DMI Finance', 'Hero FinCorp', 'Fullerton', 'Aditya Birla',
   ];
 
   for (const lender of KNOWN_LENDERS) {
@@ -61,6 +77,9 @@ function extractEntities(reply: string) {
     'recovery agent': 'recovery agents', 'interest': 'interest rate',
     'eligib': 'eligibility', 'ineligib': 'ineligibility',
     'income': 'income', 'obligation': 'monthly obligation',
+    'settle': 'settlement', 'negotiate': 'negotiation',
+    'combine': 'loan combining', 'single payment': 'loan combining',
+    'reduce': 'reduce', 'lower': 'lower',
   };
 
   for (const [kw, topic] of Object.entries(TOPIC_KEYWORDS)) {
@@ -88,25 +107,59 @@ function extractClosingQuestion(reply: string): string | null {
 
 /**
  * Generate follow-ups that directly answer the bot's closing question.
- * This is the highest-priority follow-up strategy.
+ * Phase-aware: different strategies for different conversation stages.
  */
 function followUpsFromClosingQuestion(
   question: string,
-  entities: ReturnType<typeof extractEntities>
+  entities: ReturnType<typeof extractEntities>,
+  messageCount: number
 ): string[] | null {
   const lower = question.toLowerCase();
   const { lenders, amounts, programs } = entities;
   const lender1 = lenders[0];
-  const amount1 = amounts[0];
   const prog1 = programs[0];
 
-  // "Would you like me to explain/show/walk through X?"
-  if (/would you like (me to |to )?(explain|show|walk|break|tell|go through|help)/i.test(question)) {
-    const subject = prog1 || (lender1 ? `${lender1} loan` : amount1 || 'this');
+  // ── Phase 1 patterns: Diagnostic questions (early conversation) ──
+
+  // "What's stressing you most — X or Y?"
+  if (/what('s| is) (stressing|bothering|worrying|concerning|troubling)/i.test(question)) {
     return [
-      `Yes, explain ${subject}`,
-      'Not now, different question',
-      'Show me my options first',
+      'The total amount I owe',
+      'Too many payments to track',
+      "I've already missed some EMIs",
+    ];
+  }
+
+  // "Are you able to make your payments / have any slipped?"
+  if (/able to (make|pay|manage|keep up)|have (any|some) (slipped|missed|fallen)/i.test(question)) {
+    return [
+      "I've missed a few already",
+      'Barely managing right now',
+      'Yes, but it\'s very tight',
+    ];
+  }
+
+  // "Which part concerns you — amount or payments?"
+  if (/which (part|aspect|thing)|what (part|aspect)/i.test(question)) {
+    if (lenders.length > 1) {
+      return [lenders[0], lenders[1], 'All of them honestly'];
+    }
+    return [
+      'The monthly EMI amount',
+      'The number of loans',
+      'My credit score impact',
+    ];
+  }
+
+  // ── Phase 2 patterns: Bridging questions (mid conversation) ──
+
+  // "Would you like me to explain/show/walk through X?"
+  if (/would you like (me to |to )?(explain|show|walk|break|tell|go through|help|share)/i.test(question)) {
+    const subject = lender1 ? `my ${lender1} loan` : (prog1 ? toMarketingPhrase(prog1) : 'this');
+    return [
+      `Yes, show me ${subject}`,
+      'Give me the key highlights',
+      'What are my options?',
     ];
   }
 
@@ -115,19 +168,28 @@ function followUpsFromClosingQuestion(
     return [
       'Yes, please go ahead',
       'Give me the short version',
-      'I have a different question',
+      'What can I actually do about it?',
     ];
   }
 
-  // "Which [factor/account/loan] concerns you most?"
-  if (/which (factor|account|loan|debt|lender|issue|aspect)/i.test(question)) {
-    if (lenders.length > 1) {
-      return [lenders[0], lenders[1], 'Walk me through all of them'];
-    }
+  // "How does that sound / Does that make sense?"
+  if (/how does that sound|does that (make sense|work|help|sound)/i.test(question)) {
     return [
-      'The overdue amount',
-      'My credit score impact',
-      'What I can fix fastest',
+      'That sounds promising',
+      'What are the risks?',
+      'Show me the numbers',
+    ];
+  }
+
+  // ── Phase 3 patterns: Solution/action questions (later conversation) ──
+
+  // "Want to explore / interested in [program/solution]?"
+  if (/(want to |like to |interested in |ready to )?(explore|try|sign up|know more|get started|see how)/i.test(question)) {
+    const subj = prog1 ? toMarketingPhrase(prog1) : 'this';
+    return [
+      `Yes, let's explore ${subj}`,
+      'What are the risks first?',
+      'Are there other options?',
     ];
   }
 
@@ -135,27 +197,17 @@ function followUpsFromClosingQuestion(
   if (/call|harass|recovery|agent/i.test(question)) {
     return [
       'Yes, I get calls daily',
-      'Not yet, but I\'m worried',
+      "Not yet, but I'm worried",
       'Tell me how to stop them',
-    ];
-  }
-
-  // "Do you want to explore [program]?"
-  if (/(want to |like to |interested in |explore|try|sign up|know more about)/i.test(question)) {
-    const subj = prog1 || 'this program';
-    return [
-      `Yes, explore ${subj}`,
-      'Tell me the risks first',
-      'Show me other options',
     ];
   }
 
   // "Have you missed / are you missing EMI payments?"
   if (/missed|missing|delay|late|default/i.test(question)) {
     return [
-      'Yes, I\'ve missed payments',
+      "Yes, I've missed payments",
       'Not yet, but struggling',
-      'Tell me what happens next',
+      'What happens if I miss more?',
     ];
   }
 
@@ -168,90 +220,151 @@ function followUpsFromClosingQuestion(
     ];
   }
 
-  // Generic yes/no question at end
-  if (lower.includes('?') && lower.length < 100) {
+  // "Which [factor/account/loan] concerns you most?"
+  if (/which (factor|account|loan|debt|lender|issue)/i.test(question)) {
+    if (lenders.length > 1) {
+      return [lenders[0], lenders[1], 'Walk me through all of them'];
+    }
     return [
-      'Yes, tell me more',
-      'No, different angle',
-      lender1 ? `Focus on ${lender1}` : (prog1 ? `Explore ${prog1}` : 'Show me options'),
+      'The overdue amounts',
+      'My credit score impact',
+      'What I can fix first',
     ];
+  }
+
+  // Generic yes/no question at end — phase-aware responses
+  if (lower.includes('?') && lower.length < 120) {
+    if (messageCount <= 1) {
+      // Phase 1: Keep exploring
+      return [
+        'Yes, I\'d like to understand',
+        'Can you show me my data?',
+        'What are my main issues?',
+      ];
+    } else if (messageCount === 2) {
+      // Phase 2: Start bridging toward solution
+      return [
+        'Yes, that interests me',
+        'What does that involve?',
+        lender1 ? `Focus on ${lender1}` : 'Show me my options',
+      ];
+    } else {
+      // Phase 3+: Action-oriented
+      return [
+        'Yes, let\'s do it',
+        'What are the risks?',
+        prog1 ? `Explore ${toMarketingPhrase(prog1)}` : 'Show me alternatives',
+      ];
+    }
   }
 
   return null; // No specific match — fall through to entity-based
 }
 
-// ─── Entity-Based Follow-up Generation ───────────────────────────────────────
+// ─── Phase-Aware Entity-Based Follow-up Generation ───────────────────────────
 
 function generateEntityFollowUps(
   entities: ReturnType<typeof extractEntities>,
-  hasRedirect: boolean
+  hasRedirect: boolean,
+  messageCount: number
 ): string[] {
   const { lenders, amounts, programs, topics } = entities;
 
+  // If redirect was included, follow-ups should support the action
   if (hasRedirect) {
-    const prog = programs[0] || 'this section';
+    const prog = programs[0] ? toMarketingPhrase(programs[0]) : 'this';
     return [
-      `Yes, take me to ${prog}`,
-      'Explain more before I go',
-      'What else can you help with?',
+      `Yes, show me ${prog}`,
+      'What should I expect there?',
+      'Tell me the risks first',
     ];
   }
 
   const opts: string[] = [];
 
-  // Option 1: Deepen current topic (most specific)
-  if (lenders.length > 0 && amounts.length > 0) {
-    opts.push(`Break down my ${lenders[0]} debt`);
-  } else if (topics.includes('payment history')) {
-    opts.push('How do I improve this?');
-  } else if (topics.includes('credit utilization')) {
-    opts.push('How do I lower my utilization?');
-  } else if (topics.includes('enquiries')) {
-    opts.push('Will old enquiries fade away?');
-  } else if (topics.includes('credit age')) {
-    opts.push('How can I build credit age?');
-  } else if (topics.includes('credit mix')) {
-    opts.push('What loans improve my mix?');
-  } else if (programs.length > 0) {
-    opts.push(`How does ${programs[0]} work?`);
-  } else if (topics.includes('credit score')) {
-    opts.push("What's hurting my score most?");
-  } else if (topics.includes('delinquency') || topics.includes('overdue')) {
-    opts.push('What happens if I don\'t pay?');
-  } else if (topics.includes('EMI')) {
-    opts.push('Can I reduce my EMI?');
-  } else {
-    opts.push('Walk me through this');
-  }
+  if (messageCount <= 1) {
+    // ── Phase 1: Diagnostic follow-ups — explore different angles ──
+    if (topics.includes('EMI') || topics.includes('monthly obligation')) {
+      opts.push('My EMIs are really stressful');
+    } else if (topics.includes('credit score')) {
+      opts.push("What's dragging my score down?");
+    } else if (topics.includes('delinquency') || topics.includes('overdue')) {
+      opts.push("I've missed a few payments");
+    } else if (lenders.length > 0) {
+      opts.push(`Tell me about my ${lenders[0]} loan`);
+    } else {
+      opts.push('Show me my biggest problem');
+    }
 
-  // Option 2: Related concern
-  if (lenders.length > 1) {
-    opts.push(`What about ${lenders[1]}?`);
-  } else if (programs.includes('DRP') || topics.includes('delinquency')) {
-    opts.push('What are the risks?');
-  } else if (programs.includes('DCP')) {
-    opts.push('Will my score be affected?');
-  } else if (topics.includes('harassment') || topics.includes('recovery agents')) {
-    opts.push('What are my legal rights?');
-  } else if (topics.includes('credit score') && lenders.length > 0) {
-    opts.push(`How does ${lenders[0]} affect score?`);
-  } else if (amounts.length > 0) {
-    opts.push('How much can I save?');
-  } else {
-    opts.push('What should I prioritize?');
-  }
+    if (topics.includes('harassment') || topics.includes('recovery agents')) {
+      opts.push("Yes, I'm getting calls");
+    } else if (amounts.length > 0) {
+      opts.push(`Is ${amounts[0]} a lot?`);
+    } else {
+      opts.push('How bad is my situation?');
+    }
 
-  // Option 3: Action step or pivot
-  if (programs.length > 0 && !hasRedirect) {
-    opts.push(`Explore ${programs[0]} program`);
-  } else if (topics.includes('credit score')) {
-    opts.push('Set a score improvement goal');
-  } else if (topics.includes('harassment')) {
-    opts.push('Activate FREED Shield');
-  } else if (lenders.length > 0) {
-    opts.push('Show my full account summary');
+    opts.push('What can I do about it?');
+
+  } else if (messageCount === 2) {
+    // ── Phase 2: Bridge follow-ups — move toward solution ──
+    if (lenders.length > 0 && amounts.length > 0) {
+      opts.push(`Break down my ${lenders[0]} debt`);
+    } else if (topics.includes('credit score')) {
+      opts.push('How do I improve this?');
+    } else if (topics.includes('settlement') || topics.includes('negotiation')) {
+      opts.push('How does this work exactly?');
+    } else if (topics.includes('loan combining')) {
+      opts.push('Can this really lower my EMI?');
+    } else if (programs.length > 0) {
+      opts.push(`How does ${toMarketingPhrase(programs[0])} work?`);
+    } else {
+      opts.push('Walk me through my options');
+    }
+
+    // One toward the solution concept
+    if (programs.includes('DRP') || topics.includes('settlement')) {
+      opts.push('Can I settle for less?');
+    } else if (programs.includes('DCP') || topics.includes('loan combining')) {
+      opts.push('Combine into one EMI?');
+    } else if (programs.includes('DEP')) {
+      opts.push('Pay off loans faster?');
+    } else if (topics.includes('credit score')) {
+      opts.push('Set a score target for me');
+    } else {
+      opts.push('What solution fits me?');
+    }
+
+    // One concern
+    if (lenders.length > 1) {
+      opts.push(`What about ${lenders[1]}?`);
+    } else {
+      opts.push('Will this affect my score?');
+    }
+
   } else {
-    opts.push('Show me my options');
+    // ── Phase 3+: Action follow-ups — drive to resolution ──
+    if (programs.length > 0) {
+      opts.push(`Show me ${toMarketingPhrase(programs[0])}`);
+    } else if (lenders.length > 0) {
+      opts.push(`Resolve my ${lenders[0]} debt`);
+    } else {
+      opts.push("Let's start the process");
+    }
+
+    if (topics.includes('settlement') || topics.includes('negotiation') || programs.includes('DRP')) {
+      opts.push('What are the risks?');
+    } else if (programs.includes('DCP')) {
+      opts.push('Will my score be affected?');
+    } else {
+      opts.push('What should I watch out for?');
+    }
+
+    if (lenders.length > 1) {
+      opts.push(`What about ${lenders[1]}?`);
+    } else {
+      opts.push('Show me alternatives');
+    }
   }
 
   return opts.slice(0, 3).map(o => o.length > 40 ? o.slice(0, 38) + '…' : o);
@@ -312,6 +425,22 @@ export async function getChatResponse(
     } catch { /* ignore */ }
   }
 
+  // ── 1.5. Strip inline markdown links [text](url) → text (hard failsafe) ───
+  // All navigation must go through the structured [REDIRECT:...] token.
+  // If the model generates anchor-style links like [here](/), strip them.
+  cleanReply = cleanReply.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+
+  // ── 1.6. Light cleanup — keep structured formatting but remove report-style headers ─
+  // Remove bold category labels like "**Payment History:**" but keep bullet points and numbered lists.
+  cleanReply = cleanReply.replace(/\*\*[A-Z][^*\n]{2,40}\*\*:\s*/g, (match) => {
+    // Only remove if it looks like a report-style category label (e.g., "**Payment History:** ")
+    // Keep everything else (bold lender names, amounts, etc.)
+    return match.includes(':') ? '' : match;
+  });
+
+  // Collapse excessive whitespace but preserve intentional line breaks for formatting
+  cleanReply = cleanReply.replace(/\n{3,}/g, '\n\n').trim();
+
   // ── 2. Parse follow-ups from LLM ──────────────────────────────────────────
   const followUpPatterns = [
     /\[FOLLOWUPS:\s*(.*?)\]/si,
@@ -340,20 +469,20 @@ export async function getChatResponse(
     followUps = undefined; // Force regeneration
   }
 
-  // ── 4. If no/bad follow-ups, generate dynamically ─────────────────────────
+  // ── 4. If no/bad follow-ups, generate dynamically (phase-aware) ────────────
   if (!followUps || followUps.length === 0) {
-    // Strategy A: Reflect the bot's closing question
+    // Strategy A: Reflect the bot's closing question (phase-aware)
     const closingQ = extractClosingQuestion(cleanReply);
     if (closingQ) {
-      const questionFollowUps = followUpsFromClosingQuestion(closingQ, entities);
+      const questionFollowUps = followUpsFromClosingQuestion(closingQ, entities, messageCount);
       if (questionFollowUps) {
         followUps = questionFollowUps;
       }
     }
 
-    // Strategy B: Entity-based contextual follow-ups
+    // Strategy B: Phase-aware entity-based contextual follow-ups
     if (!followUps || followUps.length === 0) {
-      followUps = generateEntityFollowUps(entities, !!redirectUrl);
+      followUps = generateEntityFollowUps(entities, !!redirectUrl, messageCount);
     }
   }
 

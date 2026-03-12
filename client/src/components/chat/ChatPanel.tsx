@@ -12,7 +12,7 @@ interface ChatPanelProps {
     state: ChatState;
     handleInput: (text: string) => void;
     handleSelectUser: (leadRefId: string) => void;
-    sendMessage: (text: string) => void;
+    sendMessage: (text: string, intentTag?: string) => void;
     clearConversation: () => void;
   };
 }

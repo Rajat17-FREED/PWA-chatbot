@@ -25,7 +25,8 @@ export async function sendChatMessage(
   message: string,
   leadRefId: string,
   history: Message[],
-  messageCount: number
+  messageCount: number,
+  intentTag?: string
 ): Promise<ChatResponse> {
   const chatHistory = history
     .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -35,7 +36,7 @@ export async function sendChatMessage(
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, leadRefId, history: chatHistory, messageCount }),
+    body: JSON.stringify({ message, leadRefId, history: chatHistory, messageCount, intentTag }),
   });
   if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
   return res.json();

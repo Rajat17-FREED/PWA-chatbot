@@ -35,6 +35,30 @@ export interface ConversationStarter {
   redirectTo: string;
 }
 
+/** Detailed info for a single account in a tooltip hover group */
+export interface TooltipAccountDetail {
+  name: string;
+  debtType?: string;
+  outstanding?: number | null;
+  overdue?: number | null;
+}
+
+/** A named group of accounts shown on hover over a bold number */
+export interface TooltipGroup {
+  label: string;       // e.g. "Accounts with missed payments"
+  accounts: string[];  // e.g. ["HDFC Bank Ltd", "Bajaj Finance"]
+  details?: TooltipAccountDetail[];  // richer data for enhanced display
+  rawCount?: number;   // pre-dedup account count (AI may reference this number)
+}
+
+/** Per-message tooltip lookup by account category */
+export interface MessageTooltips {
+  overdue?: TooltipGroup;
+  active?: TooltipGroup;
+  secured?: TooltipGroup;
+  unsecured?: TooltipGroup;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -43,6 +67,7 @@ export interface Message {
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
+  tooltips?: MessageTooltips;
 }
 
 export interface IdentifyResponse {
@@ -63,6 +88,7 @@ export interface ChatResponse {
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
+  tooltips?: MessageTooltips;
 }
 
 export type ChatPhase =
