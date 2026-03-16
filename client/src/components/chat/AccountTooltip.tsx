@@ -110,9 +110,6 @@ export default function AccountTooltip({ value, group }: AccountTooltipProps) {
                   <span className="freed-acct-tooltip__dot" aria-hidden="true" />
                   <span className="freed-acct-tooltip__content">
                     <span className="freed-acct-tooltip__name">{name}</span>
-                    {detail?.debtType && (
-                      <span className="freed-acct-tooltip__type">{detail.debtType}</span>
-                    )}
                     {(amountStr || overdueStr) && (
                       <span className="freed-acct-tooltip__amounts">
                         {amountStr && <span className="freed-acct-tooltip__amount">{amountStr}</span>}

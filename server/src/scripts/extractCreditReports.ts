@@ -29,6 +29,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import type { EnrichedCreditReport, EnrichedAccount, DPDSummary, PortfolioSummary } from '../types';
+import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
 
 // ── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,25 @@ const CIBIL_TYPES: Record<number, { debtType: string; secured: boolean }> = {
   50: { debtType: 'Consumer Loan',                secured: false },
 };
 
+function normalizeExtractedDebtType(
+  typeCode: number,
+  baseType: { debtType: string; secured: boolean },
+  lenderName: string,
+  creditLimit: number | null
+): { debtType: string; secured: boolean } {
+  const normalizedDebtType = normalizeDebtTypeLabel({
+    debtType: baseType.debtType,
+    creditLimit,
+    lenderName,
+    accountTypeCode: typeCode,
+  });
+  if (normalizedDebtType === 'Credit Card') {
+    return { debtType: 'Credit Card', secured: false };
+  }
+
+  return baseType;
+}
+
 // ── DPD computation from CIBIL Payment_History_Profile ───────────────────────
 // The profile string encodes payment history, newest-first:
 // '0' = current, '1' = 30 DPD, '2' = 60 DPD, ... '8' = 730+ DPD
@@ -164,7 +184,7 @@ function computeDPDFromProfile(
 
 function extractAccount(raw: any): EnrichedAccount | null {
   const typeCode = typeof raw.Account_Type === 'number' ? raw.Account_Type : 0;
-  const typeInfo = CIBIL_TYPES[typeCode] ?? { debtType: 'Loan', secured: false };
+  const baseTypeInfo = CIBIL_TYPES[typeCode] ?? { debtType: 'Loan', secured: false };
 
   const lenderName: string = raw.Subscriber_Name || 'Unknown';
   if (!lenderName || lenderName === 'Unknown') return null;
@@ -177,6 +197,7 @@ function extractAccount(raw: any): EnrichedAccount | null {
   const overdueAmount: number | null = raw.Amount_Past_Due > 0 ? raw.Amount_Past_Due : 0;
   const sanctionedAmount: number | null = raw.Highest_Credit_or_Original_Loan_Amount > 0 ? raw.Highest_Credit_or_Original_Loan_Amount : null;
   const creditLimit: number | null = raw.Credit_Limit_Amount > 0 ? raw.Credit_Limit_Amount : null;
+  const typeInfo = normalizeExtractedDebtType(typeCode, baseTypeInfo, lenderName, creditLimit);
 
   const writtenOffStatus: string | null = raw.Written_off_Settled_Status
     && raw.Written_off_Settled_Status !== '' && raw.Written_off_Settled_Status !== '00'
@@ -338,7 +359,7 @@ function extractReport(doc: any): EnrichedCreditReport | null {
   return { creditScore, bureau, reportDate, summary, accounts: cappedAccounts, enquiries };
 }
 
-// ── Mobile → leadRefId index from lead-complete.csv ──────────────────────────
+// ── Mobile + Name → leadRefId indexes from lead-complete.csv ─────────────────
 
 function normalizePhone(phone: string): string {
   let p = String(phone).replace(/[\s\-+]/g, '');
@@ -346,40 +367,75 @@ function normalizePhone(phone: string): string {
   return p;
 }
 
-function loadMobileIndex(csvPath: string): Map<string, string> {
-  const index = new Map<string, string>();
+function normalizeName(first: string, last: string): string {
+  return `${String(first || '').trim().toLowerCase()}|${String(last || '').trim().toLowerCase()}`;
+}
+
+interface LeadIndexes {
+  byPhone: Map<string, string>;  // normalizedPhone → leadRefId
+  byName:  Map<string, string>;  // "firstname|lastname" → leadRefId
+}
+
+function loadLeadIndexes(csvPath: string): LeadIndexes {
+  const byPhone = new Map<string, string>();
+  const byName  = new Map<string, string>();
+
   if (!fs.existsSync(csvPath)) {
-    console.warn(`  ⚠ lead-complete.csv not found at ${csvPath} — will key by _id.$oid`);
-    return index;
+    console.warn(`  ⚠ lead-complete.csv not found at ${csvPath}`);
+    console.warn(`  ⚠ No phone/name matching available — credit reports will not be matched`);
+    return { byPhone, byName };
   }
 
   const content = fs.readFileSync(csvPath, 'utf-8');
   const lines = content.split('\n');
-  if (lines.length < 2) return index;
+  if (lines.length < 2) return { byPhone, byName };
 
   const header = lines[0].split(',');
   const col: Record<string, number> = {};
   header.forEach((c, i) => { col[c.trim()] = i; });
 
-  const idCol = col['_id'] ?? col['leadRefId'] ?? -1;
-  const phoneCol = col['dedupeId'] ?? col['mobile'] ?? -1;
+  // Use _id column (index 0) — always reliable with naive split(',').
+  // In lead-complete.csv, _id === leadRefId (same value); the leadRefId
+  // column (index 12) is unreachable with naive split because preceding
+  // quoted fields (dates, user-agents) contain commas.
+  const refCol       = col['_id'] ?? -1;
+  const phoneCol     = col['dedupeId']  ?? col['mobile'] ?? -1;
+  const firstNameCol = col['firstName'] ?? -1;
+  const lastNameCol  = col['lastName']  ?? -1;
 
-  if (idCol < 0 || phoneCol < 0) {
-    console.warn(`  ⚠ Could not find _id or dedupeId columns in lead-complete.csv`);
-    return index;
+  if (refCol < 0) {
+    console.warn(`  ⚠ Could not find leadRefId column in lead-complete.csv`);
+    return { byPhone, byName };
   }
 
   for (let i = 1; i < lines.length; i++) {
     const fields = lines[i].split(',');
-    const leadRefId = fields[idCol]?.trim();
-    const phone = fields[phoneCol]?.trim();
-    if (!leadRefId || !phone) continue;
-    const normalized = normalizePhone(phone);
-    if (normalized.length >= 10) index.set(normalized, leadRefId);
+    const leadRefId = fields[refCol]?.trim();
+    if (!leadRefId) continue;
+
+    // Phone index
+    if (phoneCol >= 0) {
+      const phone = fields[phoneCol]?.trim();
+      if (phone) {
+        const normalized = normalizePhone(phone);
+        if (normalized.length >= 10) byPhone.set(normalized, leadRefId);
+      }
+    }
+
+    // Name index (firstName|lastName)
+    if (firstNameCol >= 0 && lastNameCol >= 0) {
+      const firstName = fields[firstNameCol]?.trim() || '';
+      const lastName  = fields[lastNameCol]?.trim()  || '';
+      if (firstName || lastName) {
+        const key = normalizeName(firstName, lastName);
+        // Only store if not already present (first occurrence wins)
+        if (!byName.has(key)) byName.set(key, leadRefId);
+      }
+    }
   }
 
-  console.log(`  ✓ Loaded ${index.size} mobile → leadRefId mappings from lead-complete.csv`);
-  return index;
+  console.log(`  ✓ Loaded ${byPhone.size} phone and ${byName.size} name → leadRefId mappings from lead-complete.csv`);
+  return { byPhone, byName };
 }
 
 // ── Main streaming processor ─────────────────────────────────────────────────
@@ -405,8 +461,8 @@ async function processFile(): Promise<void> {
   if (maxRecords) console.log(`  Max records: ${maxRecords}`);
   console.log();
 
-  // Build mobile → leadRefId lookup from lead-complete.csv
-  const mobileIndex = loadMobileIndex(csvPath);
+  // Build phone + name → leadRefId lookups from lead-complete.csv
+  const { byPhone, byName } = loadLeadIndexes(csvPath);
 
   // Load whitelist of known leadRefIds from users.json (optional but recommended)
   // Without a whitelist the full dump is extracted (can be very large for 70GB files)
@@ -451,18 +507,18 @@ async function processFile(): Promise<void> {
       const rawDoc = JSON.parse(jsonStr);
       const doc = unwrap(rawDoc);
 
-      // Find leadRefId via mobile number
+      // Find leadRefId: primary = phone match, secondary = name match
       const mobile = normalizePhone(doc.mobile || '');
       let userId: string | null = null;
 
-      if (mobile.length >= 10 && mobileIndex.size > 0) {
-        userId = mobileIndex.get(mobile) || null;
+      if (mobile.length >= 10) {
+        userId = byPhone.get(mobile) || null;
       }
 
-      // Fallback: use _id if no mobile match (still useful for later cross-ref)
-      if (!userId) {
-        const oid = rawDoc._id?.$oid || rawDoc._id;
-        if (oid) userId = String(oid);
+      // Secondary: name match (only if phone didn't match)
+      if (!userId && (doc.firstName || doc.lastName)) {
+        const nameKey = normalizeName(doc.firstName || '', doc.lastName || '');
+        userId = byName.get(nameKey) || null;
       }
 
       if (!userId) {

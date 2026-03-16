@@ -221,6 +221,113 @@ export interface MessageTooltips {
   unsecured?: TooltipGroup;  // personal loans, credit cards
 }
 
+/** Source-of-truth constraints used to validate/sanitize model output text. */
+export interface LenderGroundingFacts {
+  debtTypes: string[];
+  outstandingAmounts: number[];
+  overdueAmounts: number[];
+  creditLimits: number[];
+  maxDPD: number;
+}
+
+export interface ResponseGroundingContext {
+  allowedLenders: string[];
+  allowedDebtTypes: string[];
+  lenderDebtTypes: Record<string, string[]>;
+  likelyCardLenders: string[];
+  lenderFacts: Record<string, LenderGroundingFacts>;
+  knownNumericFacts: number[];
+  creditScore: number | null;
+}
+
+export type StructuredFormatMode = 'plain' | 'guided' | 'analysis';
+
+export type StructuredSectionStyle = 'paragraph' | 'bullet_list' | 'numbered_list';
+
+export interface ClosingQuestionContract {
+  text: string;
+  options: string[];
+}
+
+export interface StructuredSection {
+  title?: string;
+  style: StructuredSectionStyle;
+  items: string[];
+}
+
+export interface StructuredRedirect {
+  url: string;
+  label: string;
+}
+
+export interface StructuredAssistantTurn {
+  formatMode: StructuredFormatMode;
+  opening: string;
+  sections: StructuredSection[];
+  closingQuestion?: ClosingQuestionContract;
+  followUps: string[];
+  redirect?: StructuredRedirect;
+}
+
+export interface AdvisorAccountContext {
+  lenderName: string;
+  debtType: string;
+  status: string;
+  outstandingAmount: number | null;
+  overdueAmount: number | null;
+  creditLimit: number | null;
+  utilizationPercentage: number | null;
+  maxDPD: number | null;
+  interestRate: number | null;
+  estimatedEMI: number | null;
+  repaymentTenure: number | null;
+  signals: string[];
+}
+
+export interface AdvisorInsight {
+  label: string;
+  detail: string;
+  lenderName?: string;
+  debtType?: string;
+  amount?: number | null;
+  percentage?: number | null;
+  dpd?: number | null;
+}
+
+export interface AdvisorContext {
+  source: 'report' | 'creditor' | 'general';
+  userName: string | null;
+  segment: Segment | null;
+  financialGoal: string | null;
+  creditScore: number | null;
+  scoreGapTo750: number | null;
+  monthlyIncome: number | null;
+  monthlyObligation: number | null;
+  foirPercentage: number | null;
+  activeAccountCount: number;
+  closedAccountCount: number;
+  delinquentAccountCount: number;
+  totalOutstanding: number;
+  unsecuredOutstanding: number;
+  securedOutstanding: number;
+  creditCardCount: number;
+  personalLoanCount: number;
+  dominantAccounts: AdvisorAccountContext[];
+  relevantAccounts: AdvisorAccountContext[];
+  topRisks: AdvisorInsight[];
+  topOpportunities: AdvisorInsight[];
+  overdueHighlights: AdvisorInsight[];
+  cardUtilizationHighlights: AdvisorInsight[];
+  relevantFacts: string[];
+}
+
+export interface RenderedTurn {
+  reply: string;
+  followUps: string[];
+  redirectUrl?: string;
+  redirectLabel?: string;
+}
+
 export interface ChatResponse {
   reply: string;
   redirectUrl?: string;

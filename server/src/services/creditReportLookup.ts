@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { EnrichedCreditReport } from '../types';
+import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
 
 /**
  * In-memory enriched credit report data.
@@ -16,6 +17,55 @@ let reportIndex: Map<string, EnrichedCreditReport> | null = null;
  * Built from the validLeadRefIds cross-reference.
  */
 let leadRefIdIndex: Map<string, string> | null = null;
+
+function normalizeReport(report: EnrichedCreditReport): EnrichedCreditReport {
+  const normalizedAccounts = report.accounts.map((a) => {
+    const normalizedDebtType = normalizeDebtTypeLabel({
+      debtType: a.debtType,
+      creditLimit: a.creditLimit,
+      lenderName: a.lenderName,
+    });
+    return { ...a, debtType: normalizedDebtType };
+  });
+
+  const active = normalizedAccounts.filter(a => a.status === 'ACTIVE');
+  const creditCardCount = active.filter(a => a.debtType.toLowerCase().includes('credit card')).length;
+  const personalLoanCount = active.filter(a => a.debtType.toLowerCase().includes('personal loan') || a.debtType.toLowerCase().includes('short term')).length;
+
+  let largestDebtType = report.summary.largestDebt?.type ?? null;
+  if (report.summary.largestDebt) {
+    const m = normalizedAccounts.find(a =>
+      a.lenderName === report.summary.largestDebt!.lender &&
+      (a.outstandingAmount ?? 0) === report.summary.largestDebt!.amount
+    );
+    if (m) largestDebtType = m.debtType;
+  }
+
+  let worstType = report.summary.worstDPDAccount?.type ?? null;
+  if (report.summary.worstDPDAccount) {
+    const m = normalizedAccounts.find(a =>
+      a.lenderName === report.summary.worstDPDAccount!.lender &&
+      a.dpd.maxDPD === report.summary.worstDPDAccount!.maxDPD
+    );
+    if (m) worstType = m.debtType;
+  }
+
+  return {
+    ...report,
+    accounts: normalizedAccounts,
+    summary: {
+      ...report.summary,
+      creditCardCount,
+      personalLoanCount,
+      largestDebt: report.summary.largestDebt
+        ? { ...report.summary.largestDebt, type: largestDebtType || report.summary.largestDebt.type }
+        : null,
+      worstDPDAccount: report.summary.worstDPDAccount
+        ? { ...report.summary.worstDPDAccount, type: worstType || report.summary.worstDPDAccount.type }
+        : null,
+    },
+  };
+}
 
 /**
  * Load enriched credit reports from JSON.
@@ -38,7 +88,11 @@ export function loadCreditReports(): void {
 
   try {
     const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-    reportIndex = new Map(Object.entries(raw));
+    const normalizedEntries = Object.entries(raw).map(([key, value]) => {
+      const report = normalizeReport(value as EnrichedCreditReport);
+      return [key, report] as const;
+    });
+    reportIndex = new Map(normalizedEntries);
 
     const elapsed = Date.now() - startTime;
     console.log(`Credit reports loaded: ${reportIndex.size} users in ${elapsed}ms`);

@@ -5,8 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prebuild": "npm run audit:credit-reports && npm run verify:structured && npm run verify:grounding",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "audit:credit-reports": "tsx src/scripts/auditCreditReports.ts",
+    "verify:structured": "tsx src/scripts/verifyStructuredPipeline.ts",
+    "verify:grounding": "tsx src/scripts/verifyGroundingAllUsers.ts",
+    "simulate:dhanraj": "tsx src/scripts/simulateDhanraj.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +21,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "openai": "^6.27.0"
+    "openai": "^6.27.0",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

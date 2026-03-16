@@ -3,13 +3,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { lookupByName, getUserByLeadRefId, getStartersForSegment, getAllLeadRefIds } from '../services/userLookup';
 import { getChatResponse } from '../services/claude';
-import { buildSystemPrompt, buildGeneralSystemPrompt } from '../prompts/system';
 import { loadCreditorData, getCreditorAccounts } from '../services/creditorLookup';
-import { loadCreditInsights, getCreditInsights } from '../services/creditInsightsLookup';
-import { loadPhoneLookup, getPhoneForUser } from '../services/phoneLookup';
+import { loadCreditInsights } from '../services/creditInsightsLookup';
+import { loadPhoneLookup } from '../services/phoneLookup';
 import { loadCreditReports, getCreditReport } from '../services/creditReportLookup';
-import { indexKnowledgeBase, selectKnowledge } from '../services/knowledgeSelection';
-import { IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail } from '../types';
+import { indexKnowledgeBase } from '../services/knowledgeSelection';
+import { buildEmbeddingStore, retrieveKnowledge } from '../services/embeddingStore';
+import { parsePdf } from '../services/knowledgeChunker';
+import { buildResponseGroundingContext } from '../services/groundingContext';
+import { buildAdvisorContext } from '../services/advisorContext';
+import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
+import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext } from '../types';
 
 /**
  * Build hover tooltip groups from creditor account data (Creditor.csv).
@@ -34,11 +38,26 @@ function buildTooltipsFromCreditor(accounts: CreditorAccount[]): MessageTooltips
 
   const overdueItems = accounts
     .filter(a => (a.overdueAmount ?? 0) > 0 || (a.delinquency ?? 0) > 0)
-    .map(a => ({ name: a.lenderName, detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount, overdue: a.overdueAmount } }));
+    .map(a => ({
+      name: a.lenderName,
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimitAmount, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount,
+        overdue: a.overdueAmount,
+      }
+    }));
 
   const activeItems = accounts
     .filter(a => !a.closedDate || a.closedDate.trim() === '')
-    .map(a => ({ name: a.lenderName, detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount } }));
+    .map(a => ({
+      name: a.lenderName,
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimitAmount, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount,
+      }
+    }));
 
   const securedItems = accounts
     .filter(a => {
@@ -46,7 +65,14 @@ function buildTooltipsFromCreditor(accounts: CreditorAccount[]): MessageTooltips
       return t.includes('home') || t.includes('vehicle') || t.includes('auto') ||
              t.includes('mortgage') || t.includes('secured');
     })
-    .map(a => ({ name: a.lenderName, detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount } }));
+    .map(a => ({
+      name: a.lenderName,
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimitAmount, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount,
+      }
+    }));
 
   const unsecuredItems = accounts
     .filter(a => {
@@ -54,7 +80,14 @@ function buildTooltipsFromCreditor(accounts: CreditorAccount[]): MessageTooltips
       return t.includes('personal') || t.includes('credit') ||
              t.includes('unsecured') || t.includes('gold');
     })
-    .map(a => ({ name: a.lenderName, detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount } }));
+    .map(a => ({
+      name: a.lenderName,
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimitAmount, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount,
+      }
+    }));
 
   const result: MessageTooltips = {};
   const overdueDedup = dedup(overdueItems);
@@ -97,7 +130,12 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
     .filter(a => a.dpd.maxDPD > 0 || (a.overdueAmount && a.overdueAmount > 0))
     .map(a => ({
       name: a.lenderName,
-      detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount, overdue: a.overdueAmount }
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimit, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount,
+        overdue: a.overdueAmount
+      }
     }));
 
   // Active accounts
@@ -105,7 +143,11 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
     .filter(a => a.status === 'ACTIVE')
     .map(a => ({
       name: a.lenderName,
-      detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount }
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimit, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount
+      }
     }));
 
   // Secured loans
@@ -116,7 +158,11 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
     })
     .map(a => ({
       name: a.lenderName,
-      detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount }
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimit, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount
+      }
     }));
 
   // Unsecured loans
@@ -128,7 +174,11 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
     })
     .map(a => ({
       name: a.lenderName,
-      detail: { name: a.lenderName, debtType: a.debtType || a.accountType, outstanding: a.outstandingAmount }
+      detail: {
+        name: a.lenderName,
+        debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimit, lenderName: a.lenderName }),
+        outstanding: a.outstandingAmount
+      }
     }));
 
   const result: MessageTooltips = {};
@@ -147,18 +197,7 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
 
 const router = Router();
 
-// Load knowledge base once and index for section-based selection
-let knowledgeBase = '';
-try {
-  knowledgeBase = fs.readFileSync(
-    path.join(__dirname, '..', 'data', 'knowledge-base.txt'),
-    'utf-8'
-  );
-  indexKnowledgeBase(knowledgeBase);
-  console.log(`Knowledge base loaded: ${knowledgeBase.length} characters`);
-} catch (err) {
-  console.error('Failed to load knowledge base:', err);
-}
+// ── Startup initialisation ────────────────────────────────────────────────────
 
 /**
  * Initialize all dataset lookups — called from index.ts at startup.
@@ -169,6 +208,53 @@ export function initCreditorData(): void {
   loadCreditInsights(validIds);
   loadPhoneLookup(validIds);
   loadCreditReports();
+}
+
+/**
+ * Load both PDF knowledge bases, build section index for sectionHint detection,
+ * then embed all chunks into the in-memory RAG store.
+ * Called once at server startup (async, ~3–6s).
+ */
+export async function initKnowledgeBase(): Promise<void> {
+  // Load legacy text for indexKnowledgeBase (sectionHint pattern reference)
+  try {
+    const kbText = fs.readFileSync(
+      path.join(__dirname, '..', 'data', 'knowledge-base.txt'),
+      'utf-8'
+    );
+    indexKnowledgeBase(kbText);
+    console.log(`[KB] Legacy text indexed (${kbText.length} chars) for sectionHint patterns`);
+  } catch (err) {
+    console.warn('[KB] Could not load knowledge-base.txt (continuing without it):', err);
+  }
+
+  // Parse both PDFs
+  // __dirname is server/src/routes — go up to server/, then up to project root
+  const datasetDir = path.resolve(__dirname, '..', '..', '..', 'dataset');
+
+  let companyText = '';
+  let generalText = '';
+
+  try {
+    companyText = await parsePdf(path.join(datasetDir, 'FREED - Company Knowledge base.pdf'));
+    console.log(`[KB] Company PDF parsed: ${companyText.length} chars`);
+  } catch (err) {
+    console.error('[KB] Failed to parse Company PDF:', err);
+  }
+
+  try {
+    generalText = await parsePdf(path.join(datasetDir, 'FREED - General Knowledge Base.pdf'));
+    console.log(`[KB] General Finance PDF parsed: ${generalText.length} chars`);
+  } catch (err) {
+    console.error('[KB] Failed to parse General Finance PDF:', err);
+  }
+
+  if (!companyText && !generalText) {
+    console.warn('[KB] No PDF content available — RAG store will be empty.');
+    return;
+  }
+
+  await buildEmbeddingStore(companyText, generalText);
 }
 
 // POST /api/identify - Look up user by name or phone number
@@ -227,7 +313,12 @@ router.post('/chat', async (req: Request, res: Response) => {
   }
 
   try {
-    let systemPrompt: string;
+    let responseGrounding: ResponseGroundingContext | undefined;
+    let creditorAccounts: CreditorAccount[] = [];
+    let selectedKnowledge = '';
+    let userName: string | null = null;
+    let segment: string | null = null;
+    let advisorContext: AdvisorContext | undefined;
 
     // Enriched credit report (from full bureau JSON) — may be null
     const enrichedReport = leadRefId ? getCreditReport(leadRefId) : null;
@@ -235,30 +326,51 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (leadRefId) {
       const user = getUserByLeadRefId(leadRefId);
       if (user) {
-        const creditorAccounts = getCreditorAccounts(leadRefId);
-        const creditInsights = getCreditInsights(leadRefId);
-        const phoneNumber = getPhoneForUser(leadRefId);
+        creditorAccounts = getCreditorAccounts(leadRefId);
         const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
-        // Select only relevant KB sections (RAG-like) based on segment, intent, and user message
-        const selectedKB = selectKnowledge(user.segment, intentTag, message, totalMessages);
-        systemPrompt = buildSystemPrompt(user, selectedKB || knowledgeBase, creditorAccounts, creditInsights, phoneNumber, totalMessages, intentTag, enrichedReport, message);
-      } else {
-        systemPrompt = buildGeneralSystemPrompt(knowledgeBase);
+        // Semantic RAG retrieval — embed user message and return top passages from both PDFs
+        selectedKnowledge = await retrieveKnowledge(message, user.segment, intentTag);
+        responseGrounding = buildResponseGroundingContext(enrichedReport, creditorAccounts);
+        advisorContext = buildAdvisorContext({
+          user,
+          report: enrichedReport,
+          creditorAccounts,
+          userMessage: message,
+        });
+        userName = user.firstName;
+        segment = user.segment;
       }
-    } else {
-      systemPrompt = buildGeneralSystemPrompt(knowledgeBase);
+    }
+
+    if (!advisorContext) {
+      advisorContext = buildAdvisorContext({
+        user: null,
+        report: enrichedReport,
+        creditorAccounts,
+        userMessage: message,
+      });
     }
 
     const chatHistory = Array.isArray(history) ? history.slice(-20) : [];
     const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
-    const response = await getChatResponse(systemPrompt, chatHistory, message, totalMessages);
+    const response = await getChatResponse({
+      history: chatHistory,
+      userMessage: message,
+      messageCount: totalMessages,
+      knowledgeBase: selectedKnowledge,
+      advisorContext,
+      grounding: responseGrounding,
+      userName,
+      segment,
+      intentTag,
+    });
 
     // Attach hover-tooltip data — prefer enriched report, fall back to Creditor.csv
     let tooltips: MessageTooltips | undefined;
     if (enrichedReport) {
       tooltips = buildTooltipsFromReport(enrichedReport);
     } else if (leadRefId) {
-      const creditorAccountsForTooltip = getCreditorAccounts(leadRefId);
+      const creditorAccountsForTooltip = creditorAccounts.length > 0 ? creditorAccounts : getCreditorAccounts(leadRefId);
       tooltips = creditorAccountsForTooltip.length > 0
         ? buildTooltipsFromCreditor(creditorAccountsForTooltip)
         : undefined;

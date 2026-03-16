@@ -58,16 +58,20 @@ function formatTimestamp(date: Date): string {
   return `${dateStr}, ${time}`;
 }
 
+function normalizeAssistantContent(content: string): string {
+  return content
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /**
  * Resolve which tooltip group to show for a bold number.
  *
- * Three-tier approach:
- *  Tier 0 — count match: If the bold number exactly matches the count of accounts
- *    in a tooltip group AND the context has relevant keywords, that's a strong match.
- *  Tier 1 — clause-level (strict): Split on commas/conjunctions and check the
- *    clause containing the number.
- *  Tier 2 — sentence-level (broad fallback): If no match at clause level, check
- *    the full sentence.
+ * Strict approach:
+ * - Only show tooltip when the bold number equals an account COUNT in a
+ *   relevant group (active or overdue) and context keywords match.
+ * - Never infer from sentence-level proximity for unrelated numbers.
  */
 function resolveTooltipGroup(
   numStr: string,
@@ -79,81 +83,32 @@ function resolveTooltipGroup(
   const num = parseInt(numStr.replace(/,/g, ''), 10);
   if (isNaN(num) || num === 0) return null;
 
-  // ── Tier 0: Count-based matching (strongest signal) ────────────────────
-  // If bold number matches the exact count of accounts in a group AND context
-  // has relevant keywords, this is almost certainly the right match.
+  // Strict mode: only show tooltips when the bold number equals
+  // the account COUNT in a relevant group. This prevents unrelated
+  // numbers (score/amount/percentage) from opening account popups.
   const fullCtx = paragraphText.toLowerCase();
 
-  const groups: Array<{ key: keyof MessageTooltips; group: TooltipGroup; keywords: string[] }> = [
-    { key: 'overdue', group: tooltips.overdue!, keywords: ['missed', 'overdue', 'slipped', 'late', 'delinquen', 'behind', 'payment issue', 'dpd'] },
-    { key: 'active', group: tooltips.active!, keywords: ['active', 'managing', 'across', 'running', 'current', 'open', 'loan', 'account'] },
-    { key: 'secured', group: tooltips.secured!, keywords: ['secured', 'home loan', 'vehicle', 'car loan', 'mortgage', 'housing'] },
-    { key: 'unsecured', group: tooltips.unsecured!, keywords: ['unsecured', 'personal loan', 'credit card', 'consumer'] },
-  ].filter(g => g.group);
+  const groups: Array<{ group: TooltipGroup; keywords: string[] }> = [];
+  if (tooltips.overdue) {
+    groups.push({
+      group: tooltips.overdue,
+      keywords: ['missed', 'overdue', 'slipped', 'late', 'delinquen', 'behind', 'payment issue', 'dpd'],
+    });
+  }
+  if (tooltips.active) {
+    groups.push({
+      group: tooltips.active,
+      keywords: ['active', 'managing', 'across', 'running', 'current', 'open', 'loan', 'account'],
+    });
+  }
 
-  // Tier 0: exact count + any keyword match in full context
+  // Exact count + contextual keyword is required.
   // Check both dedup'd count (accounts.length) and raw pre-dedup count (rawCount)
   for (const { group, keywords } of groups) {
     const matchesCount = group.accounts.length === num || (group.rawCount != null && group.rawCount === num);
     if (matchesCount && keywords.some(kw => fullCtx.includes(kw))) {
       return group;
     }
-  }
-
-  // ── Tier 1: clause-level match (strict) ────────────────────────────────
-  const clauses = paragraphText.split(/[,;]|\band\b|\bwith\b/i);
-  const relevantClause = clauses.find(c => c.match(/\d+/g)?.includes(String(num)));
-  const clauseCtx = (relevantClause ?? '').toLowerCase();
-
-  if (clauseCtx) {
-    if (tooltips.overdue &&
-        (clauseCtx.includes('missed') || clauseCtx.includes('overdue') ||
-         clauseCtx.includes('slipped') || clauseCtx.includes('late payment') ||
-         clauseCtx.includes('behind') || clauseCtx.includes('delinquen'))) {
-      return tooltips.overdue;
-    }
-    if (tooltips.active &&
-        (clauseCtx.includes('active account') || clauseCtx.includes('active loan') ||
-         clauseCtx.includes('managing') || clauseCtx.includes('across') || clauseCtx.includes('running'))) {
-      return tooltips.active;
-    }
-    if (tooltips.secured &&
-        (clauseCtx.includes('secured') || clauseCtx.includes('home loan') ||
-         clauseCtx.includes('vehicle') || clauseCtx.includes('car loan'))) {
-      return tooltips.secured;
-    }
-    if (tooltips.unsecured &&
-        (clauseCtx.includes('unsecured') || clauseCtx.includes('personal loan') ||
-         clauseCtx.includes('credit card'))) {
-      return tooltips.unsecured;
-    }
-  }
-
-  // ── Tier 2: sentence-level fallback ────────────────────────────────────
-  const sentences = paragraphText.split(/[.!?]/);
-  const relevantSentence = sentences.find(s => s.match(/\d+/g)?.includes(String(num))) ?? paragraphText;
-  const sentCtx = relevantSentence.toLowerCase();
-
-  if (tooltips.overdue &&
-      (sentCtx.includes('missed payment') || sentCtx.includes('overdue') ||
-       sentCtx.includes('slipped') || sentCtx.includes('late payment') || sentCtx.includes('behind'))) {
-    return tooltips.overdue;
-  }
-  if (tooltips.active &&
-      (sentCtx.includes('active account') || sentCtx.includes('active loan') ||
-       sentCtx.includes('managing') || sentCtx.includes('across') ||
-       (sentCtx.includes('account') && !sentCtx.includes('missed')))) {
-    return tooltips.active;
-  }
-  if (tooltips.secured &&
-      (sentCtx.includes('secured') || sentCtx.includes('home loan') ||
-       sentCtx.includes('vehicle') || sentCtx.includes('car loan'))) {
-    return tooltips.secured;
-  }
-  if (tooltips.unsecured &&
-      (sentCtx.includes('unsecured') || sentCtx.includes('personal loan') ||
-       sentCtx.includes('credit card'))) {
-    return tooltips.unsecured;
   }
 
   return null;
@@ -260,8 +215,10 @@ export default function MessageBubble({
   onFollowUpClick,
 }: MessageBubbleProps) {
   const { isLoggedIn } = useAuth();
+  const normalizedContent = role === 'assistant' ? normalizeAssistantContent(content) : content;
+  const normalizedFollowUps = (followUps || []).slice(0, 3);
   const showFollowUps = isLatest && role === 'assistant' && onFollowUpClick;
-  const hasFollowUps = followUps && followUps.length > 0;
+  const hasFollowUps = normalizedFollowUps.length > 0;
   const hasRedirect = redirectUrl && redirectLabel;
 
   const handleRedirectClick = () => {
@@ -293,11 +250,11 @@ export default function MessageBubble({
           // Provide both contexts so the static components above can read them
           <TooltipsContext.Provider value={tooltips}>
             <ReactMarkdown components={MARKDOWN_COMPONENTS}>
-              {content}
+              {normalizedContent}
             </ReactMarkdown>
           </TooltipsContext.Provider>
         ) : (
-          <p className="freed-message__text">{content}</p>
+          <p className="freed-message__text">{normalizedContent}</p>
         )}
       </div>
 
@@ -311,7 +268,7 @@ export default function MessageBubble({
       {/* Follow-ups and redirect shown as options */}
       {showFollowUps && (hasFollowUps || hasRedirect) && (
         <div className="freed-followups">
-          {hasFollowUps && followUps.map((text, i) => (
+          {hasFollowUps && normalizedFollowUps.map((text, i) => (
             <button
               key={i}
               className="freed-followups__chip"

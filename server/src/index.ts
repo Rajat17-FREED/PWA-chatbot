@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
 import chatRouter from './routes/chat';
-import { initCreditorData } from './routes/chat';
+import { initCreditorData, initKnowledgeBase } from './routes/chat';
 
 dotenv.config();
 
@@ -31,9 +31,20 @@ app.get('{*path}', (_req, res) => {
   }
 });
 
-// Load creditor data at startup
-initCreditorData();
+// Startup sequence — load datasets and build RAG embedding store before serving
+async function main(): Promise<void> {
+  // Synchronous dataset loads (fast, in-memory CSV/JSON)
+  initCreditorData();
 
-app.listen(PORT, () => {
-  console.log(`FREED Chatbot server running on http://localhost:${PORT}`);
+  // Async: parse PDFs + embed all chunks (one-time cost, ~3–6s)
+  await initKnowledgeBase();
+
+  app.listen(PORT, () => {
+    console.log(`FREED Chatbot server running on http://localhost:${PORT}`);
+  });
+}
+
+main().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
