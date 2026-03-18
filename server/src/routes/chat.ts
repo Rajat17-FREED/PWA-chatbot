@@ -7,12 +7,13 @@ import { loadCreditorData, getCreditorAccounts } from '../services/creditorLooku
 import { loadCreditInsights } from '../services/creditInsightsLookup';
 import { loadPhoneLookup } from '../services/phoneLookup';
 import { loadCreditReports, getCreditReport } from '../services/creditReportLookup';
-import { indexKnowledgeBase } from '../services/knowledgeSelection';
-import { buildEmbeddingStore, retrieveKnowledge } from '../services/embeddingStore';
+import { indexKnowledgeBase, selectKnowledge } from '../services/knowledgeSelection';
+import { buildEmbeddingStore, retrieveKnowledge, preEmbedQueries } from '../services/embeddingStore';
 import { parsePdf } from '../services/knowledgeChunker';
 import { buildResponseGroundingContext } from '../services/groundingContext';
 import { buildAdvisorContext } from '../services/advisorContext';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
+import { generateDynamicStarters, prewarmStarters, buildWelcomeMessage, buildErrorResponse } from '../services/starterGenerator';
 import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext } from '../types';
 
 /**
@@ -45,6 +46,7 @@ function buildTooltipsFromCreditor(accounts: CreditorAccount[]): MessageTooltips
         debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimitAmount, lenderName: a.lenderName }),
         outstanding: a.outstandingAmount,
         overdue: a.overdueAmount,
+        maxDPD: (a.delinquency ?? 0) > 0 ? a.delinquency : null,
       }
     }));
 
@@ -134,7 +136,8 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
         name: a.lenderName,
         debtType: normalizeDebtTypeLabel({ debtType: a.debtType, creditLimit: a.creditLimit, lenderName: a.lenderName }),
         outstanding: a.outstandingAmount,
-        overdue: a.overdueAmount
+        overdue: a.overdueAmount,
+        maxDPD: a.dpd.maxDPD > 0 ? a.dpd.maxDPD : null,
       }
     }));
 
@@ -255,10 +258,20 @@ export async function initKnowledgeBase(): Promise<void> {
   }
 
   await buildEmbeddingStore(companyText, generalText);
+
+  // Pre-embed all conversation starters so first-click is instant
+  const { conversationStarters } = await import('../prompts/segments');
+  const allStarterTexts: string[] = [];
+  for (const segment of Object.keys(conversationStarters)) {
+    for (const starter of conversationStarters[segment as Segment]) {
+      allStarterTexts.push(starter.text);
+    }
+  }
+  await preEmbedQueries(allStarterTexts);
 }
 
 // POST /api/identify - Look up user by name or phone number
-router.post('/identify', (req: Request, res: Response) => {
+router.post('/identify', async (req: Request, res: Response) => {
   const { name } = req.body as IdentifyRequest;
 
   if (!name || !name.trim()) {
@@ -270,11 +283,45 @@ router.post('/identify', (req: Request, res: Response) => {
   }
 
   const result = lookupByName(name);
+
+  if (result.status === 'found' && result.user) {
+    // Direct match — return static starters immediately, prewarm dynamic in background
+    const enrichedReport = getCreditReport(result.user.leadRefId);
+    const creditorAccounts = getCreditorAccounts(result.user.leadRefId);
+    const advisorContext = buildAdvisorContext({
+      user: result.user,
+      report: enrichedReport,
+      creditorAccounts,
+      userMessage: '',
+    });
+
+    result.message = buildWelcomeMessage(result.user, advisorContext);
+    // Fire dynamic starters in background — don't block login response
+    prewarmStarters(result.user, advisorContext);
+  } else if (result.status === 'multiple' && result.candidates) {
+    // Multiple matches — prewarm starters for ALL candidates in background
+    // so when the user selects one, starters are already cached
+    for (const candidate of result.candidates) {
+      const user = getUserByLeadRefId(candidate.leadRefId);
+      if (user) {
+        const report = getCreditReport(candidate.leadRefId);
+        const accounts = getCreditorAccounts(candidate.leadRefId);
+        const ctx = buildAdvisorContext({
+          user,
+          report,
+          creditorAccounts: accounts,
+          userMessage: '',
+        });
+        prewarmStarters(user, ctx);
+      }
+    }
+  }
+
   res.json(result);
 });
 
 // POST /api/select - Select a specific user from disambiguation
-router.post('/select', (req: Request, res: Response) => {
+router.post('/select', async (req: Request, res: Response) => {
   const { leadRefId } = req.body as { leadRefId: string };
 
   if (!leadRefId) {
@@ -288,11 +335,26 @@ router.post('/select', (req: Request, res: Response) => {
     return;
   }
 
+  // Build advisor context for dynamic starters + welcome
+  const enrichedReport = getCreditReport(leadRefId);
+  const creditorAccounts = getCreditorAccounts(leadRefId);
+  const advisorContext = buildAdvisorContext({
+    user,
+    report: enrichedReport,
+    creditorAccounts,
+    userMessage: '',
+  });
+
+  // Try to get dynamic starters from cache (prewarm may have finished during disambiguation)
+  // If not ready, return static starters immediately — don't block
+  const starters = await generateDynamicStarters(user, advisorContext);
+  const welcomeMessage = buildWelcomeMessage(user, advisorContext);
+
   res.json({
     status: 'found',
     user,
-    starters: getStartersForSegment(user.segment),
-    message: `Welcome, ${user.firstName}!`,
+    starters,
+    message: welcomeMessage,
   });
 });
 
@@ -312,13 +374,14 @@ router.post('/chat', async (req: Request, res: Response) => {
     return;
   }
 
+  let userName: string | null = null;
+  let advisorContext: AdvisorContext | undefined;
+
   try {
     let responseGrounding: ResponseGroundingContext | undefined;
     let creditorAccounts: CreditorAccount[] = [];
     let selectedKnowledge = '';
-    let userName: string | null = null;
     let segment: string | null = null;
-    let advisorContext: AdvisorContext | undefined;
 
     // Enriched credit report (from full bureau JSON) — may be null
     const enrichedReport = leadRefId ? getCreditReport(leadRefId) : null;
@@ -328,15 +391,31 @@ router.post('/chat', async (req: Request, res: Response) => {
       if (user) {
         creditorAccounts = getCreditorAccounts(leadRefId);
         const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
-        // Semantic RAG retrieval — embed user message and return top passages from both PDFs
-        selectedKnowledge = await retrieveKnowledge(message, user.segment, intentTag);
-        responseGrounding = buildResponseGroundingContext(enrichedReport, creditorAccounts);
+
+        // Fire RAG retrieval in parallel with context building, with 1000ms timeout
+        const ragPromise = Promise.race([
+          retrieveKnowledge(message, user.segment, intentTag),
+          new Promise<string>(resolve => setTimeout(() => resolve(''), 1000)),
+        ]);
+
+        // Build context in parallel (these are synchronous/<5ms)
+        responseGrounding = buildResponseGroundingContext(enrichedReport, creditorAccounts, user);
         advisorContext = buildAdvisorContext({
           user,
           report: enrichedReport,
           creditorAccounts,
           userMessage: message,
         });
+
+        // Await the RAG result (will be fast if cached, or timeout after 300ms)
+        selectedKnowledge = await ragPromise;
+
+        // If RAG timed out or returned empty, fall back to keyword-based selection
+        if (!selectedKnowledge) {
+          selectedKnowledge = selectKnowledge(user.segment, intentTag, message, totalMessages);
+          console.log('[RAG] Timeout — fell back to keyword selection');
+        }
+
         userName = user.firstName;
         segment = user.segment;
       }
@@ -382,13 +461,13 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     if (err?.status === 429) {
       res.status(429).json({
-        reply: "I'm a bit busy right now. Could you try again in a moment?",
+        reply: buildErrorResponse(userName, advisorContext, '429'),
       });
       return;
     }
 
     res.status(500).json({
-      reply: "I'm having trouble connecting right now. Please try again.",
+      reply: buildErrorResponse(userName, advisorContext, '500'),
     });
   }
 });

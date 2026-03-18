@@ -197,11 +197,40 @@ function isGenericNonLenderPhrase(value: string): boolean {
   const genericPatterns = [
     /^credit cards?$/,
     /^credit card accounts?$/,
+    /^credit card companies$/,
     /^loan accounts?$/,
     /^business loans?$/,
     /^personal loans?$/,
     /^secured loans?$/,
     /^unsecured loans?$/,
+    /^consumer loans?$/,
+    /^home loans?$/,
+    /^housing loans?$/,
+    /^vehicle loans?$/,
+    /^auto loans?$/,
+    /^financial services?$/,
+    /^financial institutions?$/,
+    /^credit institutions?$/,
+    /^credit bureau$/,
+    /^credit reports?$/,
+    /^credit agencies$/,
+    /^interest rates?$/,
+    /^loan eligibility$/,
+    /^credit worthiness$/,
+    /^credit history$/,
+    /^credit score$/,
+    /^credit profiles?$/,
+    /^payment history$/,
+    /^credit utilization$/,
+    /^credit health$/,
+    /^credit monitoring$/,
+    /^debt consolidation$/,
+    /^debt resolution$/,
+    /^debt elimination$/,
+    /^recovery agents?$/,
+    /^collection agents?$/,
+    /^reserve bank$/,
+    /^rbi$/,
   ];
   return genericPatterns.some(pattern => pattern.test(normalized));
 }
@@ -215,6 +244,21 @@ function buildAllowedLenderAliasSet(grounding: ResponseGroundingContext): Set<st
     }
   }
   return aliases;
+}
+
+/**
+ * Check if a lender mention is "known" — either exact alias match or
+ * fuzzy match (the mention's key contains or is contained by an alias key).
+ */
+function isKnownLender(mention: string, allowedAliases: Set<string>): boolean {
+  const key = lenderKey(mention);
+  if (!key) return true;
+  if (allowedAliases.has(key)) return true;
+  // Fuzzy: check if mention contains any alias or vice versa
+  for (const alias of allowedAliases) {
+    if (alias.length >= 3 && (key.includes(alias) || alias.includes(key))) return true;
+  }
+  return false;
 }
 
 function isFactualClaimLine(line: string): boolean {
@@ -240,10 +284,12 @@ function stripUnknownLenderClaims(reply: string, grounding: ResponseGroundingCon
 
     const unknownMentions = matches.filter(name => {
       if (isGenericNonLenderPhrase(name)) return false;
-      return !allowedAliases.has(lenderKey(name));
+      return !isKnownLender(name, allowedAliases);
     });
 
-    if (unknownMentions.length > 0 && isFactualClaimLine(line)) {
+    // Only strip if ALL lender mentions on this line are unknown AND it's a factual claim
+    // If at least one mention is known, the line is likely valid
+    if (unknownMentions.length > 0 && unknownMentions.length === matches.length && isFactualClaimLine(line)) {
       continue;
     }
 
@@ -569,7 +615,7 @@ function normalizeFollowUp(text: string, grounding?: ResponseGroundingContext): 
     grounding
   ).replace(/[.]+$/g, '');
 
-  return shortenText(cleaned, 68);
+  return shortenText(cleaned, 120);
 }
 
 function normalizeSectionStyle(style: string | undefined, mode: StructuredFormatMode): StructuredSectionStyle {
@@ -640,6 +686,12 @@ function sanitizeStructuredTurn(turn: StructuredAssistantTurn, grounding?: Respo
     }
   }
 
+  let redirectNudge: string | undefined;
+  if (redirect && turn.redirectNudge) {
+    redirectNudge = normalizeTextValue(turn.redirectNudge, grounding);
+    if (!redirectNudge) redirectNudge = undefined;
+  }
+
   return {
     formatMode,
     opening,
@@ -647,6 +699,7 @@ function sanitizeStructuredTurn(turn: StructuredAssistantTurn, grounding?: Respo
     closingQuestion,
     followUps,
     redirect,
+    redirectNudge,
   };
 }
 
@@ -713,16 +766,33 @@ function matchesDistinctAnchors(followUps: string[], advisorContext?: AdvisorCon
   return matchedAnchorIndexes.size >= Math.min(MAX_FOLLOW_UPS, anchors.length);
 }
 
-function containsUnknownLenderClaim(text: string, grounding?: ResponseGroundingContext): boolean {
-  if (!grounding) return false;
+/**
+ * Count lines with completely unknown lender claims (all mentions unknown).
+ * A line where at least one lender is known is considered valid.
+ */
+function countUnknownLenderClaimLines(text: string, grounding?: ResponseGroundingContext): number {
+  if (!grounding) return 0;
   const allowedAliases = buildAllowedLenderAliasSet(grounding);
   const lines = text.split('\n');
+  let count = 0;
 
-  return lines.some(line => {
+  for (const line of lines) {
     const matches = [...line.matchAll(LENDER_MENTION_PATTERN)].map(match => match[1]);
-    if (matches.length === 0 || !isFactualClaimLine(line)) return false;
-    return matches.some(name => !isGenericNonLenderPhrase(name) && !allowedAliases.has(lenderKey(name)));
-  });
+    if (matches.length === 0 || !isFactualClaimLine(line)) continue;
+
+    const nonGeneric = matches.filter(name => !isGenericNonLenderPhrase(name));
+    if (nonGeneric.length === 0) continue;
+
+    // Only flag if ALL non-generic mentions on this line are unknown
+    const allUnknown = nonGeneric.every(name => !isKnownLender(name, allowedAliases));
+    if (allUnknown) count++;
+  }
+
+  return count;
+}
+
+function containsUnknownLenderClaim(text: string, grounding?: ResponseGroundingContext): boolean {
+  return countUnknownLenderClaimLines(text, grounding) > 0;
 }
 
 function hasCardContextWithoutLabel(text: string, grounding?: ResponseGroundingContext): boolean {
@@ -862,7 +932,7 @@ async function callModelForJson<T>(args: {
 async function requestStructuredTurn(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): Promise<StructuredAssistantTurn | null> {
   const payload = buildStructuredPayload(input, expectedFormatMode);
   const turn = await callModelForJson<StructuredAssistantTurn>({
-    systemPrompt: buildStructuredTurnSystemPrompt(),
+    systemPrompt: buildStructuredTurnSystemPrompt(input.segment, input.intentTag),
     payload,
     schema: STRUCTURED_TURN_SCHEMA,
     maxTokens: 1100,
@@ -927,6 +997,7 @@ function renderBodyPreview(turn: StructuredAssistantTurn): string {
     parts.push(...section.items);
   }
   if (turn.closingQuestion?.text) parts.push(turn.closingQuestion.text);
+  if (turn.redirectNudge) parts.push(turn.redirectNudge);
   return parts.join('\n');
 }
 
@@ -939,7 +1010,7 @@ function validateFollowUps(turn: StructuredAssistantTurn, advisorContext?: Advis
     issues.push('followUps must contain exactly 3 prompts');
   }
 
-  if (followUps.some(followUp => followUp.length < 10 || followUp.length > 68)) {
+  if (followUps.some(followUp => followUp.length < 10 || followUp.length > 120)) {
     issues.push('followUps must stay specific and concise');
   }
 
@@ -1095,12 +1166,12 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
     parts.push(turn.closingQuestion.text);
   }
 
-  if (turn.formatMode !== 'plain' && turn.followUps.length === MAX_FOLLOW_UPS) {
-    parts.push([
-      'NEXT STEPS YOU CAN EXPLORE',
-      ...turn.followUps.map((followUp, index) => `${index + 1}. ${followUp}`),
-    ].join('\n'));
+  // Natural product nudge — ties the redirect to the user's specific situation
+  if (turn.redirectNudge && turn.redirect) {
+    parts.push(turn.redirectNudge);
   }
+
+  // Follow-ups are shown as interactive chips below the message — no need to duplicate them in the body
 
   const reply = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 
@@ -1112,44 +1183,322 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
   };
 }
 
+/**
+ * Build contextual follow-ups for the safe turn fallback.
+ * Uses the user's actual message to pick relevant follow-ups,
+ * then fills remaining slots from general profile-based options.
+ * Always returns exactly 3 follow-ups.
+ */
+function buildSafeFollowUps(ctx: StructuredChatRequest['advisorContext'], userMessage: string): string[] {
+  if (!ctx) return [];
+
+  const lower = (userMessage || '').toLowerCase();
+  const pool: string[] = [];
+
+  // ── Message-aware follow-ups (based on what the user asked about) ──
+
+  // EMI / payment burden questions
+  if (/emi|salary|income|burden|payment|foir|obligation/i.test(lower)) {
+    if (ctx.dominantAccounts?.[0]?.lenderName) {
+      const top = ctx.dominantAccounts[0];
+      pool.push(`Which of my accounts is eating the most of my salary -- is it ${top.lenderName}?`);
+    }
+    if (ctx.foirPercentage && ctx.foirPercentage > 0) {
+      pool.push(`With ${ctx.foirPercentage}% of my income going to EMIs, is there a way to bring that down?`);
+    }
+    if (ctx.activeAccountCount > 2) {
+      pool.push(`Would combining my ${ctx.activeAccountCount} active loans into one EMI actually save me money?`);
+    }
+  }
+
+  // Score questions
+  if (/score|cibil|rating|credit.*report/i.test(lower)) {
+    if (ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0 && ctx.creditScore) {
+      pool.push(`My score is ${ctx.creditScore} -- what's the single fastest way to close the ${ctx.scoreGapTo750}-point gap to 750?`);
+    }
+    const highUtilAccount = ctx.topOpportunities?.find(o => /utilization/i.test(o.label));
+    if (highUtilAccount?.lenderName) {
+      pool.push(`How much would paying down ${highUtilAccount.lenderName} below 30% utilization actually move my score?`);
+    }
+    if (ctx.delinquentAccountCount > 0) {
+      pool.push(`Will clearing the overdue on my ${ctx.delinquentAccountCount} account${ctx.delinquentAccountCount > 1 ? 's' : ''} help my score recover?`);
+    }
+  }
+
+  // Overdue / missed payment questions
+  if (/overdue|missed|late|delay|delinqu|dpd|default/i.test(lower)) {
+    const overdueAccount = ctx.topRisks?.find(r => /overdue/i.test(r.label));
+    if (overdueAccount?.lenderName) {
+      pool.push(`Should I prioritize clearing the ${overdueAccount.lenderName} overdue first, or spread payments across accounts?`);
+    }
+    if (ctx.creditScore) {
+      pool.push(`If I clear all overdue amounts, how quickly will my score of ${ctx.creditScore} start recovering?`);
+    }
+    pool.push(`Are any of my overdue accounts at risk of legal action or being written off?`);
+  }
+
+  // Lender-specific questions
+  if (/hdfc|icici|bajaj|axis|kotak|sbi|tata|home credit|idfc/i.test(lower)) {
+    const mentioned = lower.match(/hdfc|icici|bajaj|axis|kotak|sbi|tata|home credit|idfc/i)?.[0] || '';
+    const matchedAccount = ctx.relevantAccounts?.find(a => a.lenderName.toLowerCase().includes(mentioned));
+    if (matchedAccount && (matchedAccount.outstandingAmount ?? 0) > 0) {
+      pool.push(`What's my best strategy for the ${matchedAccount.lenderName} ${matchedAccount.debtType.toLowerCase()} specifically?`);
+    }
+  }
+
+  // Interest / rate / DEP questions
+  if (/interest|rate|paying too much|save|prepay|refinanc/i.test(lower)) {
+    if (ctx.dominantAccounts?.[0]?.lenderName) {
+      const top = ctx.dominantAccounts[0];
+      pool.push(`Which of my loans has the highest interest rate -- is it ${top.lenderName}?`);
+    }
+    if (ctx.totalOutstanding && ctx.totalOutstanding > 0) {
+      pool.push(`How much total interest could I save if I follow a structured repayment plan?`);
+    }
+    const nearComplete = ctx.repaymentHighlights?.find(h => (h.percentage ?? 0) >= 60);
+    if (nearComplete?.lenderName) {
+      pool.push(`I'm already ${nearComplete.percentage}% done with ${nearComplete.lenderName} -- should I accelerate that one?`);
+    } else {
+      pool.push(`Should I prepay my highest-interest loan first, or would DEP work better for me?`);
+    }
+  }
+
+  // Goal / loan readiness questions
+  if (/goal|loan|readiness|best rate|home loan|car loan|eligib/i.test(lower)) {
+    if (ctx.creditScore && ctx.creditScore >= 750) {
+      pool.push(`With a score of ${ctx.creditScore}, what kind of rates can I expect in the market?`);
+    } else if (ctx.creditScore && ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0) {
+      pool.push(`What's the most impactful thing I can do to close the ${ctx.scoreGapTo750}-point gap to 750 before applying?`);
+    }
+    if (ctx.foirPercentage) {
+      pool.push(`My EMIs take ${ctx.foirPercentage}% of my income -- will that affect my loan approval?`);
+    }
+  }
+
+  // Profile / snapshot questions
+  if (/profile|snapshot|financial.*look|where.*stand|overall/i.test(lower)) {
+    const topRiskProfile = ctx.topRisks?.[0];
+    if (topRiskProfile?.lenderName) {
+      pool.push(`What's the biggest drag on my profile -- is it the ${topRiskProfile.lenderName} account?`);
+    }
+    if (ctx.foirPercentage) {
+      pool.push(`Is ${ctx.foirPercentage}% of my income going to EMIs considered healthy?`);
+    }
+    if (ctx.overallOnTimeRate && ctx.overallOnTimeRate < 100) {
+      pool.push(`My on-time payment rate is ${ctx.overallOnTimeRate}% -- how much is that hurting my score?`);
+    }
+    if (ctx.overallCardUtilization && ctx.overallCardUtilization > 30) {
+      pool.push(`My overall card utilization is ${ctx.overallCardUtilization}% -- how do I bring it under 30%?`);
+    }
+    if (ctx.enquiryCount && ctx.enquiryCount > 3) {
+      pool.push(`I have ${ctx.enquiryCount} recent enquiries -- is that dragging my score down?`);
+    }
+    const topOppProfile = ctx.topOpportunities?.[0];
+    if (topOppProfile?.detail) {
+      pool.push(`What's the single best opportunity to improve my profile right now?`);
+    }
+  }
+
+  // Harassment questions
+  if (/harass|recovery|agent|call|threat|legal/i.test(lower)) {
+    pool.push(`Can FREED Shield actually stop the recovery calls I'm getting?`);
+    pool.push(`What are my legal rights when recovery agents call -- can they threaten me?`);
+  }
+
+  // ── General profile-based follow-ups (used to fill remaining slots) ──
+
+  const topRisk = ctx.topRisks?.[0];
+  if (topRisk?.lenderName) {
+    pool.push(`Should I tackle the ${topRisk.lenderName} ${topRisk.debtType?.toLowerCase() || 'account'} issue before anything else?`);
+  }
+
+  const topOpp = ctx.topOpportunities?.[0];
+  if (topOpp?.lenderName && topOpp?.percentage) {
+    pool.push(`How much would bringing ${topOpp.lenderName} below 30% utilization improve things?`);
+  }
+
+  if (ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0 && !pool.some(p => p.includes('gap to 750'))) {
+    pool.push(`What's the fastest way to close the ${ctx.scoreGapTo750}-point gap to 750?`);
+  }
+
+  if (ctx.delinquentAccountCount > 0 && !pool.some(p => p.includes('overdue'))) {
+    pool.push(`Will my score recover if I clear the overdue on my ${ctx.delinquentAccountCount} account${ctx.delinquentAccountCount > 1 ? 's' : ''}?`);
+  }
+
+  if (ctx.foirPercentage && ctx.foirPercentage > 30 && !pool.some(p => p.includes('income going to'))) {
+    pool.push(`With ${ctx.foirPercentage}% of my income going to EMIs, what's the smartest next move?`);
+  }
+
+  if (ctx.creditScore && !pool.some(p => p.includes('affecting my score'))) {
+    pool.push(`What's hurting my score of ${ctx.creditScore} the most right now?`);
+  }
+
+  if (ctx.activeAccountCount > 0 && !pool.some(p => p.includes('active'))) {
+    pool.push(`Across my ${ctx.activeAccountCount} active accounts, which one should I focus on first?`);
+  }
+
+  // Deduplicate and return exactly 3
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const item of pool) {
+    const key = item.toLowerCase().slice(0, 40);
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(item);
+    }
+    if (unique.length >= 3) break;
+  }
+
+  return unique;
+}
+
+/**
+ * Determine an appropriate redirect for the safe turn based on segment and intent.
+ */
+function inferSafeRedirect(segment: string | null | undefined, intentTag: string | undefined, userMessage: string): StructuredRedirect | undefined {
+  const lower = (userMessage || '').toLowerCase();
+
+  // Intent-based redirect takes priority
+  if (intentTag) {
+    switch (intentTag) {
+      case 'INTENT_HARASSMENT':
+        return { url: '/freed-shield', label: 'Explore FREED Shield' };
+      case 'INTENT_DELINQUENCY_STRESS':
+        if (segment === 'DRP_Eligible') return { url: '/drp', label: 'Explore Debt Resolution' };
+        return { url: '/credit-score', label: 'View your credit profile' };
+      case 'INTENT_EMI_OPTIMISATION':
+        if (segment === 'DCP_Eligible') return { url: '/dcp', label: 'Explore Debt Consolidation' };
+        if (segment === 'DEP') return { url: '/dep', label: 'Explore Debt Elimination' };
+        return { url: '/credit-score', label: 'View your credit profile' };
+      case 'INTENT_INTEREST_OPTIMISATION':
+        if (segment === 'DEP') return { url: '/dep', label: 'Explore Debt Elimination' };
+        break;
+      case 'INTENT_GOAL_BASED_LOAN':
+        return { url: '/credit-score', label: 'Check Your Loan Readiness' };
+      case 'INTENT_CREDIT_SCORE_TARGET':
+        return { url: '/goal-tracker', label: 'Set Your Score Target' };
+      case 'INTENT_SCORE_IMPROVEMENT':
+      case 'INTENT_GOAL_TRACKING':
+        return { url: '/goal-tracker', label: 'Set a score goal' };
+      case 'INTENT_SCORE_DIAGNOSIS':
+      case 'INTENT_LOAN_ELIGIBILITY':
+        return { url: '/credit-score', label: 'View your credit profile' };
+    }
+  }
+
+  // Message keyword fallback
+  if (/harass|recovery|agent|call|threat/i.test(lower)) {
+    return { url: '/freed-shield', label: 'Explore FREED Shield' };
+  }
+  if (/score|cibil|credit.*report/i.test(lower)) {
+    return { url: '/credit-score', label: 'View your credit profile' };
+  }
+  if (/consolidat|combine|single.*emi|multiple.*emi/i.test(lower)) {
+    if (segment === 'DCP_Eligible') return { url: '/dcp', label: 'Explore Debt Consolidation' };
+  }
+  if (/settle|negoti|reduce.*debt|overdue/i.test(lower)) {
+    if (segment === 'DRP_Eligible') return { url: '/drp', label: 'Explore Debt Resolution' };
+  }
+
+  // Segment-based default
+  switch (segment) {
+    case 'DRP_Eligible': return { url: '/drp', label: 'Explore Debt Resolution' };
+    case 'DCP_Eligible': return { url: '/dcp', label: 'Explore Debt Consolidation' };
+    case 'DEP': return { url: '/dep', label: 'Explore Debt Elimination' };
+    default: return { url: '/credit-score', label: 'View your credit profile' };
+  }
+}
+
+function buildSafeRedirectNudge(redirect: StructuredRedirect | undefined, ctx?: AdvisorContext): string | undefined {
+  if (!redirect) return undefined;
+  const name = ctx?.userName ? `${ctx.userName}, you` : 'You';
+  switch (redirect.url) {
+    case '/drp':
+      return `${name} can use FREED's Debt Resolution program to explore settlement options for your overdue accounts.`;
+    case '/dcp':
+      return `${name} can check out FREED's Debt Consolidation program to simplify your EMIs into a single payment.`;
+    case '/dep':
+      return `${name} can explore FREED's Debt Elimination program to find the fastest way to become debt-free.`;
+    case '/credit-score':
+      return `${name} can view your detailed credit profile on FREED to see exactly where you stand.`;
+    case '/goal-tracker':
+      return ctx?.scoreGapTo750
+        ? `${name} can use FREED's Goal Tracker to monitor your progress toward closing the ${ctx.scoreGapTo750}-point gap to 750.`
+        : `${name} can use FREED's Goal Tracker to set a target score and track your progress over time.`;
+    case '/freed-shield':
+      return `${name} can activate FREED Shield to get protection from recovery agent harassment.`;
+    case '/dispute':
+      return `${name} can use FREED's dispute tool to flag and correct errors on your credit report.`;
+    default:
+      return undefined;
+  }
+}
+
 function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): StructuredAssistantTurn {
   const name = input.userName ?? input.advisorContext?.userName ?? null;
-  const facts = input.advisorContext?.relevantFacts.slice(0, expectedFormatMode === 'analysis' ? 4 : 3) || [];
-  const opportunities = input.advisorContext?.topOpportunities.slice(0, 2).map(item => item.detail) || [];
+  const ctx = input.advisorContext;
+  const facts = ctx?.relevantFacts.slice(0, expectedFormatMode === 'analysis' ? 4 : 3) || [];
+  const opportunities = ctx?.topOpportunities.slice(0, 2).map(item => item.detail) || [];
   const greetingLike = FORMAT_KEYWORDS.plain.test(normalizeSpace(input.userMessage));
+  const safeFollowUps = buildSafeFollowUps(ctx, input.userMessage);
+  const goal = ctx?.financialGoal;
+  const redirect = inferSafeRedirect(input.segment, input.intentTag, input.userMessage);
+  const redirectNudge = greetingLike ? undefined : buildSafeRedirectNudge(redirect, ctx);
 
   if (expectedFormatMode === 'plain' && greetingLike) {
+    let opening: string;
+    if (name && goal) {
+      opening = `Hi ${name}! I have your profile loaded and I can see your goal is ${goal.toLowerCase()} -- I'm here to help you with that, along with your credit score and accounts.`;
+    } else if (name) {
+      opening = `Hi ${name}! I have your profile ready. I'm here to help with your credit score, accounts, or any repayment questions you have.`;
+    } else {
+      opening = 'Welcome! I am here to help with your credit profile, score, and repayment questions.';
+    }
     return {
       formatMode: 'plain',
-      opening: name
-        ? `Welcome, ${name}. I have your profile ready and can help with your credit score, accounts, or repayment questions.`
-        : 'I am ready to help with your credit profile, score, and repayment questions.',
+      opening,
       sections: [],
-      followUps: [],
+      followUps: safeFollowUps,
+      redirect,
     };
   }
 
   if (expectedFormatMode === 'guided') {
+    let opening: string;
+    if (name && ctx?.creditScore) {
+      opening = `Good question, ${name}! I looked into your profile -- with a score of ${ctx.creditScore}, here's what stands out.`;
+    } else if (name) {
+      opening = `Let me dig into that for you, ${name}. Based on your current report, here's what I found.`;
+    } else {
+      opening = 'Good question! Based on your current report, here are the most relevant details.';
+    }
     return {
       formatMode: 'guided',
-      opening: name
-        ? `I checked your current report, ${name}. Here are the most relevant facts for this question.`
-        : 'I checked your current report. Here are the most relevant facts for this question.',
+      opening,
       sections: [
         {
           style: 'bullet_list',
           items: facts.length > 0 ? facts.slice(0, 3) : ['I am keeping this answer grounded to the verified data we have for your account.'],
         },
       ],
-      followUps: [],
+      followUps: safeFollowUps,
+      redirect,
+      redirectNudge,
     };
+  }
+
+  let opening: string;
+  if (name && ctx?.creditScore) {
+    opening = `Here's the full picture from your report, ${name}. Your score is ${ctx.creditScore} and there are ${ctx?.activeAccountCount ?? 0} active accounts to consider.`;
+  } else if (name) {
+    opening = `Let me break this down for you, ${name}. Here's what your report tells us.`;
+  } else {
+    opening = 'Let me break this down for you. Here is the clearest view from the data right now.';
   }
 
   return {
     formatMode: expectedFormatMode,
-    opening: name
-      ? `Here is the clearest grounded view for you right now, ${name}.`
-      : 'Here is the clearest grounded view right now.',
+    opening,
     sections: [
       {
         title: 'KEY RISKS',
@@ -1159,24 +1508,36 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
       {
         title: 'BEST LEVERS',
         style: 'bullet_list',
-        items: opportunities.length > 0 ? opportunities.slice(0, 2) : ['Tell me whether your priority is score improvement, payment pressure, or loan eligibility, and I will narrow the next action.'],
+        items: opportunities.length > 0 ? opportunities.slice(0, 2) : ['Let me know whether your priority is score improvement, payment pressure, or loan eligibility, and I will narrow down the best next step for you.'],
       },
     ],
-    followUps: [],
+    followUps: safeFollowUps,
+    redirect,
+    redirectNudge,
   };
 }
 
 // Issues that indicate factual hallucination — these justify falling back to safe turn
+// Issues that ALWAYS warrant safe turn fallback — must be truly broken, not just imperfect
 const CRITICAL_BODY_ISSUES = new Set([
-  'body still contains unsupported lender claims',
   'credit score mention does not match grounded data',
-  'card lender is still described as a business loan',
   'body is empty after sanitization',
   'opening is required',
 ]);
 
+// Issues that warrant repair attempt but NOT safe turn fallback — the LLM response is
+// usable even with these, and stripping/sanitization already handled them
+const REPAIRABLE_BODY_ISSUES = new Set([
+  'body still contains unsupported lender claims',
+  'card lender is still described as a business loan',
+]);
+
 function hasCriticalBodyIssues(issues: string[]): boolean {
   return issues.some(issue => CRITICAL_BODY_ISSUES.has(issue));
+}
+
+function hasRepairableBodyIssues(issues: string[]): boolean {
+  return issues.some(issue => REPAIRABLE_BODY_ISSUES.has(issue));
 }
 
 async function finalizeStructuredTurn(
@@ -1190,9 +1551,8 @@ async function finalizeStructuredTurn(
 
   const repairStart = Date.now();
 
-  // Only attempt repair for critical grounding issues — skip repair for format-only issues
-  const needsRepair = hasCriticalBodyIssues(validation.bodyIssues);
-  if (allowRepair && process.env.OPENAI_API_KEY && needsRepair) {
+  // Only attempt repair for truly critical issues (wrong score, empty body)
+  if (allowRepair && process.env.OPENAI_API_KEY && hasCriticalBodyIssues(validation.bodyIssues)) {
     while (Date.now() - repairStart < REPAIR_BUDGET_MS && hasCriticalBodyIssues(validation.bodyIssues)) {
       const repaired = await repairStructuredTurn(input, expectedFormatMode, turn, validation);
       if (!repaired) break;
@@ -1201,14 +1561,17 @@ async function finalizeStructuredTurn(
     }
   }
 
-  // Only fall back to safe turn for critical grounding issues that survived repair
+  // Only fall back to safe turn for truly critical issues (wrong score, empty body)
   if (hasCriticalBodyIssues(validation.bodyIssues)) {
-    console.warn('[PIPELINE] Critical grounding issues after repair — falling back to safe turn. Issues:', validation.bodyIssues);
+    console.warn('[PIPELINE] Critical issues after repair — safe turn fallback. Issues:', validation.bodyIssues);
     turn = buildMinimalSafeTurn(input, expectedFormatMode);
     turn = sanitizeStructuredTurn(turn, input.grounding);
     validation = validateStructuredTurn(turn, expectedFormatMode, input.advisorContext, input.grounding);
+  } else if (hasRepairableBodyIssues(validation.bodyIssues)) {
+    // Lender claim / card label issues — sanitization already stripped the bad lines.
+    // Accept the response as-is rather than discarding the entire LLM output.
+    console.log('[PIPELINE] Repairable issues (accepted after sanitization):', validation.bodyIssues);
   } else if (validation.bodyIssues.length > 0) {
-    // Format issues only — accept the LLM response as-is (don't discard it)
     console.log('[PIPELINE] Non-critical format issues (accepted):', validation.bodyIssues);
   }
 
@@ -1222,11 +1585,18 @@ async function finalizeStructuredTurn(
   }
 
   if (validation.followUpIssues.length > 0) {
-    turn = sanitizeStructuredTurn({
-      ...turn,
-      closingQuestion: undefined,
-      followUps: [],
-    }, input.grounding);
+    // Instead of wiping follow-ups, fall back to context-aware safe follow-ups
+    const safeFollowUps = buildSafeFollowUps(input.advisorContext, input.userMessage);
+    if (safeFollowUps.length > 0) {
+      console.log('[PIPELINE] Follow-up validation failed — using safe follow-ups');
+      turn = { ...turn, closingQuestion: undefined, followUps: safeFollowUps };
+    } else {
+      turn = sanitizeStructuredTurn({
+        ...turn,
+        closingQuestion: undefined,
+        followUps: [],
+      }, input.grounding);
+    }
   }
 
   return renderStructuredTurn(turn);

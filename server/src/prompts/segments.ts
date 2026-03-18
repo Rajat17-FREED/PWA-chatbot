@@ -33,7 +33,13 @@ Recommend the Debt Elimination Program for faster payoff with priority-based rep
 Key talking points: interest savings, faster debt-free timeline, structured repayment plan.
 This user is in relatively good financial health — focus on optimization rather than rescue.
 IMPORTANT: This user likely came from a campaign about "saving interest" or "becoming debt-free faster." Start with how much interest they could save, then introduce the structured approach.
-LANGUAGE NOTE: Say "percentage of income going to EMIs" — NOT "FOIR" until Phase 2.`,
+LANGUAGE NOTE: Say "percentage of income going to EMIs" — NOT "FOIR" until Phase 2.
+INTENT-SPECIFIC GUIDANCE:
+- INTENT_SCORE_IMPROVEMENT: Lead with their credit score snapshot, then actionable steps, then FREED tools. Use real numbers.
+- INTENT_INTEREST_OPTIMISATION: Lead with interest profile and highest-ROI accounts, then reduction strategies, then position DEP as the structured path.
+- INTENT_GOAL_BASED_LOAN: Assess loan readiness based on score and FOIR. Strong profiles get optimization tips; weaker profiles get improvement steps with specific targets.
+- INTENT_CREDIT_SCORE_TARGET: Provide a numbered action plan toward the target score. Each step must be distinct and reference specific accounts/metrics.
+- INTENT_PROFILE_ANALYSIS: Give a holistic snapshot — score, FOIR, income, accounts — then highlight strengths and improvement areas.`,
 
   NTC: `This user has no credit history — they are New to Credit.
 Focus on credit building advice and financial education.
@@ -86,11 +92,11 @@ export const conversationStarters: Record<Segment, ConversationStarter[]> = {
   ],
 
   DEP: [
-    { text: "How can I get debt-free faster?", intentTag: 'INTENT_INTEREST_OPTIMISATION', redirectTo: '/dep' },
     { text: "How can I improve my credit score?", intentTag: 'INTENT_SCORE_IMPROVEMENT', redirectTo: '/goal-tracker' },
     { text: "Am I paying too much interest on my loans?", intentTag: 'INTENT_INTEREST_OPTIMISATION', redirectTo: '/dep' },
-    { text: "Which loan should I tackle first?", intentTag: 'INTENT_INTEREST_OPTIMISATION', redirectTo: '/dep' },
-    { text: "I want to be done with all my loans sooner", intentTag: 'INTENT_INTEREST_OPTIMISATION', redirectTo: '/dep' },
+    { text: "I want to get the best rate on my next loan", intentTag: 'INTENT_GOAL_BASED_LOAN', redirectTo: '/credit-score' },
+    { text: "How do I get my score above 750?", intentTag: 'INTENT_CREDIT_SCORE_TARGET', redirectTo: '/goal-tracker' },
+    { text: "What does my financial profile look like?", intentTag: 'INTENT_PROFILE_ANALYSIS', redirectTo: '/credit-score' },
   ],
 
   NTC: [

@@ -188,6 +188,24 @@ export function selectKnowledge(
         selected.add('program_dcp');
         selected.add('program_dep');
         break;
+      case 'INTENT_INTEREST_OPTIMISATION':
+        selected.add('program_dep');
+        selected.add('program_dcp');
+        break;
+      case 'INTENT_GOAL_BASED_LOAN':
+        selected.add('program_dep');
+        selected.add('product_credit_insights');
+        selected.add('customer_segments');
+        break;
+      case 'INTENT_CREDIT_SCORE_TARGET':
+        selected.add('product_credit_insights');
+        selected.add('product_goal_tracker');
+        break;
+      case 'INTENT_PROFILE_ANALYSIS':
+        selected.add('program_dep');
+        selected.add('product_credit_insights');
+        selected.add('customer_segments');
+        break;
     }
   }
 

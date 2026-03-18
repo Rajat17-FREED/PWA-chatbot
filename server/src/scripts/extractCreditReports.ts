@@ -225,12 +225,22 @@ function extractAccount(raw: any): EnrichedAccount | null {
     overdueAmount,
     creditLimit,
     sanctionedAmount,
-    roi: null,         // CIBIL reports don't include interest rates
+    roi: (() => {
+      const r = raw.Rate_of_Interest;
+      if (r === '' || r === null || r === undefined) return null;
+      const n = typeof r === 'number' ? r : parseFloat(String(r));
+      return isNaN(n) || n <= 0 ? null : Math.round(n * 100) / 100;
+    })(),
     repaymentTenure: null,
-    estimatedEMI: null,
+    estimatedEMI: (() => {
+      const e = raw.Scheduled_Monthly_Payment_Amount;
+      if (e === '' || e === null || e === undefined) return null;
+      const n = typeof e === 'number' ? e : parseFloat(String(e));
+      return isNaN(n) || n <= 0 ? null : Math.round(n);
+    })(),
     openDate: fmtDate(raw.Open_Date),
     closedDate: fmtDate(dateClosed),
-    lastPaymentDate: null,
+    lastPaymentDate: fmtDate(raw.Date_of_Last_Payment),
     delinquency: null,
     writtenOffStatus,
     suitFiled,
@@ -289,8 +299,18 @@ function computeSummary(accounts: EnrichedAccount[], rawSummary: any): Portfolio
     unsecuredActiveCount: unsecuredActive.length,
     creditCardCount: creditCards.length,
     personalLoanCount: personalLoans.length,
-    highestROI: null,   // CIBIL reports don't include interest rates
-    lowestROI: null,
+    highestROI: (() => {
+      const withROI = active.filter(a => a.roi && a.roi > 0);
+      if (withROI.length === 0) return null;
+      const sorted = [...withROI].sort((a, b) => b.roi! - a.roi!);
+      return { lender: sorted[0].lenderName, rate: sorted[0].roi! };
+    })(),
+    lowestROI: (() => {
+      const withROI = active.filter(a => a.roi && a.roi > 0);
+      if (withROI.length === 0) return null;
+      const sorted = [...withROI].sort((a, b) => a.roi! - b.roi!);
+      return { lender: sorted[0].lenderName, rate: sorted[0].roi! };
+    })(),
     largestDebt,
     worstDPDAccount,
   };

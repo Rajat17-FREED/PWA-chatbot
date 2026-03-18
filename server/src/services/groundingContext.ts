@@ -1,4 +1,4 @@
-import { CreditorAccount, EnrichedCreditReport, ResponseGroundingContext } from '../types';
+import { CreditorAccount, CreditPullSummary, EnrichedCreditReport, ResponseGroundingContext, User } from '../types';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
 
 function uniquePushCI(target: string[], value: string) {
@@ -44,7 +44,8 @@ function getOrCreateFacts(
 
 export function buildResponseGroundingContext(
   report: EnrichedCreditReport | null,
-  creditorAccounts: CreditorAccount[]
+  creditorAccounts: CreditorAccount[],
+  user?: User | null
 ): ResponseGroundingContext | undefined {
   const allowedLenders: string[] = [];
   const allowedDebtTypes: string[] = [];
@@ -126,6 +127,7 @@ export function buildResponseGroundingContext(
           account.sanctionedAmount,
           account.estimatedEMI,
           account.repaymentTenure,
+          account.roi,
         ],
       });
     }
@@ -150,12 +152,43 @@ export function buildResponseGroundingContext(
           account.repaymentTenure,
           account.tenurePaid,
           account.settlementAmount,
+          account.roi,
         ],
       });
     }
   }
 
-  if (allowedLenders.length === 0 && allowedDebtTypes.length === 0) return undefined;
+  // When no account-level data exists, ground with CreditPull aggregate numbers
+  if (allowedLenders.length === 0 && allowedDebtTypes.length === 0) {
+    const cp = user?.creditPull;
+    if (cp) {
+      const cpNumbers = new Set<number>();
+      addKnownNumber(cpNumbers, cp.creditScore);
+      addKnownNumber(cpNumbers, cp.accountsActiveCount);
+      addKnownNumber(cpNumbers, cp.accountsClosedCount);
+      addKnownNumber(cpNumbers, cp.accountsDelinquentCount);
+      addKnownNumber(cpNumbers, cp.accountsTotalOutstanding);
+      addKnownNumber(cpNumbers, cp.unsecuredAccountsTotalOutstanding);
+      addKnownNumber(cpNumbers, cp.securedAccountsTotalOutstanding);
+      addKnownNumber(cpNumbers, cp.unsecuredAccountsActiveCount);
+      addKnownNumber(cpNumbers, cp.unsecuredAccountsDelinquentCount);
+      addKnownNumber(cpNumbers, user?.monthlyIncome ?? null);
+      addKnownNumber(cpNumbers, user?.monthlyObligation ?? null);
+      addKnownNumber(cpNumbers, user?.creditScore ?? null);
+      if (cpNumbers.size > 0) {
+        return {
+          allowedLenders: [],
+          allowedDebtTypes: [],
+          lenderDebtTypes: {},
+          likelyCardLenders: [],
+          lenderFacts: {},
+          knownNumericFacts: [...cpNumbers].sort((a, b) => a - b),
+          creditScore: cp.creditScore ?? user?.creditScore ?? null,
+        };
+      }
+    }
+    return undefined;
+  }
 
   const lenderDebtTypes: Record<string, string[]> = {};
   for (const [lender, types] of lenderDebtTypeSets.entries()) {

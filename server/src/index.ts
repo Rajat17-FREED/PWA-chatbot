@@ -31,20 +31,22 @@ app.get('{*path}', (_req, res) => {
   }
 });
 
-// Startup sequence — load datasets and build RAG embedding store before serving
-async function main(): Promise<void> {
+// Startup sequence — load datasets synchronously, then start serving immediately.
+// RAG embedding store is built in the background (falls back to keyword selection until ready).
+function main(): void {
   // Synchronous dataset loads (fast, in-memory CSV/JSON)
   initCreditorData();
 
-  // Async: parse PDFs + embed all chunks (one-time cost, ~3–6s)
-  await initKnowledgeBase();
-
+  // Start server immediately — don't wait for embeddings
   app.listen(PORT, () => {
     console.log(`FREED Chatbot server running on http://localhost:${PORT}`);
   });
+
+  // Build RAG embedding store in the background (PDF parse + OpenAI embed)
+  // Chat endpoint already falls back to keyword selection if RAG isn't ready or times out
+  initKnowledgeBase().catch(err => {
+    console.error('[KB] Background knowledge base init failed:', err);
+  });
 }
 
-main().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+main();

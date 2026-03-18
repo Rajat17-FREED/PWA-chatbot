@@ -104,16 +104,22 @@ export default function AccountTooltip({ value, group }: AccountTooltipProps) {
               const detail = isDetail ? item : null;
               const amountStr = detail ? formatINR(detail.outstanding) : null;
               const overdueStr = detail?.overdue ? formatINR(detail.overdue) : null;
+              const dpdValue = detail?.maxDPD;
+              const dpdStr = dpdValue && dpdValue > 0 ? `${dpdValue} days late` : null;
 
               return (
                 <li key={i} className="freed-acct-tooltip__item">
                   <span className="freed-acct-tooltip__dot" aria-hidden="true" />
                   <span className="freed-acct-tooltip__content">
                     <span className="freed-acct-tooltip__name">{name}</span>
-                    {(amountStr || overdueStr) && (
+                    {detail?.debtType && (
+                      <span className="freed-acct-tooltip__type">{detail.debtType}</span>
+                    )}
+                    {(amountStr || overdueStr || dpdStr) && (
                       <span className="freed-acct-tooltip__amounts">
                         {amountStr && <span className="freed-acct-tooltip__amount">{amountStr}</span>}
                         {overdueStr && <span className="freed-acct-tooltip__overdue">{overdueStr} overdue</span>}
+                        {dpdStr && <span className="freed-acct-tooltip__dpd">{dpdStr}</span>}
                       </span>
                     )}
                   </span>

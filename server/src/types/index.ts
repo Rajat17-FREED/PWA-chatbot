@@ -132,6 +132,7 @@ export interface CreditorAccount {
   tenurePaid: number | null;
   settlementAmount: number | null;
   suitFiledWilfulDefault: string;
+  roi: number | null;              // interest rate % (from Creditor.csv)
 }
 
 // ── Enriched Credit Report (extracted from full bureau JSON) ────────────────
@@ -203,6 +204,7 @@ export interface TooltipAccountDetail {
   debtType?: string;               // e.g. "Personal Loan", "Credit Card"
   outstanding?: number | null;     // outstanding amount
   overdue?: number | null;         // overdue amount (for missed-payment groups)
+  maxDPD?: number | null;          // worst days past due (for delinquent accounts)
 }
 
 /** A named group of accounts shown on hover over a bold number in the chat */
@@ -267,6 +269,7 @@ export interface StructuredAssistantTurn {
   closingQuestion?: ClosingQuestionContract;
   followUps: string[];
   redirect?: StructuredRedirect;
+  redirectNudge?: string;
 }
 
 export interface AdvisorAccountContext {
@@ -282,6 +285,12 @@ export interface AdvisorAccountContext {
   estimatedEMI: number | null;
   repaymentTenure: number | null;
   signals: string[];
+  sanctionedAmount: number | null;
+  repaymentPercentage: number | null;      // % of sanctioned amount already repaid
+  accountAgeMonths: number | null;         // months since openDate
+  onTimePaymentRate: number | null;        // % of months with 0 DPD
+  paymentTrend: 'improving' | 'stable' | 'worsening' | null;
+  recentDPDTrend: number[] | null;         // last 6 months DPD [newest→oldest]
 }
 
 export interface AdvisorInsight {
@@ -319,6 +328,20 @@ export interface AdvisorContext {
   overdueHighlights: AdvisorInsight[];
   cardUtilizationHighlights: AdvisorInsight[];
   relevantFacts: string[];
+  // Enriched credit report fields (null when no credit report available)
+  overallOnTimeRate: number | null;        // aggregate on-time payment % across all accounts
+  overallCardUtilization: number | null;   // aggregate credit card utilization %
+  totalCreditLimit: number | null;         // sum of all credit card limits
+  totalCreditUsed: number | null;          // sum of all credit card outstanding
+  enquiryCount: number | null;             // recent credit enquiries
+  oldestAccountAgeMonths: number | null;   // age of oldest active account
+  newestAccountAgeMonths: number | null;   // age of newest active account
+  closedCleanCount: number;                // closed accounts with no DPD history
+  closedWithIssuesCount: number;           // closed accounts that had DPD or overdue
+  accountsImproving: string[];             // lender names of accounts with improving DPD trend
+  reportDate: string | null;               // credit report date for freshness context
+  repaymentHighlights: AdvisorInsight[];   // accounts with notable repayment progress
+  dataCompleteness: 'full' | 'summary' | 'none';  // 'full' = account-level data, 'summary' = only User/CreditPull aggregates, 'none' = no financial data
 }
 
 export interface RenderedTurn {

@@ -153,6 +153,12 @@
   font-size: 10px;
 }
 
+.freed-acct-tooltip__dpd {
+  font-weight: 600;
+  color: #d35400;
+  font-size: 10px;
+}
+
 .freed-acct-tooltip__more {
   font-size: 11px;
   color: var(--text-secondary, #7a7f9a);

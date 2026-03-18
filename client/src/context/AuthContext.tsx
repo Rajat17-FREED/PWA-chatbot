@@ -6,6 +6,7 @@ interface AuthState {
   isLoggedIn: boolean;
   user: User | null;
   starters: ConversationStarter[];
+  welcomeMessage: string | null;
   isLoading: boolean;
 }
 
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoggedIn: false,
     user: null,
     starters: [],
+    welcomeMessage: null,
     isLoading: false,
   });
 
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoggedIn: true,
           user: result.user,
           starters: result.starters || [],
+          welcomeMessage: result.message || null,
           isLoading: false,
         });
         return { status: 'found' };
@@ -59,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoggedIn: true,
           user: result.user,
           starters: result.starters || [],
+          welcomeMessage: result.message || null,
           isLoading: false,
         });
       }
@@ -68,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    setState({ isLoggedIn: false, user: null, starters: [], isLoading: false });
+    setState({ isLoggedIn: false, user: null, starters: [], welcomeMessage: null, isLoading: false });
   }, []);
 
   return (

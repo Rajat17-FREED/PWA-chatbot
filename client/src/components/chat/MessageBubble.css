@@ -123,6 +123,7 @@
   flex-direction: column;
   gap: 6px;
   margin-left: 40px;
+  margin-right: 12px;
   margin-top: 10px;
   animation: followupsFadeIn 0.35s ease-out;
 }
@@ -140,7 +141,7 @@
 
 .freed-followups__chip {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 10px 14px;
   background: var(--white);
@@ -155,6 +156,8 @@
   text-align: left;
   width: fit-content;
   max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .freed-followups__chip:hover {
@@ -168,6 +171,7 @@
   flex-shrink: 0;
   opacity: 0.4;
   transition: opacity 0.2s, transform 0.2s;
+  margin-top: 2px;
 }
 
 .freed-followups__chip:hover .freed-followups__arrow {

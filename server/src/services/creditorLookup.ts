@@ -100,6 +100,7 @@ export function loadCreditorData(validLeadRefIds: Set<string>): void {
       tenurePaid: parseAmount(fields[colIndex['tenurePaid']]),
       settlementAmount: parseAmount(fields[colIndex['settlementAmount']]),
       suitFiledWilfulDefault: fields[colIndex['suitFiledWilfulDefault']] || '',
+      roi: parseAmount(fields[colIndex['roi']]),
     };
 
     if (!creditorIndex.has(leadRefId)) {

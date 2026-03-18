@@ -102,12 +102,26 @@ function resolveTooltipGroup(
     });
   }
 
-  // Exact count + contextual keyword is required.
+  // Pass 1 — Exact count + contextual keyword (strictest, preferred).
   // Check both dedup'd count (accounts.length) and raw pre-dedup count (rawCount)
   for (const { group, keywords } of groups) {
     const matchesCount = group.accounts.length === num || (group.rawCount != null && group.rawCount === num);
     if (matchesCount && keywords.some(kw => fullCtx.includes(kw))) {
       return group;
+    }
+  }
+
+  // Pass 2 — Relaxed: the AI may reference a subset of a group (e.g. "2 accounts
+  // with missed payments" when 5 total exist). Allow when:
+  //   (a) the bold number is ≤ the group size, AND
+  //   (b) the context includes at least one strong keyword for the group.
+  // Only applies to small account-like numbers (≤ 50) to avoid matching amounts.
+  if (num <= 50) {
+    for (const { group, keywords } of groups) {
+      const groupSize = Math.max(group.accounts.length, group.rawCount ?? 0);
+      if (num <= groupSize && keywords.some(kw => fullCtx.includes(kw))) {
+        return group;
+      }
     }
   }
 

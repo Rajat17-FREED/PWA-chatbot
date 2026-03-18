@@ -41,6 +41,7 @@ export interface TooltipAccountDetail {
   debtType?: string;
   outstanding?: number | null;
   overdue?: number | null;
+  maxDPD?: number | null;          // worst days past due (for delinquent accounts)
 }
 
 /** A named group of accounts shown on hover over a bold number */
@@ -68,6 +69,8 @@ export interface Message {
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
+  retryText?: string;
+  retryIntentTag?: string;
 }
 
 export interface IdentifyResponse {

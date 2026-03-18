@@ -35,6 +35,26 @@ interface EmbeddingChunk {
 let store: EmbeddingChunk[] = [];
 let isReady = false;
 
+// ── Query Embedding Cache (LRU, max 500 entries) ────────────────────────────
+
+const QUERY_CACHE_MAX = 500;
+const queryCache = new Map<string, number[]>();
+
+/** Normalize a query for cache key: lowercase, strip punctuation, collapse whitespace, trim. */
+function normalizeQuery(text: string): string {
+  return text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/** LRU insert: if over limit, delete oldest (first) key. */
+function cacheSet(key: string, embedding: number[]): void {
+  if (queryCache.has(key)) queryCache.delete(key); // move to end
+  queryCache.set(key, embedding);
+  if (queryCache.size > QUERY_CACHE_MAX) {
+    const oldest = queryCache.keys().next().value;
+    if (oldest !== undefined) queryCache.delete(oldest);
+  }
+}
+
 // ── Boost maps ────────────────────────────────────────────────────────────────
 
 /**
@@ -53,13 +73,17 @@ const SEGMENT_BOOST_MAP: Record<string, string[]> = {
 };
 
 const INTENT_BOOST_MAP: Record<string, string[]> = {
-  INTENT_HARASSMENT:        ['product_shield', 'program_drp'],
-  INTENT_SCORE_IMPROVEMENT: ['product_credit_insights', 'product_goal_tracker'],
-  INTENT_SCORE_DIAGNOSIS:   ['product_credit_insights'],
-  INTENT_GOAL_TRACKING:     ['product_goal_tracker'],
-  INTENT_LOAN_ELIGIBILITY:  ['customer_segments'],
-  INTENT_DELINQUENCY_STRESS:['program_drp', 'product_shield'],
-  INTENT_EMI_OPTIMISATION:  ['program_dcp', 'program_dep'],
+  INTENT_HARASSMENT:          ['product_shield', 'program_drp'],
+  INTENT_SCORE_IMPROVEMENT:   ['product_credit_insights', 'product_goal_tracker'],
+  INTENT_SCORE_DIAGNOSIS:     ['product_credit_insights'],
+  INTENT_GOAL_TRACKING:       ['product_goal_tracker'],
+  INTENT_LOAN_ELIGIBILITY:    ['customer_segments'],
+  INTENT_DELINQUENCY_STRESS:  ['program_drp', 'product_shield'],
+  INTENT_EMI_OPTIMISATION:    ['program_dcp', 'program_dep'],
+  INTENT_INTEREST_OPTIMISATION: ['program_dep', 'program_dcp'],
+  INTENT_GOAL_BASED_LOAN:     ['program_dep', 'customer_segments', 'product_credit_insights'],
+  INTENT_CREDIT_SCORE_TARGET: ['product_credit_insights', 'product_goal_tracker'],
+  INTENT_PROFILE_ANALYSIS:    ['program_dep', 'product_credit_insights', 'customer_segments'],
 };
 
 // ── Math utilities ────────────────────────────────────────────────────────────
@@ -158,12 +182,24 @@ export async function retrieveKnowledge(
 
   const queryStart = Date.now();
 
-  // Embed the user message
-  const queryResponse = await getOpenAI().embeddings.create({
-    model: 'text-embedding-3-small',
-    input: userMessage,
-  });
-  const queryEmbedding = queryResponse.data[0].embedding;
+  // Check cache before calling OpenAI
+  const cacheKey = normalizeQuery(userMessage);
+  let queryEmbedding: number[];
+  const cached = queryCache.get(cacheKey);
+  if (cached) {
+    queryEmbedding = cached;
+    // LRU touch: move to end
+    queryCache.delete(cacheKey);
+    queryCache.set(cacheKey, cached);
+    console.log(`[RAG] Cache HIT for "${cacheKey.slice(0, 50)}..."`);
+  } else {
+    const queryResponse = await getOpenAI().embeddings.create({
+      model: 'text-embedding-3-small',
+      input: userMessage,
+    });
+    queryEmbedding = queryResponse.data[0].embedding;
+    cacheSet(cacheKey, queryEmbedding);
+  }
 
   // Score all chunks
   type ScoredChunk = { score: number; chunk: EmbeddingChunk };
@@ -222,6 +258,38 @@ export async function retrieveKnowledge(
   console.log(`[RAG] Retrieved ${selected.length} chunks (${totalChars} chars) in ${elapsed}ms`);
 
   return selected.map(item => item.chunk.text).join('\n\n---\n\n');
+}
+
+/**
+ * Pre-embed a list of query strings (e.g. conversation starters) into the cache.
+ * Single batch API call at startup — makes first-click instant.
+ */
+export async function preEmbedQueries(queries: string[]): Promise<void> {
+  if (queries.length === 0) return;
+
+  // Filter out queries already in cache
+  const toEmbed: { key: string; text: string }[] = [];
+  for (const q of queries) {
+    const key = normalizeQuery(q);
+    if (!queryCache.has(key)) {
+      toEmbed.push({ key, text: q });
+    }
+  }
+
+  if (toEmbed.length === 0) {
+    console.log('[RAG] All starter queries already cached');
+    return;
+  }
+
+  const startTime = Date.now();
+  const embeddings = await embedBatch(toEmbed.map(item => item.text));
+
+  for (let i = 0; i < toEmbed.length; i++) {
+    cacheSet(toEmbed[i].key, embeddings[i]);
+  }
+
+  const elapsed = Date.now() - startTime;
+  console.log(`[RAG] Pre-embedded ${toEmbed.length} starter queries in ${elapsed}ms`);
 }
 
 /** Returns true once buildEmbeddingStore() has completed. */

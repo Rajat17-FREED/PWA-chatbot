@@ -28,7 +28,7 @@ function createMessage(role: 'user' | 'assistant', content: string, extra?: Part
 
 const defaultGreeting = createMessage(
   'assistant',
-  "Hi there! Welcome to **FREED**. I'm here to help with your financial queries. Please enter your **name** or **10-digit mobile number** to pull up your profile and get personalised help!"
+  "Hi there! I'm your FREED financial assistant. To give you personalised guidance on your credit, loans, and repayment options, please enter your **name** or **10-digit mobile number** so I can pull up your profile."
 );
 
 const initialState: ChatState = {
@@ -73,8 +73,8 @@ export function useChat() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const auth = useAuth();
   const hasInitRef = useRef(false);
-  // Tracks the intent of the first starter chip clicked — persists for entire conversation
-  const activeIntentRef = useRef<string | undefined>(undefined);
+  // Tracks the intent of the current message only — resets each turn for flow-based routing
+  const currentIntentRef = useRef<string | undefined>(undefined);
 
   // When auth changes (user logs in via login modal), pre-populate chat
   useEffect(() => {
@@ -85,7 +85,7 @@ export function useChat() {
         messages: [
           createMessage(
             'assistant',
-            `Welcome, ${auth.user.firstName}! I've loaded your profile. Here are some things I can help you with:`
+            auth.welcomeMessage || `Welcome, ${auth.user.firstName}! I've loaded your profile. Here are some things I can help you with:`
           ),
         ],
         user: auth.user,
@@ -94,7 +94,7 @@ export function useChat() {
       });
     } else if (!auth.isLoggedIn && hasInitRef.current) {
       hasInitRef.current = false;
-      activeIntentRef.current = undefined;
+      currentIntentRef.current = undefined;
       dispatch({
         type: 'RESET',
         messages: [defaultGreeting],
@@ -103,7 +103,7 @@ export function useChat() {
         phase: 'greeting',
       });
     }
-  }, [auth.isLoggedIn, auth.user, auth.starters]);
+  }, [auth.isLoggedIn, auth.user, auth.starters, auth.welcomeMessage]);
 
   const identifyUser = useCallback(async (name: string) => {
     dispatch({ type: 'ADD_MESSAGE', message: createMessage('user', name) });
@@ -123,7 +123,7 @@ export function useChat() {
           type: 'ADD_MESSAGE',
           message: createMessage(
             'assistant',
-            `Great to meet you, ${result.user.firstName}! I've pulled up your profile. Here are some things I can help you with — feel free to pick one or ask me anything!`
+            result.message || `Welcome, ${result.user.firstName}! I've loaded your profile. Here are some things I can help you with:`
           ),
         });
       } else if (result.status === 'multiple' && result.candidates) {
@@ -145,7 +145,7 @@ export function useChat() {
         type: 'ADD_MESSAGE',
         message: createMessage(
           'assistant',
-          "I'm having trouble looking that up right now. Could you try again?"
+          "I'm having trouble looking that up right now. Please check your connection and try again, or enter your 10-digit mobile number instead."
         ),
       });
     } finally {
@@ -168,7 +168,7 @@ export function useChat() {
           type: 'ADD_MESSAGE',
           message: createMessage(
             'assistant',
-            `Welcome, ${result.user.firstName}! I've loaded your profile. Here are some things I can help you with:`
+            result.message || `Welcome, ${result.user.firstName}! I've loaded your profile. Here are some things I can help you with:`
           ),
         });
       }
@@ -177,7 +177,7 @@ export function useChat() {
         type: 'ADD_MESSAGE',
         message: createMessage(
           'assistant',
-          "I'm having trouble loading that profile. Could you try again?"
+          "I'm having trouble loading that profile right now. Please try again, or type your name to search a different way."
         ),
       });
     } finally {
@@ -186,8 +186,9 @@ export function useChat() {
   }, []);
 
   const sendMessage = useCallback(async (text: string, intentTag?: string) => {
-    // If a starter chip was clicked (has intentTag), lock it in for the whole conversation
-    if (intentTag) activeIntentRef.current = intentTag;
+    // Only pass intentTag for this specific message (starter chip click or follow-up retry)
+    // Do NOT lock it for the whole conversation — let redirects be flow-based
+    currentIntentRef.current = intentTag;
 
     dispatch({ type: 'CLEAR_STARTERS' });
     dispatch({ type: 'ADD_MESSAGE', message: createMessage('user', text) });
@@ -197,7 +198,7 @@ export function useChat() {
       const leadRefId = state.user?.leadRefId || '';
       // Count only user messages for messageCount (assistant messages don't count)
       const userMessageCount = state.messages.filter(m => m.role === 'user').length;
-      const result = await api.sendChatMessage(text, leadRefId, state.messages, userMessageCount, activeIntentRef.current);
+      const result = await api.sendChatMessage(text, leadRefId, state.messages, userMessageCount, currentIntentRef.current);
 
       dispatch({
         type: 'ADD_MESSAGE',
@@ -213,7 +214,8 @@ export function useChat() {
         type: 'ADD_MESSAGE',
         message: createMessage(
           'assistant',
-          "I'm having trouble connecting right now. Could you try again in a moment?"
+          "I couldn't process that right now -- this is likely a temporary issue. Please try sending your message again.",
+          { retryText: text, retryIntentTag: currentIntentRef.current },
         ),
       });
     } finally {
@@ -233,7 +235,7 @@ export function useChat() {
   );
 
   const clearConversation = useCallback(() => {
-    activeIntentRef.current = undefined; // reset intent when conversation clears
+    currentIntentRef.current = undefined; // reset intent when conversation clears
     if (state.user) {
       // If logged in, keep user but restart conversation with starters
       dispatch({
