@@ -207,6 +207,7 @@ export function useChat() {
           redirectLabel: result.redirectLabel,
           followUps: result.followUps,
           tooltips: result.tooltips,
+          lenderSelector: result.lenderSelector,
         }),
       });
     } catch {

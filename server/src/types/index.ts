@@ -291,6 +291,12 @@ export interface AdvisorAccountContext {
   onTimePaymentRate: number | null;        // % of months with 0 DPD
   paymentTrend: 'improving' | 'stable' | 'worsening' | null;
   recentDPDTrend: number[] | null;         // last 6 months DPD [newest→oldest]
+  // Serviceability enrichment (from serviceable_creditors.csv)
+  isServicedByFreed: boolean;               // can FREED settle/negotiate with this lender?
+  serviceableForThisDebtType: boolean;      // is THIS specific debt type serviceable?
+  creditorCategory: string | null;          // Bank, NBFC, Fintech, Others
+  pressureScore: number | null;             // collection pressure 1-9 (9 = most aggressive)
+  isDebarred: boolean;                      // creditor is debarred from settlement
 }
 
 export interface AdvisorInsight {
@@ -310,6 +316,8 @@ export interface AdvisorContext {
   financialGoal: string | null;
   creditScore: number | null;
   scoreGapTo750: number | null;
+  nextScoreTarget: number | null;
+  scoreGapToTarget: number | null;
   monthlyIncome: number | null;
   monthlyObligation: number | null;
   foirPercentage: number | null;
@@ -342,6 +350,29 @@ export interface AdvisorContext {
   reportDate: string | null;               // credit report date for freshness context
   repaymentHighlights: AdvisorInsight[];   // accounts with notable repayment progress
   dataCompleteness: 'full' | 'summary' | 'none';  // 'full' = account-level data, 'summary' = only User/CreditPull aggregates, 'none' = no financial data
+  // EMI calculator enrichment
+  calculatedTotalEMI: number | null;       // total estimated monthly EMI across all active accounts (₹)
+  consolidationProjection: ConsolidationProjection | null;  // DCP savings projection
+  // Serviceability aggregates (from serviceable_creditors.csv)
+  serviceableAccountCount: number;           // accounts where FREED can settle
+  nonServiceableAccountCount: number;        // accounts FREED cannot settle
+  serviceableTotalOutstanding: number;       // outstanding across serviceable accounts
+  nonServiceableTotalOutstanding: number;    // outstanding across non-serviceable accounts
+  highPressureLenders: string[];             // lender names with pressureScore >= 7
+}
+
+/** Consolidation projection from EMI calculator */
+export interface ConsolidationProjection {
+  currentTotalEMI: number;          // sum of all current EMIs (₹)
+  consolidatedEMI: number;          // single EMI after consolidation (₹)
+  monthlySavings: number;           // savings per month (₹)
+  totalPrincipal: number;           // total outstanding being consolidated (₹)
+  consolidatedRate: number;         // projected consolidated rate (%)
+  consolidatedTenureMonths: number; // projected tenure (months)
+  totalInterestBefore: number;      // sum of interest across current loans (₹)
+  totalInterestAfter: number;       // interest on consolidated loan (₹)
+  interestSaved: number;            // total interest saved (₹)
+  accountCount: number;             // number of accounts consolidated
 }
 
 export interface RenderedTurn {
@@ -351,10 +382,28 @@ export interface RenderedTurn {
   redirectLabel?: string;
 }
 
+/** Option for the interactive lender selector (harassment flow) */
+export interface LenderSelectorOption {
+  name: string;
+  debtType?: string;
+  overdueAmount?: number | null;
+  maxDPD?: number | null;
+  pressureScore?: number | null;            // collection pressure 1-9
+  isServicedByFreed?: boolean;              // can FREED help with this lender?
+}
+
+/** Interactive lender checkbox selector — injected into harassment first-response */
+export interface LenderSelector {
+  prompt: string;
+  lenders: LenderSelectorOption[];
+  allowOther: boolean;
+}
+
 export interface ChatResponse {
   reply: string;
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
+  lenderSelector?: LenderSelector;
 }

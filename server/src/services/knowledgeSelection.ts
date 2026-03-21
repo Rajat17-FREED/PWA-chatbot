@@ -206,6 +206,17 @@ export function selectKnowledge(
         selected.add('product_credit_insights');
         selected.add('customer_segments');
         break;
+      case 'INTENT_EMI_STRESS':
+        selected.add('program_dcp');
+        selected.add('program_dep');
+        selected.add('product_goal_tracker');
+        break;
+      case 'INTENT_GOAL_BASED_PATH':
+        selected.add('program_dcp');
+        selected.add('program_dep');
+        selected.add('product_credit_insights');
+        selected.add('product_goal_tracker');
+        break;
     }
   }
 
@@ -229,6 +240,12 @@ export function selectKnowledge(
       'recovery': ['product_shield'],
       'calls': ['product_shield'],
       'shield': ['product_shield'],
+      'stop calls': ['product_shield'],
+      'legal protection': ['product_shield'],
+      'legal right': ['product_shield'],
+      'rbi': ['product_shield'],
+      'threatening': ['product_shield'],
+      'abusive': ['product_shield'],
       'credit score': ['product_credit_insights'],
       'cibil': ['product_credit_insights'],
       'improve score': ['product_credit_insights', 'product_goal_tracker'],
@@ -244,6 +261,11 @@ export function selectKnowledge(
       'drp': ['program_drp'],
       'dcp': ['program_dcp'],
       'dep': ['program_dep'],
+      'due date': ['program_dcp', 'product_goal_tracker'],
+      'multiple emi': ['program_dcp'],
+      'stress': ['program_dcp'],
+      'overwhelm': ['program_dcp'],
+      'save': ['program_dcp', 'program_dep'],
     };
 
     for (const [keyword, sectionIds] of Object.entries(keywordMap)) {

@@ -1,11 +1,11 @@
 /**
- * Dynamic Starter Generator — generates personalized conversation starters,
+ * Dynamic Starter Generator -generates personalized conversation starters,
  * welcome messages, and context-aware error responses.
  */
 
 import OpenAI from 'openai';
 import { AdvisorContext, ConversationStarter, User, Segment } from '../types';
-import { conversationStarters } from '../prompts/segments';
+import { conversationStarters, resolveStarterScoreTargets } from '../prompts/segments';
 
 let openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -20,7 +20,7 @@ interface CachedStarters {
   timestamp: number;
 }
 
-// In-flight promises for deduplication — prevents duplicate API calls
+// In-flight promises for deduplication -prevents duplicate API calls
 const inflightGenerations = new Map<string, Promise<ConversationStarter[]>>();
 
 const starterCache = new Map<string, CachedStarters>();
@@ -43,6 +43,7 @@ const VALID_INTENT_TAGS = new Set([
   'INTENT_HARASSMENT', 'INTENT_EMI_OPTIMISATION', 'INTENT_INTEREST_OPTIMISATION',
   'INTENT_LOAN_ELIGIBILITY', 'INTENT_GOAL_TRACKING', 'INTENT_BEHAVIOUR_IMPACT',
   'INTENT_PROFILE_ANALYSIS', 'INTENT_GOAL_BASED_LOAN', 'INTENT_CREDIT_SCORE_TARGET',
+  'INTENT_EMI_STRESS', 'INTENT_GOAL_BASED_PATH',
 ]);
 
 const VALID_REDIRECTS = new Set([
@@ -54,9 +55,13 @@ const VALID_REDIRECTS = new Set([
 function segmentContext(segment: string): string {
   switch (segment) {
     case 'DRP_Eligible':
-      return 'User has significant overdue accounts and may benefit from a debt resolution program (settlement/negotiation).';
+      return 'User has significant overdue accounts and qualifies for FREED\'s Debt Resolution Program (settlement/negotiation). Five conversation flows: (1) credit score improvement, (2) delinquency stress/inability to pay, (3) recovery agent harassment, (4) credit score target path, (5) goal-based loan readiness. Focus on empathy and settlement as primary solution.';
+    case 'DRP_Ineligible':
+      return 'User has some missed payments but does not currently meet DRP criteria. Five conversation flows: (1) credit score improvement, (2) payment struggles/self-help, (3) recovery agent harassment (FREED Shield only), (4) credit score target, (5) debt management options. Do NOT suggest DRP or settlement.';
     case 'DCP_Eligible':
-      return 'User has high EMI burden across multiple lenders and may benefit from debt consolidation into a single payment.';
+      return 'User has high EMI burden across multiple lenders (FOIR > 50%, score > 700) and qualifies for debt consolidation. Five conversation flows: (1) credit score improvement, (2) EMI reduction via DCP, (3) EMI stress/multiple payment management, (4) credit score target path, (5) goal-based guidance. Focus on simplifying payments and reducing burden.';
+    case 'DCP_Ineligible':
+      return 'User has debt but does not qualify for consolidation (score < 700 or amount < ₹1.5L). Five conversation flows: (1) credit score improvement, (2) EMI reduction alternatives, (3) payment stress management, (4) loan eligibility improvement, (5) goal-based path. Focus on what they CAN do to improve.';
     case 'DEP':
       return 'User is managing repayments well (FOIR < 50%). Five conversation flows: (1) credit score improvement, (2) interest/debt reduction via DEP, (3) goal-based loan readiness, (4) credit score target path, (5) full financial profile analysis. Focus on optimization over rescue.';
     default:
@@ -67,6 +72,7 @@ function segmentContext(segment: string): string {
 function buildStarterPrompt(user: User, ctx: AdvisorContext): string {
   const topRisks = ctx.topRisks.slice(0, 3).map(r => r.detail).join('; ');
   const topOpps = ctx.topOpportunities.slice(0, 2).map(o => o.detail).join('; ');
+  const scoreTarget = ctx.nextScoreTarget || 750;
 
   return `Generate exactly 5 conversation starters for a financial chatbot user.
 
@@ -82,18 +88,39 @@ USER CONTEXT (for your understanding only -- do NOT put numbers, amounts, or sco
 - Top Opportunities: ${topOpps || 'none'}
 
 STRUCTURE:
-${user.segment === 'DEP' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
+${user.segment === 'DRP_Eligible' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
+- Position 2: Delinquency stress/unable to pay (INTENT_DELINQUENCY_STRESS, redirect /drp). Example: "Unable to pay my EMI and credit card dues"
+- Position 3: Recovery agent harassment (INTENT_HARASSMENT, redirect /freed-shield). Example: "Recovery agents keep calling me"
+- Position 4: Score target (INTENT_CREDIT_SCORE_TARGET, redirect /goal-tracker). MUST include the number ${scoreTarget} in the text. Example: "Help me reach ${scoreTarget}"
+- Position 5: Goal-based loan readiness (INTENT_GOAL_BASED_LOAN, redirect /drp). Example: "I want to get a loan - what should I do?"` :
+user.segment === 'DRP_Ineligible' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
+- Position 2: Payment struggles (INTENT_DELINQUENCY_STRESS, redirect /credit-score). Example: "I'm struggling with payments - what can I do?"
+- Position 3: Recovery agent harassment (INTENT_HARASSMENT, redirect /freed-shield). Example: "Recovery agents won't stop calling me"
+- Position 4: Score target (INTENT_CREDIT_SCORE_TARGET, redirect /goal-tracker). MUST include the number ${scoreTarget} in the text. Example: "Help me reach ${scoreTarget}"
+- Position 5: Debt management options (INTENT_GOAL_BASED_LOAN, redirect /credit-score). Example: "What are my options to manage my debt?"` :
+user.segment === 'DEP' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
 - Position 2: Interest/debt reduction (INTENT_INTEREST_OPTIMISATION, redirect /dep). Example: "Am I paying too much interest on my loans?"
-- Position 3: Score target (INTENT_CREDIT_SCORE_TARGET, redirect /goal-tracker). Adapt based on score range: if score < 750 say "How do I get my score above 750?", if >= 750 say "How do I push my score above 800?"
-- Position 4: Goal-based loan readiness (INTENT_GOAL_BASED_LOAN, redirect /credit-score). ${user.financialGoal ? `User wants "${user.financialGoal}" — say something like "I want to get the best rate on a ${user.financialGoal}"` : 'Fallback: "I want to get the best rate on my next loan"'}
-- Position 5: Profile overview (INTENT_PROFILE_ANALYSIS, redirect /credit-score). Example: "What does my financial profile look like?"` : `- Positions 1-3: Credit and credit score related. Focus on understanding, improving, or diagnosing their credit health. Examples of good angles: "What's pulling my credit score down?", "How can I improve my credit score faster?", "Is my credit utilization hurting me?"
-- Positions 4-5: Specific to the user's segment and situation. For DRP_Eligible: debt resolution, settlement options, dealing with overdue stress. For DCP_Eligible: EMI management, consolidation benefits. For others: financial goals, account management.`}
+- Position 3: Score target (INTENT_CREDIT_SCORE_TARGET, redirect /goal-tracker). MUST include the number ${scoreTarget} in the text. Example: "Help me reach ${scoreTarget}"
+- Position 4: Goal-based loan readiness (INTENT_GOAL_BASED_LOAN, redirect /credit-score). ${user.financialGoal ? `User wants "${user.financialGoal}" -say something like "I want to get the best rate on a ${user.financialGoal}"` : 'Fallback: "I want to get the best rate on my next loan"'}
+- Position 5: Profile overview (INTENT_PROFILE_ANALYSIS, redirect /credit-score). Example: "What does my financial profile look like?"` :
+user.segment === 'DCP_Eligible' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
+- Position 2: EMI reduction via consolidation (INTENT_EMI_OPTIMISATION, redirect /dcp). Example: "I want to reduce my monthly EMI burden"
+- Position 3: EMI stress/multiple payments (INTENT_EMI_STRESS, redirect /dcp). Example: "Managing multiple EMI payments is stressful"
+- Position 4: Score target (INTENT_CREDIT_SCORE_TARGET, redirect /goal-tracker). MUST include the number ${scoreTarget} in the text. Example: "Help me get my score above ${scoreTarget}"
+- Position 5: Goal-based path (INTENT_GOAL_BASED_PATH, redirect /dcp). ${user.financialGoal ? `User wants "${user.financialGoal}" -adapt the starter to reflect this goal` : 'Fallback: "What\'s the best path for my financial goal?"'}` :
+user.segment === 'DCP_Ineligible' ? `- Position 1: Credit score improvement (INTENT_SCORE_IMPROVEMENT, redirect /goal-tracker). Example: "How can I improve my credit score?"
+- Position 2: EMI reduction alternatives (INTENT_EMI_OPTIMISATION, redirect /credit-score). Example: "How can I get a lower EMI?"
+- Position 3: Payment stress management (INTENT_EMI_STRESS, redirect /credit-score). Example: "Managing multiple payments is overwhelming"
+- Position 4: Loan eligibility (INTENT_LOAN_ELIGIBILITY, redirect /credit-score). Example: "My loan applications keep getting rejected"
+- Position 5: Goal-based path (INTENT_GOAL_BASED_PATH, redirect /goal-tracker). ${user.financialGoal ? `User wants "${user.financialGoal}" -adapt the starter to reflect this goal` : 'Fallback: "What\'s the best path for my financial goal?"'}` : `- Positions 1-3: Credit and credit score related. Focus on understanding, improving, or diagnosing their credit health. Examples of good angles: "What's pulling my credit score down?", "How can I improve my credit score faster?", "Is my credit utilization hurting me?"
+- Positions 4-5: Specific to the user's segment and situation. Financial goals, account management.`}
 
 TONE AND STYLE:
 1. All starters must be in first-person user voice (as if the user is asking)
 2. Make them feel warm, inviting, and curiosity-driven -- the user should WANT to click them
-3. NEVER include specific numbers, amounts, percentages, or scores in the text
+3. NEVER include specific numbers, amounts, percentages in the text EXCEPT for score targets (Position 4 must include ${scoreTarget})
 4. NEVER mention specific lender names in the text
+5. NEVER use em dashes (the character \u2014). Use hyphens (-) or commas instead
 5. Instead of data, use relatable language: "my credit score", "my overdue accounts", "my EMIs"
 6. Avoid starts like "Tell me about", "What is", "Show me" -- prefer curiosity-driven questions like "What's really affecting my score?", "Could I be saving on my EMIs?", "Is there a smarter way to handle my dues?"
 7. Keep each starter between 30 and 80 characters
@@ -109,8 +136,8 @@ Return JSON with this exact structure:
 }
 
 /**
- * Core generation logic — called internally, returns starters or null on failure.
- * No timeout here — callers handle timeout/fallback.
+ * Core generation logic -called internally, returns starters or null on failure.
+ * No timeout here -callers handle timeout/fallback.
  */
 async function generateStartersFromAPI(
   user: User,
@@ -149,10 +176,10 @@ async function generateStartersFromAPI(
 /**
  * Fire-and-forget: start generating starters in the background.
  * Call this as early as possible (e.g. when user is first identified).
- * Results are cached — later calls to generateDynamicStarters() will hit the cache.
+ * Results are cached -later calls to generateDynamicStarters() will hit the cache.
  */
 export function prewarmStarters(user: User, advisorContext: AdvisorContext): void {
-  // Already cached or already in-flight — skip
+  // Already cached or already in-flight -skip
   if (getCachedStarters(user.leadRefId) || inflightGenerations.has(user.leadRefId)) {
     return;
   }
@@ -164,11 +191,11 @@ export function prewarmStarters(user: User, advisorContext: AdvisorContext): voi
         starterCache.set(user.leadRefId, { starters, timestamp: Date.now() });
         console.log(`[Starters] Pre-warmed ${starters.length} dynamic starters for ${user.firstName}`);
       }
-      return starters || conversationStarters[user.segment] || [];
+      return starters || resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
     })
     .catch((err: any) => {
       console.warn('[Starters] Prewarm failed:', err?.message);
-      return conversationStarters[user.segment] || [];
+      return resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
     })
     .finally(() => {
       inflightGenerations.delete(user.leadRefId);
@@ -198,14 +225,14 @@ export async function generateDynamicStarters(
       new Promise<null>(resolve => setTimeout(() => resolve(null), 5000)),
     ]);
     if (result) return result;
-    // Timed out waiting for prewarm — fall back
-    console.log('[Starters] Prewarm still pending — using static starters');
-    return conversationStarters[user.segment] || [];
+    // Timed out waiting for prewarm -fall back
+    console.log('[Starters] Prewarm still pending -using static starters');
+    return resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
   }
 
-  // No cache, no inflight — generate now
+  // No cache, no inflight -generate now
   if (!process.env.OPENAI_API_KEY) {
-    return conversationStarters[user.segment] || [];
+    return resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
   }
 
   try {
@@ -220,11 +247,11 @@ export async function generateDynamicStarters(
       return result;
     }
 
-    console.log('[Starters] Timeout — falling back to static starters');
-    return conversationStarters[user.segment] || [];
+    console.log('[Starters] Timeout -falling back to static starters');
+    return resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
   } catch (err: any) {
     console.warn('[Starters] Generation failed, using static:', err?.message);
-    return conversationStarters[user.segment] || [];
+    return resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore);
   }
 }
 
@@ -246,7 +273,7 @@ export function buildErrorResponse(
   const name = userName || null;
   const ctx = advisorContext;
 
-  // No user context — generic but warm
+  // No user context -generic but warm
   if (!name || !ctx) {
     if (errorType === '429') {
       return "I need a moment to catch up -- please try again in a few seconds.";
@@ -255,12 +282,13 @@ export function buildErrorResponse(
   }
 
   const score = ctx.creditScore;
-  const gap = ctx.scoreGapTo750;
+  const gap = ctx.scoreGapToTarget;
+  const target = ctx.nextScoreTarget;
   const fact = ctx.relevantFacts[0] || null;
 
   if (errorType === '429') {
-    if (score && gap && gap > 0) {
-      return `I need a moment to catch up, ${name}. While I reconnect -- your credit score is ${score}, which is ${gap} points from 750. Try again in a few seconds.`;
+    if (score && gap && gap > 0 && target) {
+      return `I need a moment to catch up, ${name}. While I reconnect -- your credit score is ${score}, which is ${gap} points from ${target}. Try again in a few seconds.`;
     }
     if (fact) {
       return `I need a moment, ${name}. Quick reminder while I reconnect: ${fact} Try again in a few seconds.`;

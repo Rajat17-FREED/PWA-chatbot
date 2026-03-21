@@ -12,9 +12,11 @@ import { buildEmbeddingStore, retrieveKnowledge, preEmbedQueries } from '../serv
 import { parsePdf } from '../services/knowledgeChunker';
 import { buildResponseGroundingContext } from '../services/groundingContext';
 import { buildAdvisorContext } from '../services/advisorContext';
+import { loadServiceableCreditors } from '../services/serviceableCreditorLookup';
+import { reconcileData, toEnrichedReport } from '../services/dataReconciliation';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
 import { generateDynamicStarters, prewarmStarters, buildWelcomeMessage, buildErrorResponse } from '../services/starterGenerator';
-import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext } from '../types';
+import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext, LenderSelector, LenderSelectorOption } from '../types';
 
 /**
  * Build hover tooltip groups from creditor account data (Creditor.csv).
@@ -211,6 +213,7 @@ export function initCreditorData(): void {
   loadCreditInsights(validIds);
   loadPhoneLookup(validIds);
   loadCreditReports();
+  loadServiceableCreditors();
 }
 
 /**
@@ -264,7 +267,14 @@ export async function initKnowledgeBase(): Promise<void> {
   const allStarterTexts: string[] = [];
   for (const segment of Object.keys(conversationStarters)) {
     for (const starter of conversationStarters[segment as Segment]) {
-      allStarterTexts.push(starter.text);
+      // Resolve {SCORE_TARGET} placeholder with common target values
+      if (starter.text.includes('{SCORE_TARGET}')) {
+        for (const target of [700, 750, 800, 850]) {
+          allStarterTexts.push(starter.text.replace('{SCORE_TARGET}', String(target)));
+        }
+      } else {
+        allStarterTexts.push(starter.text);
+      }
     }
   }
   await preEmbedQueries(allStarterTexts);
@@ -286,11 +296,12 @@ router.post('/identify', async (req: Request, res: Response) => {
 
   if (result.status === 'found' && result.user) {
     // Direct match — return static starters immediately, prewarm dynamic in background
-    const enrichedReport = getCreditReport(result.user.leadRefId);
+    const rawRpt = getCreditReport(result.user.leadRefId);
     const creditorAccounts = getCreditorAccounts(result.user.leadRefId);
+    const reconciledReport = toEnrichedReport(reconcileData(rawRpt, creditorAccounts));
     const advisorContext = buildAdvisorContext({
       user: result.user,
-      report: enrichedReport,
+      report: reconciledReport,
       creditorAccounts,
       userMessage: '',
     });
@@ -336,11 +347,12 @@ router.post('/select', async (req: Request, res: Response) => {
   }
 
   // Build advisor context for dynamic starters + welcome
-  const enrichedReport = getCreditReport(leadRefId);
+  const rawRpt = getCreditReport(leadRefId);
   const creditorAccounts = getCreditorAccounts(leadRefId);
+  const reconciledReport = toEnrichedReport(reconcileData(rawRpt, creditorAccounts));
   const advisorContext = buildAdvisorContext({
     user,
-    report: enrichedReport,
+    report: reconciledReport,
     creditorAccounts,
     userMessage: '',
   });
@@ -382,23 +394,35 @@ router.post('/chat', async (req: Request, res: Response) => {
     let creditorAccounts: CreditorAccount[] = [];
     let selectedKnowledge = '';
     let segment: string | null = null;
+    let enrichedReport: EnrichedCreditReport | null = null;
 
-    // Enriched credit report (from full bureau JSON) — may be null
-    const enrichedReport = leadRefId ? getCreditReport(leadRefId) : null;
+    // Raw credit report (from full bureau JSON) — may be null
+    const rawReport = leadRefId ? getCreditReport(leadRefId) : null;
 
     if (leadRefId) {
       const user = getUserByLeadRefId(leadRefId);
       if (user) {
         creditorAccounts = getCreditorAccounts(leadRefId);
+
+        // ── Data reconciliation: merge credit report + Creditor CSV ──
+        // CSV is fresher (Jan/Feb 2026) than credit report (Nov 2025).
+        // reconcileData merges both, preferring CSV for financial amounts
+        // and credit report for DPD history, credit limits, enquiries.
+        const reconciliation = reconcileData(rawReport, creditorAccounts);
+        enrichedReport = toEnrichedReport(reconciliation);
+        if (reconciliation.reconciliationLog.length > 0) {
+          console.log(`[Reconciliation] ${user.firstName} ${user.lastName}: ${reconciliation.reconciliationLog.length} changes`);
+        }
+
         const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
 
-        // Fire RAG retrieval in parallel with context building, with 1000ms timeout
+        // Fire RAG retrieval in parallel with context building, with 1500ms timeout
         const ragPromise = Promise.race([
           retrieveKnowledge(message, user.segment, intentTag),
-          new Promise<string>(resolve => setTimeout(() => resolve(''), 1000)),
+          new Promise<string>(resolve => setTimeout(() => resolve(''), 1500)),
         ]);
 
-        // Build context in parallel (these are synchronous/<5ms)
+        // Build context using reconciled data (these are synchronous/<5ms)
         responseGrounding = buildResponseGroundingContext(enrichedReport, creditorAccounts, user);
         advisorContext = buildAdvisorContext({
           user,
@@ -422,6 +446,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     if (!advisorContext) {
+      // Fallback: no user found — still reconcile if we have any data
+      enrichedReport = toEnrichedReport(reconcileData(rawReport, creditorAccounts));
       advisorContext = buildAdvisorContext({
         user: null,
         report: enrichedReport,
@@ -455,7 +481,48 @@ router.post('/chat', async (req: Request, res: Response) => {
         : undefined;
     }
 
-    res.json({ ...response, tooltips });
+    // ── Inject interactive lender selector for harassment first-response ──
+    let lenderSelector: LenderSelector | undefined;
+    if (
+      intentTag === 'INTENT_HARASSMENT' &&
+      (segment === 'DRP_Eligible' || segment === 'DRP_Ineligible') &&
+      advisorContext
+    ) {
+      // Only on the first harassment message (no prior assistant messages about harassment)
+      const priorHarassmentTurn = chatHistory.some(
+        (m: any) => m.role === 'assistant' && /which.*lender|lender.*harass|recovery.*call/i.test(m.content)
+      );
+      if (!priorHarassmentTurn) {
+        const delinquentAccounts = [
+          ...(advisorContext.dominantAccounts || []),
+          ...(advisorContext.relevantAccounts || []),
+        ]
+          .filter(a => (a.overdueAmount ?? 0) > 0 || (a.maxDPD ?? 0) > 0)
+          .reduce((unique, a) => {
+            if (!unique.some(u => u.lenderName === a.lenderName)) unique.push(a);
+            return unique;
+          }, [] as typeof advisorContext.dominantAccounts);
+
+        if (delinquentAccounts.length > 0) {
+          // Sort by pressure score (highest first) so most aggressive lenders appear at top
+          const sorted = [...delinquentAccounts].sort((a, b) => (b.pressureScore ?? 0) - (a.pressureScore ?? 0));
+          lenderSelector = {
+            prompt: 'Which of these lenders are harassing you?',
+            lenders: sorted.slice(0, 6).map(a => ({
+              name: a.lenderName,
+              debtType: a.debtType,
+              overdueAmount: a.overdueAmount,
+              maxDPD: a.maxDPD,
+              pressureScore: a.pressureScore,
+              isServicedByFreed: a.isServicedByFreed,
+            })),
+            allowOther: true,
+          };
+        }
+      }
+    }
+
+    res.json({ ...response, tooltips, ...(lenderSelector ? { lenderSelector } : {}) });
   } catch (err: any) {
     console.error('Chat error:', err?.message || err);
 

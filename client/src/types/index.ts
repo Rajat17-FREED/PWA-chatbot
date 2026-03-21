@@ -69,6 +69,7 @@ export interface Message {
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
+  lenderSelector?: LenderSelector;
   retryText?: string;
   retryIntentTag?: string;
 }
@@ -86,12 +87,28 @@ export interface IdentifyResponse {
   message: string;
 }
 
+/** Option for the interactive lender selector (harassment flow) */
+export interface LenderSelectorOption {
+  name: string;
+  debtType?: string;
+  overdueAmount?: number | null;
+  maxDPD?: number | null;
+}
+
+/** Interactive lender checkbox selector — injected into harassment first-response */
+export interface LenderSelector {
+  prompt: string;
+  lenders: LenderSelectorOption[];
+  allowOther: boolean;
+}
+
 export interface ChatResponse {
   reply: string;
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
+  lenderSelector?: LenderSelector;
 }
 
 export type ChatPhase =

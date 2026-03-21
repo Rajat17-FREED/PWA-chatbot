@@ -1,0 +1,149 @@
+.freed-lender-selector {
+  margin-left: 40px;
+  margin-right: 12px;
+  margin-top: 10px;
+  animation: lenderSelectorFadeIn 0.35s ease-out;
+}
+
+@keyframes lenderSelectorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.freed-lender-selector--submitted {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.freed-lender-selector__prompt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--freed-navy);
+  margin-bottom: 8px;
+}
+
+.freed-lender-selector__options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.freed-lender-selector__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--white);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.freed-lender-selector__option:hover {
+  border-color: var(--freed-orange);
+  background: var(--freed-peach);
+}
+
+.freed-lender-selector__option--selected {
+  border-color: var(--freed-orange);
+  background: var(--freed-peach);
+}
+
+.freed-lender-selector__checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--freed-orange);
+  cursor: pointer;
+}
+
+.freed-lender-selector__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.freed-lender-selector__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--freed-navy);
+  line-height: 1.3;
+}
+
+.freed-lender-selector__meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.freed-lender-selector__overdue {
+  color: var(--error);
+  font-weight: 500;
+}
+
+.freed-lender-selector__dpd {
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.freed-lender-selector__other-info {
+  flex: 1;
+}
+
+.freed-lender-selector__other-input {
+  margin-top: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.freed-lender-selector__other-input:focus {
+  border-color: var(--freed-orange);
+}
+
+.freed-lender-selector__other-input::placeholder {
+  color: var(--text-muted);
+}
+
+.freed-lender-selector__submit {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: var(--freed-navy);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.freed-lender-selector__submit:hover:not(:disabled) {
+  background: var(--freed-navy-dark, #141E4A);
+}
+
+.freed-lender-selector__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

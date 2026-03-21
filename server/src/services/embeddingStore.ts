@@ -64,7 +64,7 @@ function cacheSet(key: string, embedding: number[]): void {
  */
 const SEGMENT_BOOST_MAP: Record<string, string[]> = {
   DRP_Eligible:   ['program_drp', 'product_shield'],
-  DRP_Ineligible: ['program_drp', 'product_credit_insights'],
+  DRP_Ineligible: ['program_drp', 'product_shield', 'product_credit_insights'],
   DCP_Eligible:   ['program_dcp'],
   DCP_Ineligible: ['program_dcp', 'product_credit_insights'],
   DEP:            ['program_dep'],
@@ -74,16 +74,18 @@ const SEGMENT_BOOST_MAP: Record<string, string[]> = {
 
 const INTENT_BOOST_MAP: Record<string, string[]> = {
   INTENT_HARASSMENT:          ['product_shield', 'program_drp'],
-  INTENT_SCORE_IMPROVEMENT:   ['product_credit_insights', 'product_goal_tracker'],
-  INTENT_SCORE_DIAGNOSIS:     ['product_credit_insights'],
+  INTENT_SCORE_IMPROVEMENT:   ['product_credit_insights', 'product_goal_tracker', 'general_credit_score'],
+  INTENT_SCORE_DIAGNOSIS:     ['product_credit_insights', 'general_credit_score', 'general_credit_bureaus'],
   INTENT_GOAL_TRACKING:       ['product_goal_tracker'],
-  INTENT_LOAN_ELIGIBILITY:    ['customer_segments'],
-  INTENT_DELINQUENCY_STRESS:  ['program_drp', 'product_shield'],
-  INTENT_EMI_OPTIMISATION:    ['program_dcp', 'program_dep'],
-  INTENT_INTEREST_OPTIMISATION: ['program_dep', 'program_dcp'],
-  INTENT_GOAL_BASED_LOAN:     ['program_dep', 'customer_segments', 'product_credit_insights'],
-  INTENT_CREDIT_SCORE_TARGET: ['product_credit_insights', 'product_goal_tracker'],
-  INTENT_PROFILE_ANALYSIS:    ['program_dep', 'product_credit_insights', 'customer_segments'],
+  INTENT_LOAN_ELIGIBILITY:    ['customer_segments', 'general_loan_eligibility', 'general_interest_rates'],
+  INTENT_DELINQUENCY_STRESS:  ['program_drp', 'product_shield', 'general_delinquency'],
+  INTENT_EMI_OPTIMISATION:    ['program_dcp', 'program_dep', 'general_emi_repayment'],
+  INTENT_INTEREST_OPTIMISATION: ['program_dep', 'program_dcp', 'general_interest_rates'],
+  INTENT_GOAL_BASED_LOAN:     ['program_dep', 'customer_segments', 'product_credit_insights', 'general_loan_eligibility'],
+  INTENT_CREDIT_SCORE_TARGET: ['product_credit_insights', 'product_goal_tracker', 'general_credit_score'],
+  INTENT_PROFILE_ANALYSIS:    ['program_dep', 'product_credit_insights', 'customer_segments', 'general_loan_eligibility'],
+  INTENT_EMI_STRESS:          ['program_dcp', 'program_dep', 'general_emi_repayment', 'general_credit_card_debt'],
+  INTENT_GOAL_BASED_PATH:     ['program_dcp', 'program_dep', 'product_credit_insights', 'general_interest_rates'],
 };
 
 // ── Math utilities ────────────────────────────────────────────────────────────
@@ -219,12 +221,17 @@ export async function retrieveKnowledge(
   }
 
   // ── Greedy selection pass ─────────────────────────────────────────────────
+  // Minimum similarity threshold: chunks below this score are likely irrelevant
+  // and would introduce noise / encourage the LLM to use its own knowledge
+  const MIN_SIMILARITY = 0.25;
+
   const selected: ScoredChunk[] = [];
   const coveredHints = new Set<string>();
   const selectedSet = new Set<EmbeddingChunk>();
   let totalChars = 0;
 
   for (const item of scored) {
+    if (item.score < MIN_SIMILARITY) break; // Stop at low-quality chunks
     if (totalChars + item.chunk.text.length > charBudget) break;
     selected.push(item);
     selectedSet.add(item.chunk);
@@ -236,10 +243,13 @@ export async function retrieveKnowledge(
   for (const hint of requiredHints) {
     if (coveredHints.has(hint)) continue;
 
+    // Lower threshold for boosted chunks — they're relevant by segment/intent
+    const BOOST_MIN_SIMILARITY = 0.15;
     const candidate = scored.find(
       item =>
         item.chunk.sectionHint === hint &&
         !selectedSet.has(item.chunk) &&
+        item.score >= BOOST_MIN_SIMILARITY &&
         totalChars + item.chunk.text.length <= charBudget
     );
 

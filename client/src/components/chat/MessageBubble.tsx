@@ -2,7 +2,8 @@ import { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../../context/AuthContext';
 import AccountTooltip from './AccountTooltip';
-import type { MessageTooltips, TooltipGroup } from '../../types';
+import LenderSelector from './LenderSelector';
+import type { MessageTooltips, TooltipGroup, LenderSelector as LenderSelectorType } from '../../types';
 import './MessageBubble.css';
 
 // Map route URLs to dashboard tab actions
@@ -213,6 +214,7 @@ interface MessageBubbleProps {
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
+  lenderSelector?: LenderSelectorType;
   isLatest?: boolean;
   onFollowUpClick?: (text: string) => void;
 }
@@ -225,6 +227,7 @@ export default function MessageBubble({
   redirectLabel,
   followUps,
   tooltips,
+  lenderSelector,
   isLatest,
   onFollowUpClick,
 }: MessageBubbleProps) {
@@ -234,6 +237,7 @@ export default function MessageBubble({
   const showFollowUps = isLatest && role === 'assistant' && onFollowUpClick;
   const hasFollowUps = normalizedFollowUps.length > 0;
   const hasRedirect = redirectUrl && redirectLabel;
+  const hasLenderSelector = isLatest && role === 'assistant' && lenderSelector && onFollowUpClick;
 
   const handleRedirectClick = () => {
     if (!redirectUrl) return;
@@ -279,8 +283,16 @@ export default function MessageBubble({
         </span>
       )}
 
-      {/* Follow-ups and redirect shown as options */}
-      {showFollowUps && (hasFollowUps || hasRedirect) && (
+      {/* Interactive lender selector for harassment flow */}
+      {hasLenderSelector && lenderSelector && onFollowUpClick && (
+        <LenderSelector
+          selector={lenderSelector}
+          onSubmit={onFollowUpClick}
+        />
+      )}
+
+      {/* Follow-ups and redirect shown as options (hidden when lender selector is active) */}
+      {showFollowUps && !hasLenderSelector && (hasFollowUps || hasRedirect) && (
         <div className="freed-followups">
           {hasFollowUps && normalizedFollowUps.map((text, i) => (
             <button

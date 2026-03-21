@@ -47,6 +47,7 @@ export default function MessageList({
           redirectLabel={msg.redirectLabel}
           followUps={msg.followUps}
           tooltips={msg.tooltips}
+          lenderSelector={msg.lenderSelector}
           isLatest={idx === lastAssistantIdx && !isLoading && phase === 'chatting'}
           onFollowUpClick={onFollowUpClick}
         />

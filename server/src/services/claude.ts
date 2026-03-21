@@ -71,6 +71,7 @@ interface StructuredModelPayload {
   segment: string | null;
   intent_tag?: string;
   recent_history: Array<{ role: 'user' | 'assistant'; content: string }>;
+  topics_already_covered: string[];
   advisor_context: AdvisorContext | null;
   grounding_context: ResponseGroundingContext | null;
   knowledge_snippets: string;
@@ -247,7 +248,7 @@ function buildAllowedLenderAliasSet(grounding: ResponseGroundingContext): Set<st
 }
 
 /**
- * Check if a lender mention is "known" — either exact alias match or
+ * Check if a lender mention is "known" -either exact alias match or
  * fuzzy match (the mention's key contains or is contained by an alias key).
  */
 function isKnownLender(mention: string, allowedAliases: Set<string>): boolean {
@@ -861,11 +862,48 @@ function determineExpectedFormatMode(userMessage: string, history: ChatMessage[]
   return 'analysis';
 }
 
+/**
+ * Extract topics already covered in prior assistant messages to prevent repetition.
+ * Scans assistant messages in history for common data-point patterns and returns
+ * a concise list of what's been stated so the LLM knows not to repeat it.
+ */
+function extractTopicsCovered(history: ChatMessage[]): string[] {
+  const assistantMessages = history
+    .filter(m => m.role === 'assistant')
+    .map(m => m.content);
+
+  if (assistantMessages.length === 0) return [];
+
+  const topics: string[] = [];
+  const combined = assistantMessages.join(' ');
+
+  // Detect profile snapshot patterns
+  if (/credit score\b.*\b\d{3}\b/i.test(combined)) topics.push('credit score value');
+  if (/\bactive accounts?\b.*\b\d+\b/i.test(combined) || /\b\d+\s*active accounts?\b/i.test(combined)) topics.push('active account count');
+  if (/\bfoir\b.*\b\d+%?/i.test(combined) || /\b\d+%?\s*(?:of (?:your )?income|foir)\b/i.test(combined)) topics.push('FOIR percentage');
+  if (/total outstanding\b.*₹/i.test(combined) || /₹[\d,]+.*outstanding/i.test(combined)) topics.push('total outstanding amount');
+  if (/utilization\b.*\b\d+%/i.test(combined) || /\b\d+%\s*utilization\b/i.test(combined)) topics.push('card utilization');
+  if (/on.?time.*\b\d+%/i.test(combined) || /payment.*history/i.test(combined)) topics.push('payment history');
+  if (/enquir(?:y|ies)\b.*\b\d+\b/i.test(combined)) topics.push('enquiry count');
+  if (/delinquen|overdue.*account/i.test(combined)) topics.push('overdue/delinquent accounts');
+  if (/\bgoal tracker\b/i.test(combined)) topics.push('Goal Tracker recommendation');
+  if (/\bcredit insights?\b/i.test(combined)) topics.push('Credit Insights recommendation');
+  if (/\bfreed shield\b/i.test(combined)) topics.push('FREED Shield recommendation');
+  if (/\b(?:dep|debt elimination)\b/i.test(combined)) topics.push('DEP program');
+  if (/\b(?:dcp|debt consolidation)\b/i.test(combined)) topics.push('DCP program');
+  if (/\b(?:drp|debt resolution)\b/i.test(combined)) topics.push('DRP program');
+  if (/consolidation.*(?:emi|save|₹)/i.test(combined)) topics.push('consolidation savings calculation');
+
+  return topics;
+}
+
 function buildStructuredPayload(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): StructuredModelPayload {
   const historyPreview = input.history.slice(-6).map(message => ({
     role: message.role,
     content: shortenText(stripNextStepsBlock(stripMarkdownLinks(stripEmDashes(message.content))), 280),
   }));
+
+  const topicsCovered = extractTopicsCovered(input.history.slice(-6));
 
   return {
     user_message: input.userMessage,
@@ -875,6 +913,7 @@ function buildStructuredPayload(input: StructuredChatRequest, expectedFormatMode
     segment: input.segment ?? input.advisorContext?.segment ?? null,
     intent_tag: input.intentTag,
     recent_history: historyPreview,
+    topics_already_covered: topicsCovered,
     advisor_context: input.advisorContext ?? null,
     grounding_context: input.grounding ?? null,
     knowledge_snippets: (input.knowledgeBase || '').slice(0, 7000),
@@ -929,15 +968,62 @@ async function callModelForJson<T>(args: {
   return parseJsonObject<T>(content);
 }
 
-async function requestStructuredTurn(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): Promise<StructuredAssistantTurn | null> {
+/**
+ * Build native multi-turn messages from conversation history.
+ * Instead of cramming history into a JSON blob, we send actual
+ * user/assistant turns so the LLM has natural conversational context.
+ * Last assistant messages are shortened but kept long enough to preserve meaning.
+ */
+function buildConversationMessages(
+  input: StructuredChatRequest,
+  expectedFormatMode: StructuredFormatMode
+): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+  const systemPrompt = buildStructuredTurnSystemPrompt(input.segment, input.intentTag);
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemPrompt },
+  ];
+
+  // Inject recent conversation as native turns (last 8 messages for better context)
+  const recentHistory = input.history.slice(-8);
+  for (const msg of recentHistory) {
+    const cleaned = stripNextStepsBlock(stripMarkdownLinks(stripEmDashes(msg.content)));
+    // Keep assistant messages at 500 chars (enough to preserve key data points)
+    // Keep user messages at 300 chars (captures full intent)
+    const maxLen = msg.role === 'assistant' ? 500 : 300;
+    messages.push({
+      role: msg.role,
+      content: shortenText(cleaned, maxLen),
+    });
+  }
+
+  // Final user message: the full payload with context (but without recent_history
+  // since it's now in native turns)
   const payload = buildStructuredPayload(input, expectedFormatMode);
-  const turn = await callModelForJson<StructuredAssistantTurn>({
-    systemPrompt: buildStructuredTurnSystemPrompt(input.segment, input.intentTag),
-    payload,
-    schema: STRUCTURED_TURN_SCHEMA,
-    maxTokens: 1100,
+  // Remove recent_history from payload to avoid duplication -it's in native turns now
+  const { recent_history: _omit, ...payloadWithoutHistory } = payload;
+  messages.push({
+    role: 'user',
+    content: JSON.stringify(payloadWithoutHistory),
   });
-  return turn;
+
+  return messages;
+}
+
+async function requestStructuredTurn(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): Promise<StructuredAssistantTurn | null> {
+  const messages = buildConversationMessages(input, expectedFormatMode);
+  const response = await getClient().chat.completions.create({
+    model: 'gpt-4o',
+    temperature: 0.2,
+    max_tokens: 1100,
+    response_format: {
+      type: 'json_schema',
+      json_schema: STRUCTURED_TURN_SCHEMA,
+    } as never,
+    messages,
+  } as never);
+
+  const content = (response as any).choices[0]?.message?.content || '';
+  return parseJsonObject<StructuredAssistantTurn>(content);
 }
 
 async function repairStructuredTurn(
@@ -1010,19 +1096,23 @@ function validateFollowUps(turn: StructuredAssistantTurn, advisorContext?: Advis
     issues.push('followUps must contain exactly 3 prompts');
   }
 
-  if (followUps.some(followUp => followUp.length < 10 || followUp.length > 120)) {
+  if (followUps.some(followUp => followUp.length < 8 || followUp.length > 100)) {
     issues.push('followUps must stay specific and concise');
   }
 
-  if (followUps.some(containsGenericFollowUp)) {
+  // Only flag if ALL follow-ups are generic (not just one)
+  const genericCount = followUps.filter(containsGenericFollowUp).length;
+  if (genericCount === followUps.length && followUps.length > 0) {
     issues.push('followUps contain generic prompts');
   }
 
+  // Relaxed grounding check: require at least 1 follow-up to reference reply content
+  // (previously required 2, which triggered too many false positives)
   const contextualCount = followUps.filter(followUp => {
     const tokens = meaningfulTokens(followUp);
     return tokens.some(token => replyContextTokens.has(token));
   }).length;
-  if (followUps.length > 0 && contextualCount < Math.min(2, followUps.length)) {
+  if (followUps.length > 0 && contextualCount < 1) {
     issues.push('followUps are not grounded in the reply body');
   }
 
@@ -1039,7 +1129,7 @@ function validateFollowUps(turn: StructuredAssistantTurn, advisorContext?: Advis
       }
     }
   }
-  // Removed overly strict "distinct anchors" check — it triggered repair too often
+  // Removed overly strict "distinct anchors" check -it triggered repair too often
   // for follow-ups that were contextually appropriate but didn't token-match advisor facts
 
   return issues;
@@ -1057,46 +1147,34 @@ function validateBody(turn: StructuredAssistantTurn, expectedFormatMode: Structu
     issues.push('opening is too long');
   }
 
+  // Format mode mismatch: log but don't treat as a validation issue.
+  // The LLM sometimes picks a better mode than our heuristic, and forcing
+  // repair/fallback for this degrades quality more than accepting it.
   if (turn.formatMode !== expectedFormatMode) {
-    issues.push(`formatMode must be ${expectedFormatMode}`);
+    console.log(`[VALIDATE] Format mode mismatch: expected=${expectedFormatMode}, got=${turn.formatMode} (accepted)`);
   }
 
-  if (expectedFormatMode === 'plain') {
-    if (turn.sections.some(section => section.title)) {
-      issues.push('plain mode must not use section titles');
-    }
-    if (turn.sections.some(section => section.style !== 'paragraph')) {
-      issues.push('plain mode must not force bullet or numbered sections');
-    }
-    if (turn.sections.flatMap(section => section.items).length > 2) {
+  // Format-specific checks: only flag genuinely broken structure, not minor deviations
+  if (turn.formatMode === 'plain') {
+    if (turn.sections.flatMap(section => section.items).length > 3) {
       issues.push('plain mode must stay brief');
     }
   }
 
-  if (expectedFormatMode === 'guided') {
+  if (turn.formatMode === 'guided') {
     const listSections = turn.sections.filter(section => section.style === 'bullet_list' || section.style === 'numbered_list');
     const listItemCount = listSections.flatMap(section => section.items).length;
-    if (listSections.length === 0) {
+    if (listSections.length === 0 && turn.sections.length > 0) {
       issues.push('guided mode must include one focused list section');
     }
-    if (listItemCount < 2 || listItemCount > 4) {
-      issues.push('guided mode must keep the core answer to 2-4 list items');
-    }
-    if (turn.sections.length > 2) {
+    if (listItemCount > 6) {
       issues.push('guided mode must stay compact');
     }
   }
 
-  if (expectedFormatMode === 'analysis') {
-    if (turn.sections.length < 2) {
-      issues.push('analysis mode must include at least 2 sections');
-    }
-    if (turn.sections.some(section => !section.title)) {
-      issues.push('analysis mode sections must have titles');
-    }
-    const listSections = turn.sections.filter(section => section.style === 'bullet_list' || section.style === 'numbered_list');
-    if (listSections.length === 0) {
-      issues.push('analysis mode must include scoped bullet or numbered lists');
+  if (turn.formatMode === 'analysis') {
+    if (turn.sections.length < 1) {
+      issues.push('analysis mode must include at least 1 section');
     }
   }
 
@@ -1166,12 +1244,12 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
     parts.push(turn.closingQuestion.text);
   }
 
-  // Natural product nudge — ties the redirect to the user's specific situation
+  // Natural product nudge -ties the redirect to the user's specific situation
   if (turn.redirectNudge && turn.redirect) {
     parts.push(turn.redirectNudge);
   }
 
-  // Follow-ups are shown as interactive chips below the message — no need to duplicate them in the body
+  // Follow-ups are shown as interactive chips below the message -no need to duplicate them in the body
 
   const reply = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 
@@ -1189,159 +1267,121 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
  * then fills remaining slots from general profile-based options.
  * Always returns exactly 3 follow-ups.
  */
-function buildSafeFollowUps(ctx: StructuredChatRequest['advisorContext'], userMessage: string): string[] {
+/**
+ * Build contextual fallback follow-ups derived from the assistant's response body.
+ * When we have the response body, extract lender names, topics, and risks mentioned
+ * to generate follow-ups that continue the conversation naturally.
+ * Only used when LLM follow-ups fail validation entirely.
+ */
+function buildContextualFollowUps(
+  ctx: StructuredChatRequest['advisorContext'],
+  userMessage: string,
+  responseBody?: string,
+): string[] {
   if (!ctx) return [];
 
-  const lower = (userMessage || '').toLowerCase();
   const pool: string[] = [];
+  const segment = ctx.segment;
 
-  // ── Message-aware follow-ups (based on what the user asked about) ──
+  // ── Extract context from the response body (what was just discussed) ──
+  const body = (responseBody || '').toLowerCase();
+  const bodyLenders = new Set<string>();
+  const bodyTopics = new Set<string>();
 
-  // EMI / payment burden questions
-  if (/emi|salary|income|burden|payment|foir|obligation/i.test(lower)) {
-    if (ctx.dominantAccounts?.[0]?.lenderName) {
-      const top = ctx.dominantAccounts[0];
-      pool.push(`Which of my accounts is eating the most of my salary -- is it ${top.lenderName}?`);
-    }
-    if (ctx.foirPercentage && ctx.foirPercentage > 0) {
-      pool.push(`With ${ctx.foirPercentage}% of my income going to EMIs, is there a way to bring that down?`);
-    }
-    if (ctx.activeAccountCount > 2) {
-      pool.push(`Would combining my ${ctx.activeAccountCount} active loans into one EMI actually save me money?`);
+  // Extract lender names mentioned in the response
+  for (const account of [...(ctx.dominantAccounts || []), ...(ctx.relevantAccounts || [])]) {
+    if (account.lenderName && body.includes(account.lenderName.toLowerCase().split(' ')[0])) {
+      bodyLenders.add(account.lenderName);
     }
   }
 
-  // Score questions
-  if (/score|cibil|rating|credit.*report/i.test(lower)) {
-    if (ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0 && ctx.creditScore) {
-      pool.push(`My score is ${ctx.creditScore} -- what's the single fastest way to close the ${ctx.scoreGapTo750}-point gap to 750?`);
-    }
-    const highUtilAccount = ctx.topOpportunities?.find(o => /utilization/i.test(o.label));
-    if (highUtilAccount?.lenderName) {
-      pool.push(`How much would paying down ${highUtilAccount.lenderName} below 30% utilization actually move my score?`);
-    }
-    if (ctx.delinquentAccountCount > 0) {
-      pool.push(`Will clearing the overdue on my ${ctx.delinquentAccountCount} account${ctx.delinquentAccountCount > 1 ? 's' : ''} help my score recover?`);
+  // Detect topics discussed in response
+  if (/utilization|credit card|card usage/i.test(body)) bodyTopics.add('utilization');
+  if (/overdue|delay|missed|dpd|delinquen/i.test(body)) bodyTopics.add('overdue');
+  if (/emi|payment|obligation|foir|burden/i.test(body)) bodyTopics.add('emi');
+  if (/score|cibil|rating/i.test(body)) bodyTopics.add('score');
+  if (/interest|roi|rate/i.test(body)) bodyTopics.add('interest');
+  if (/settlement|drp|resolve/i.test(body)) bodyTopics.add('settlement');
+  if (/harassment|recovery|agent|call/i.test(body)) bodyTopics.add('harassment');
+  if (/loan|eligib|approval/i.test(body)) bodyTopics.add('loan');
+
+  // ── Generate follow-ups based on what the response discussed ──
+
+  // Follow-ups anchored to specific lenders mentioned in the response
+  const lenderArr = [...bodyLenders];
+  if (lenderArr.length > 0) {
+    pool.push(`What should I do about ${lenderArr[0]} first?`);
+    if (lenderArr.length > 1) {
+      pool.push(`Between ${lenderArr[0]} and ${lenderArr[1]}, which is more urgent?`);
     }
   }
 
-  // Overdue / missed payment questions
-  if (/overdue|missed|late|delay|delinqu|dpd|default/i.test(lower)) {
-    const overdueAccount = ctx.topRisks?.find(r => /overdue/i.test(r.label));
-    if (overdueAccount?.lenderName) {
-      pool.push(`Should I prioritize clearing the ${overdueAccount.lenderName} overdue first, or spread payments across accounts?`);
-    }
-    if (ctx.creditScore) {
-      pool.push(`If I clear all overdue amounts, how quickly will my score of ${ctx.creditScore} start recovering?`);
-    }
-    pool.push(`Are any of my overdue accounts at risk of legal action or being written off?`);
+  // Follow-ups based on topics discussed
+  if (bodyTopics.has('overdue')) {
+    pool.push(`How quickly can my score recover once I clear the overdue?`);
+    pool.push(`Which overdue account should I prioritize?`);
   }
-
-  // Lender-specific questions
-  if (/hdfc|icici|bajaj|axis|kotak|sbi|tata|home credit|idfc/i.test(lower)) {
-    const mentioned = lower.match(/hdfc|icici|bajaj|axis|kotak|sbi|tata|home credit|idfc/i)?.[0] || '';
-    const matchedAccount = ctx.relevantAccounts?.find(a => a.lenderName.toLowerCase().includes(mentioned));
-    if (matchedAccount && (matchedAccount.outstandingAmount ?? 0) > 0) {
-      pool.push(`What's my best strategy for the ${matchedAccount.lenderName} ${matchedAccount.debtType.toLowerCase()} specifically?`);
+  if (bodyTopics.has('utilization')) {
+    pool.push(`How do I bring my card utilization under control?`);
+  }
+  if (bodyTopics.has('score')) {
+    pool.push(`What's the single biggest thing dragging my score down?`);
+    if (ctx.nextScoreTarget) {
+      pool.push(`What's the fastest way to reach ${ctx.nextScoreTarget}?`);
     }
   }
-
-  // Interest / rate / DEP questions
-  if (/interest|rate|paying too much|save|prepay|refinanc/i.test(lower)) {
-    if (ctx.dominantAccounts?.[0]?.lenderName) {
-      const top = ctx.dominantAccounts[0];
-      pool.push(`Which of my loans has the highest interest rate -- is it ${top.lenderName}?`);
-    }
-    if (ctx.totalOutstanding && ctx.totalOutstanding > 0) {
-      pool.push(`How much total interest could I save if I follow a structured repayment plan?`);
-    }
-    const nearComplete = ctx.repaymentHighlights?.find(h => (h.percentage ?? 0) >= 60);
-    if (nearComplete?.lenderName) {
-      pool.push(`I'm already ${nearComplete.percentage}% done with ${nearComplete.lenderName} -- should I accelerate that one?`);
-    } else {
-      pool.push(`Should I prepay my highest-interest loan first, or would DEP work better for me?`);
+  if (bodyTopics.has('emi')) {
+    pool.push(`Which account should I pay off first?`);
+    if (segment === 'DCP_Eligible' || segment === 'DCP_Ineligible') {
+      pool.push(`Can I combine my loans into a single EMI?`);
     }
   }
-
-  // Goal / loan readiness questions
-  if (/goal|loan|readiness|best rate|home loan|car loan|eligib/i.test(lower)) {
-    if (ctx.creditScore && ctx.creditScore >= 750) {
-      pool.push(`With a score of ${ctx.creditScore}, what kind of rates can I expect in the market?`);
-    } else if (ctx.creditScore && ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0) {
-      pool.push(`What's the most impactful thing I can do to close the ${ctx.scoreGapTo750}-point gap to 750 before applying?`);
-    }
-    if (ctx.foirPercentage) {
-      pool.push(`My EMIs take ${ctx.foirPercentage}% of my income -- will that affect my loan approval?`);
-    }
+  if (bodyTopics.has('interest')) {
+    pool.push(`Which loan is costing me the most in interest?`);
+    pool.push(`Should I prepay my costliest loan first?`);
+  }
+  if (bodyTopics.has('settlement') && (segment === 'DRP_Eligible')) {
+    pool.push(`How much could I save through settlement?`);
+    pool.push(`Will settlement affect my credit score?`);
+  }
+  if (bodyTopics.has('harassment')) {
+    pool.push(`Can FREED Shield stop the recovery calls?`);
+    pool.push(`What are my rights as a borrower?`);
+  }
+  if (bodyTopics.has('loan')) {
+    pool.push(`What should I fix before applying for a loan?`);
   }
 
-  // Profile / snapshot questions
-  if (/profile|snapshot|financial.*look|where.*stand|overall/i.test(lower)) {
-    const topRiskProfile = ctx.topRisks?.[0];
-    if (topRiskProfile?.lenderName) {
-      pool.push(`What's the biggest drag on my profile -- is it the ${topRiskProfile.lenderName} account?`);
+  // ── Fallback: user message topic if response body didn't yield enough ──
+  if (pool.length < 3) {
+    const lower = (userMessage || '').toLowerCase();
+    if (/score|cibil/i.test(lower) && !pool.some(p => /score/i.test(p))) {
+      pool.push(`What's hurting my score the most?`);
     }
-    if (ctx.foirPercentage) {
-      pool.push(`Is ${ctx.foirPercentage}% of my income going to EMIs considered healthy?`);
+    if (/overdue|delay|missed/i.test(lower) && !pool.some(p => /overdue/i.test(p))) {
+      pool.push(`Are any of my accounts at risk of legal action?`);
     }
-    if (ctx.overallOnTimeRate && ctx.overallOnTimeRate < 100) {
-      pool.push(`My on-time payment rate is ${ctx.overallOnTimeRate}% -- how much is that hurting my score?`);
-    }
-    if (ctx.overallCardUtilization && ctx.overallCardUtilization > 30) {
-      pool.push(`My overall card utilization is ${ctx.overallCardUtilization}% -- how do I bring it under 30%?`);
-    }
-    if (ctx.enquiryCount && ctx.enquiryCount > 3) {
-      pool.push(`I have ${ctx.enquiryCount} recent enquiries -- is that dragging my score down?`);
-    }
-    const topOppProfile = ctx.topOpportunities?.[0];
-    if (topOppProfile?.detail) {
-      pool.push(`What's the single best opportunity to improve my profile right now?`);
+    if (/harass|recovery|call/i.test(lower) && !pool.some(p => /shield|rights/i.test(p))) {
+      pool.push(`Can FREED Shield stop the recovery calls?`);
     }
   }
 
-  // Harassment questions
-  if (/harass|recovery|agent|call|threat|legal/i.test(lower)) {
-    pool.push(`Can FREED Shield actually stop the recovery calls I'm getting?`);
-    pool.push(`What are my legal rights when recovery agents call -- can they threaten me?`);
+  // ── Last resort: profile-based fillers ──
+  if (ctx.delinquentAccountCount > 0 && !pool.some(p => /overdue|delinqu|clear/i.test(p))) {
+    pool.push(`How do I deal with my overdue accounts?`);
   }
-
-  // ── General profile-based follow-ups (used to fill remaining slots) ──
-
-  const topRisk = ctx.topRisks?.[0];
-  if (topRisk?.lenderName) {
-    pool.push(`Should I tackle the ${topRisk.lenderName} ${topRisk.debtType?.toLowerCase() || 'account'} issue before anything else?`);
+  if (!pool.some(p => /score|improv|hurting/i.test(p))) {
+    pool.push(`What can I do to improve my credit score?`);
   }
-
-  const topOpp = ctx.topOpportunities?.[0];
-  if (topOpp?.lenderName && topOpp?.percentage) {
-    pool.push(`How much would bringing ${topOpp.lenderName} below 30% utilization improve things?`);
-  }
-
-  if (ctx.scoreGapTo750 && ctx.scoreGapTo750 > 0 && !pool.some(p => p.includes('gap to 750'))) {
-    pool.push(`What's the fastest way to close the ${ctx.scoreGapTo750}-point gap to 750?`);
-  }
-
-  if (ctx.delinquentAccountCount > 0 && !pool.some(p => p.includes('overdue'))) {
-    pool.push(`Will my score recover if I clear the overdue on my ${ctx.delinquentAccountCount} account${ctx.delinquentAccountCount > 1 ? 's' : ''}?`);
-  }
-
-  if (ctx.foirPercentage && ctx.foirPercentage > 30 && !pool.some(p => p.includes('income going to'))) {
-    pool.push(`With ${ctx.foirPercentage}% of my income going to EMIs, what's the smartest next move?`);
-  }
-
-  if (ctx.creditScore && !pool.some(p => p.includes('affecting my score'))) {
-    pool.push(`What's hurting my score of ${ctx.creditScore} the most right now?`);
-  }
-
-  if (ctx.activeAccountCount > 0 && !pool.some(p => p.includes('active'))) {
-    pool.push(`Across my ${ctx.activeAccountCount} active accounts, which one should I focus on first?`);
+  if (ctx.activeAccountCount > 3 && !pool.some(p => /focus|first|priorit/i.test(p))) {
+    pool.push(`Which account should I focus on first?`);
   }
 
   // Deduplicate and return exactly 3
   const seen = new Set<string>();
   const unique: string[] = [];
   for (const item of pool) {
-    const key = item.toLowerCase().slice(0, 40);
+    const key = item.toLowerCase().slice(0, 35);
     if (!seen.has(key)) {
       seen.add(key);
       unique.push(item);
@@ -1411,24 +1451,64 @@ function inferSafeRedirect(segment: string | null | undefined, intentTag: string
 
 function buildSafeRedirectNudge(redirect: StructuredRedirect | undefined, ctx?: AdvisorContext): string | undefined {
   if (!redirect) return undefined;
-  const name = ctx?.userName ? `${ctx.userName}, you` : 'You';
+  const name = ctx?.userName || 'You';
+
+  // Contextual nudge variants to avoid repetition
   switch (redirect.url) {
-    case '/drp':
-      return `${name} can use FREED's Debt Resolution program to explore settlement options for your overdue accounts.`;
-    case '/dcp':
-      return `${name} can check out FREED's Debt Consolidation program to simplify your EMIs into a single payment.`;
-    case '/dep':
-      return `${name} can explore FREED's Debt Elimination program to find the fastest way to become debt-free.`;
-    case '/credit-score':
-      return `${name} can view your detailed credit profile on FREED to see exactly where you stand.`;
-    case '/goal-tracker':
-      return ctx?.scoreGapTo750
-        ? `${name} can use FREED's Goal Tracker to monitor your progress toward closing the ${ctx.scoreGapTo750}-point gap to 750.`
-        : `${name} can use FREED's Goal Tracker to set a target score and track your progress over time.`;
-    case '/freed-shield':
-      return `${name} can activate FREED Shield to get protection from recovery agent harassment.`;
+    case '/drp': {
+      const variants = [
+        `${name}, FREED's Debt Resolution program can negotiate with your lenders to settle overdue accounts at a reduced amount.`,
+        `FREED can help you resolve your overdue accounts through structured settlement -- no upfront fees, single monthly contribution.`,
+      ];
+      if (ctx?.delinquentAccountCount && ctx.delinquentAccountCount > 0) {
+        variants.push(`With ${ctx.delinquentAccountCount} overdue account${ctx.delinquentAccountCount > 1 ? 's' : ''}, FREED's settlement program could help you get a fresh start.`);
+      }
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    case '/dcp': {
+      const variants = [
+        `${name}, FREED's program can combine your loans into a single, lower EMI -- simplifying your payments.`,
+        `Explore how FREED can consolidate your EMIs into one manageable payment.`,
+      ];
+      if (ctx?.activeAccountCount && ctx.activeAccountCount > 2) {
+        variants.push(`Managing ${ctx.activeAccountCount} separate EMIs is tough -- FREED can help combine them into one.`);
+      }
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    case '/dep': {
+      const variants = [
+        `${name}, FREED's structured repayment plan can help you become debt-free faster while saving on interest.`,
+        `Explore FREED's Debt Elimination program to optimize your repayment and save on interest.`,
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    case '/credit-score': {
+      const variants = [
+        `${name}, check your detailed credit profile on FREED to see exactly where you stand.`,
+        `Your full credit breakdown is available on FREED -- see what's helping and hurting your score.`,
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    case '/goal-tracker': {
+      if (ctx?.scoreGapToTarget && ctx?.nextScoreTarget) {
+        return `${name}, use FREED's Goal Tracker to monitor your ${ctx.scoreGapToTarget}-point journey to ${ctx.nextScoreTarget}.`;
+      }
+      const variants = [
+        `${name}, set a target score on FREED's Goal Tracker and track your progress over time.`,
+        `FREED's Goal Tracker can help you stay on course toward your credit score goals.`,
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+    case '/freed-shield': {
+      const variants = [
+        `${name}, FREED Shield can help you report harassment, upload evidence, and get complaints escalated to lenders.`,
+        `Activate FREED Shield to document harassment incidents and protect your rights as a borrower.`,
+        `FREED Shield provides a structured way to report and escalate recovery agent harassment.`,
+      ];
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
     case '/dispute':
-      return `${name} can use FREED's dispute tool to flag and correct errors on your credit report.`;
+      return `${name}, use FREED's dispute tool to flag and correct errors on your credit report.`;
     default:
       return undefined;
   }
@@ -1440,7 +1520,9 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
   const facts = ctx?.relevantFacts.slice(0, expectedFormatMode === 'analysis' ? 4 : 3) || [];
   const opportunities = ctx?.topOpportunities.slice(0, 2).map(item => item.detail) || [];
   const greetingLike = FORMAT_KEYWORDS.plain.test(normalizeSpace(input.userMessage));
-  const safeFollowUps = buildSafeFollowUps(ctx, input.userMessage);
+  // Build response body preview for contextual follow-ups
+  const safeTurnBody = [...facts, ...opportunities].join(' ');
+  const safeFollowUps = buildContextualFollowUps(ctx, input.userMessage, safeTurnBody);
   const goal = ctx?.financialGoal;
   const redirect = inferSafeRedirect(input.segment, input.intentTag, input.userMessage);
   const redirectNudge = greetingLike ? undefined : buildSafeRedirectNudge(redirect, ctx);
@@ -1517,15 +1599,15 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
   };
 }
 
-// Issues that indicate factual hallucination — these justify falling back to safe turn
-// Issues that ALWAYS warrant safe turn fallback — must be truly broken, not just imperfect
+// Issues that indicate factual hallucination -these justify falling back to safe turn
+// Issues that ALWAYS warrant safe turn fallback -must be truly broken, not just imperfect
 const CRITICAL_BODY_ISSUES = new Set([
   'credit score mention does not match grounded data',
   'body is empty after sanitization',
   'opening is required',
 ]);
 
-// Issues that warrant repair attempt but NOT safe turn fallback — the LLM response is
+// Issues that warrant repair attempt but NOT safe turn fallback -the LLM response is
 // usable even with these, and stripping/sanitization already handled them
 const REPAIRABLE_BODY_ISSUES = new Set([
   'body still contains unsupported lender claims',
@@ -1563,12 +1645,12 @@ async function finalizeStructuredTurn(
 
   // Only fall back to safe turn for truly critical issues (wrong score, empty body)
   if (hasCriticalBodyIssues(validation.bodyIssues)) {
-    console.warn('[PIPELINE] Critical issues after repair — safe turn fallback. Issues:', validation.bodyIssues);
+    console.warn('[PIPELINE] Critical issues after repair -safe turn fallback. Issues:', validation.bodyIssues);
     turn = buildMinimalSafeTurn(input, expectedFormatMode);
     turn = sanitizeStructuredTurn(turn, input.grounding);
     validation = validateStructuredTurn(turn, expectedFormatMode, input.advisorContext, input.grounding);
   } else if (hasRepairableBodyIssues(validation.bodyIssues)) {
-    // Lender claim / card label issues — sanitization already stripped the bad lines.
+    // Lender claim / card label issues -sanitization already stripped the bad lines.
     // Accept the response as-is rather than discarding the entire LLM output.
     console.log('[PIPELINE] Repairable issues (accepted after sanitization):', validation.bodyIssues);
   } else if (validation.bodyIssues.length > 0) {
@@ -1585,17 +1667,34 @@ async function finalizeStructuredTurn(
   }
 
   if (validation.followUpIssues.length > 0) {
-    // Instead of wiping follow-ups, fall back to context-aware safe follow-ups
-    const safeFollowUps = buildSafeFollowUps(input.advisorContext, input.userMessage);
-    if (safeFollowUps.length > 0) {
-      console.log('[PIPELINE] Follow-up validation failed — using safe follow-ups');
-      turn = { ...turn, closingQuestion: undefined, followUps: safeFollowUps };
+    // Try to salvage non-generic LLM follow-ups before falling back entirely
+    const goodFollowUps = turn.followUps.filter(fu => !containsGenericFollowUp(fu) && fu.length >= 8 && fu.length <= 100);
+
+    if (goodFollowUps.length >= MAX_FOLLOW_UPS) {
+      // LLM follow-ups are fine individually -keep them
+      console.log('[PIPELINE] Follow-up validation had minor issues -keeping LLM follow-ups');
+      turn = { ...turn, followUps: goodFollowUps.slice(0, MAX_FOLLOW_UPS) };
     } else {
-      turn = sanitizeStructuredTurn({
-        ...turn,
-        closingQuestion: undefined,
-        followUps: [],
-      }, input.grounding);
+      // Supplement with contextual follow-ups derived from the response body
+      const responseBody = renderBodyPreview(turn);
+      const contextFollowUps = buildContextualFollowUps(input.advisorContext, input.userMessage, responseBody);
+      const merged: string[] = [...goodFollowUps];
+      for (const safe of contextFollowUps) {
+        if (merged.length >= MAX_FOLLOW_UPS) break;
+        if (!merged.some(existing => existing.toLowerCase().slice(0, 40) === safe.toLowerCase().slice(0, 40))) {
+          merged.push(safe);
+        }
+      }
+      if (merged.length > 0) {
+        console.log(`[PIPELINE] Follow-up validation: kept ${goodFollowUps.length} LLM + ${merged.length - goodFollowUps.length} contextual`);
+        turn = { ...turn, closingQuestion: undefined, followUps: merged.slice(0, MAX_FOLLOW_UPS) };
+      } else {
+        turn = sanitizeStructuredTurn({
+          ...turn,
+          closingQuestion: undefined,
+          followUps: [],
+        }, input.grounding);
+      }
     }
   }
 
@@ -1637,7 +1736,7 @@ export async function getChatResponse(input: StructuredChatRequest): Promise<Cha
   const generated = await requestStructuredTurn(input, expectedFormatMode);
   console.log(`[PIPELINE] LLM call: ${Date.now() - llmStart}ms`);
   if (!generated) {
-    console.warn('[PIPELINE] LLM returned null — using safe fallback');
+    console.warn('[PIPELINE] LLM returned null -using safe fallback');
     return renderStructuredTurn(buildMinimalSafeTurn(input, expectedFormatMode));
   }
 

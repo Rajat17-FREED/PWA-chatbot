@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { User, UsersData, IdentifyResponse, Segment } from '../types';
-import { conversationStarters } from '../prompts/segments';
+import { conversationStarters, resolveStarterScoreTargets } from '../prompts/segments';
 import { lookupByPhone as phoneFind, looksLikePhone } from './phoneLookup';
 
 let usersData: UsersData | null = null;
@@ -20,7 +20,7 @@ function foundResponse(user: User): IdentifyResponse {
   return {
     status: 'found',
     user,
-    starters: conversationStarters[user.segment] || [],
+    starters: resolveStarterScoreTargets(conversationStarters[user.segment] || [], user.creditScore),
     message: `Found your profile, ${user.firstName}!`,
   };
 }

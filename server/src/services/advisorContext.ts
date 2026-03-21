@@ -7,6 +7,8 @@ import {
   User,
 } from '../types';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
+import { enrichAccountsWithEMI, projectConsolidation, ConsolidationProjection } from './emiCalculator';
+import { matchServiceableCreditor, isDebtTypeServiceable } from './serviceableCreditorLookup';
 
 function formatINR(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '₹0';
@@ -32,6 +34,25 @@ function uniquePush(target: string[], value: string): void {
 function percentUsed(outstanding: number | null | undefined, limit: number | null | undefined): number | null {
   if ((outstanding ?? 0) < 0 || (limit ?? 0) <= 0) return null;
   return Math.round(((outstanding ?? 0) / (limit ?? 1)) * 100);
+}
+
+function enrichWithServiceability(account: AdvisorAccountContext): void {
+  const creditor = matchServiceableCreditor(account.lenderName);
+  if (creditor) {
+    account.isServicedByFreed = creditor.isServicedByFreed && !creditor.isDebarred;
+    account.serviceableForThisDebtType = account.isServicedByFreed
+      ? isDebtTypeServiceable(creditor, account.debtType)
+      : false;
+    account.creditorCategory = creditor.category || null;
+    account.pressureScore = creditor.pressureScore;
+    account.isDebarred = creditor.isDebarred;
+  } else {
+    account.isServicedByFreed = false;
+    account.serviceableForThisDebtType = false;
+    account.creditorCategory = null;
+    account.pressureScore = null;
+    account.isDebarred = false;
+  }
 }
 
 function buildSignals(account: AdvisorAccountContext): string[] {
@@ -61,6 +82,16 @@ function buildSignals(account: AdvisorAccountContext): string[] {
 
   if ((account.estimatedEMI ?? 0) > 0) {
     signals.push('known_emi');
+  }
+
+  if (account.isServicedByFreed) {
+    signals.push('freed_serviceable');
+  } else if ((account.overdueAmount ?? 0) > 0 || (account.maxDPD ?? 0) > 0) {
+    signals.push('freed_not_serviceable');
+  }
+
+  if ((account.pressureScore ?? 0) >= 7) {
+    signals.push('high_collection_pressure');
   }
 
   return signals;
@@ -113,7 +144,7 @@ function accountFromReport(report: EnrichedCreditReport): AdvisorAccountContext[
       overdueAmount: account.overdueAmount ?? null,
       creditLimit: account.creditLimit ?? null,
       utilizationPercentage: percentUsed(account.outstandingAmount, account.creditLimit),
-      maxDPD: account.dpd.maxDPD ?? account.delinquency ?? null,
+      maxDPD: Math.max(account.dpd.maxDPD ?? 0, account.delinquency ?? 0) || null,
       interestRate: account.roi ?? null,
       estimatedEMI: account.estimatedEMI ?? null,
       repaymentTenure: account.repaymentTenure ?? null,
@@ -124,8 +155,15 @@ function accountFromReport(report: EnrichedCreditReport): AdvisorAccountContext[
       onTimePaymentRate: computeOnTimeRate(account.dpd),
       paymentTrend: computePaymentTrend(account.dpd),
       recentDPDTrend: account.dpd.recentTrend.length > 0 ? account.dpd.recentTrend.slice(0, 6) : null,
+      // Serviceability defaults (enriched below)
+      isServicedByFreed: false,
+      serviceableForThisDebtType: false,
+      creditorCategory: null,
+      pressureScore: null,
+      isDebarred: false,
     };
 
+    enrichWithServiceability(normalized);
     normalized.signals = buildSignals(normalized);
     return normalized;
   });
@@ -147,7 +185,7 @@ function accountFromCreditor(accounts: CreditorAccount[]): AdvisorAccountContext
       overdueAmount: account.overdueAmount ?? null,
       creditLimit: account.creditLimitAmount ?? null,
       utilizationPercentage: percentUsed(account.outstandingAmount, account.creditLimitAmount),
-      maxDPD: account.delinquency ?? null,
+      maxDPD: Math.max(0, account.delinquency ?? 0) || null,
       interestRate: account.roi ?? null,
       estimatedEMI: null,
       repaymentTenure: account.repaymentTenure ?? null,
@@ -158,8 +196,15 @@ function accountFromCreditor(accounts: CreditorAccount[]): AdvisorAccountContext
       onTimePaymentRate: null,
       paymentTrend: null,
       recentDPDTrend: null,
+      // Serviceability defaults (enriched below)
+      isServicedByFreed: false,
+      serviceableForThisDebtType: false,
+      creditorCategory: null,
+      pressureScore: null,
+      isDebarred: false,
     };
 
+    enrichWithServiceability(normalized);
     normalized.signals = buildSignals(normalized);
     return normalized;
   });
@@ -247,7 +292,7 @@ function buildRiskInsights(accounts: AdvisorAccountContext[], user: User | null)
     if (account.paymentTrend === 'worsening') {
       insights.push({
         label: 'Worsening payment trend',
-        detail: `${account.lenderName} ${account.debtType.toLowerCase()} shows a worsening payment pattern — recent delays are increasing.`,
+        detail: `${account.lenderName} ${account.debtType.toLowerCase()} shows a worsening payment pattern -recent delays are increasing.`,
         lenderName: account.lenderName,
         debtType: account.debtType,
       });
@@ -261,7 +306,7 @@ function buildRiskInsights(accounts: AdvisorAccountContext[], user: User | null)
   for (const account of highInterest.slice(0, 3)) {
     insights.push({
       label: 'High interest rate',
-      detail: `${account.lenderName} ${account.debtType.toLowerCase()} carries a ${account.interestRate}% interest rate on ${formatINR(account.outstandingAmount)} outstanding — this is one of your most expensive debts.`,
+      detail: `${account.lenderName} ${account.debtType.toLowerCase()} carries a ${account.interestRate}% interest rate on ${formatINR(account.outstandingAmount)} outstanding -this is one of your most expensive debts.`,
       lenderName: account.lenderName,
       debtType: account.debtType,
       amount: account.outstandingAmount,
@@ -327,7 +372,7 @@ function buildOpportunityInsights(accounts: AdvisorAccountContext[], score: numb
     });
   }
 
-  // Repayment progress — positive reinforcement
+  // Repayment progress -positive reinforcement
   for (const account of accounts) {
     if ((account.repaymentPercentage ?? 0) >= 50 && (account.sanctionedAmount ?? 0) > 0) {
       insights.push({
@@ -345,14 +390,14 @@ function buildOpportunityInsights(accounts: AdvisorAccountContext[], score: numb
     if (account.paymentTrend === 'improving' && (account.maxDPD ?? 0) > 0) {
       insights.push({
         label: 'Improving payment behavior',
-        detail: `${account.lenderName} ${account.debtType.toLowerCase()} had delays but is now showing an improving trend — keep it up.`,
+        detail: `${account.lenderName} ${account.debtType.toLowerCase()} had delays but is now showing an improving trend -keep it up.`,
         lenderName: account.lenderName,
         debtType: account.debtType,
       });
     }
   }
 
-  // Interest rate optimization — refinancing opportunity
+  // Interest rate optimization -refinancing opportunity
   const refinanceCandidates = accounts
     .filter(a => (a.interestRate ?? 0) > 15 && (a.outstandingAmount ?? 0) > 20000)
     .sort((a, b) => (b.interestRate ?? 0) - (a.interestRate ?? 0));
@@ -368,12 +413,12 @@ function buildOpportunityInsights(accounts: AdvisorAccountContext[], score: numb
     });
   }
 
-  // Low utilization cards — good for credit mix
+  // Low utilization cards -good for credit mix
   for (const account of accounts) {
     if ((account.creditLimit ?? 0) > 0 && (account.utilizationPercentage ?? 0) < 10 && (account.utilizationPercentage ?? 0) >= 0) {
       insights.push({
         label: 'Low utilization card',
-        detail: `${account.lenderName} ${account.debtType.toLowerCase()} is at just ${account.utilizationPercentage}% utilization — great for your score.`,
+        detail: `${account.lenderName} ${account.debtType.toLowerCase()} is at just ${account.utilizationPercentage}% utilization -great for your score.`,
         lenderName: account.lenderName,
         debtType: account.debtType,
         percentage: account.utilizationPercentage,
@@ -527,6 +572,8 @@ function buildRelevantFacts(input: {
   user: User | null;
   creditScore: number | null;
   scoreGapTo750: number | null;
+  nextScoreTarget: number | null;
+  scoreGapToTarget: number | null;
   totalOutstanding: number;
   relevantAccounts: AdvisorAccountContext[];
   topRisks: AdvisorInsight[];
@@ -541,8 +588,8 @@ function buildRelevantFacts(input: {
   const facts: string[] = [];
 
   if (input.creditScore !== null) {
-    if ((input.scoreGapTo750 ?? 0) > 0) {
-      facts.push(`Your credit score is ${input.creditScore}, which is ${input.scoreGapTo750} points below 750.`);
+    if (input.nextScoreTarget !== null && (input.scoreGapToTarget ?? 0) > 0) {
+      facts.push(`Your credit score is ${input.creditScore}, which is ${input.scoreGapToTarget} points below your next target of ${input.nextScoreTarget}.`);
     } else {
       facts.push(`Your credit score is ${input.creditScore}.`);
     }
@@ -559,7 +606,7 @@ function buildRelevantFacts(input: {
   // CreditPull summary facts (available for ALL users, even without account-level data)
   const cp = input.user?.creditPull;
   if (cp && input.relevantAccounts.length === 0) {
-    // No account-level data — use CreditPull aggregates as the primary data source
+    // No account-level data -use CreditPull aggregates as the primary data source
     if ((cp.accountsActiveCount ?? 0) > 0) {
       facts.push(`You have ${cp.accountsActiveCount} active loan/credit account${(cp.accountsActiveCount ?? 0) > 1 ? 's' : ''} on your credit report.`);
     }
@@ -614,6 +661,23 @@ function buildRelevantFacts(input: {
     }
   }
 
+  // Serviceability facts (from serviceable_creditors.csv)
+  const serviceableRelevant = input.relevantAccounts.filter(a => a.isServicedByFreed && a.serviceableForThisDebtType);
+  const nonServiceableRelevant = input.relevantAccounts.filter(a => !a.isServicedByFreed || !a.serviceableForThisDebtType);
+  if (serviceableRelevant.length > 0) {
+    const names = serviceableRelevant.map(a => a.lenderName).join(', ');
+    uniquePush(facts, `FREED can help settle/negotiate with: ${names}.`);
+  }
+  if (nonServiceableRelevant.length > 0 && serviceableRelevant.length > 0) {
+    const names = nonServiceableRelevant.map(a => a.lenderName).join(', ');
+    uniquePush(facts, `FREED cannot currently settle with: ${names}.`);
+  }
+  const highPressure = input.relevantAccounts.filter(a => (a.pressureScore ?? 0) >= 7 && (a.overdueAmount ?? 0) > 0);
+  if (highPressure.length > 0) {
+    const names = highPressure.map(a => a.lenderName).join(', ');
+    uniquePush(facts, `${names} ${highPressure.length === 1 ? 'is' : 'are'} known for aggressive collection practices.`);
+  }
+
   // Repayment progress (motivational for DEP users)
   if (input.repaymentHighlights && input.repaymentHighlights.length > 0) {
     uniquePush(facts, input.repaymentHighlights[0].detail);
@@ -653,6 +717,72 @@ function buildRelevantFacts(input: {
   }
 
   return facts.slice(0, 12);
+}
+
+/**
+ * Cross-check computed totals against individual account data.
+ * When discrepancies are found, recompute from account-level source of truth.
+ * Also verifies CreditPull aggregates against account data when both exist.
+ */
+function verifyDataConsistency(
+  ctx: AdvisorContext,
+  activeAccounts: AdvisorAccountContext[],
+  user: User | null,
+): void {
+  if (activeAccounts.length === 0) return;
+
+  // ── Verify totalOutstanding matches sum of active accounts ──
+  const computedTotal = activeAccounts.reduce((sum, a) => sum + (a.outstandingAmount ?? 0), 0);
+  if (ctx.totalOutstanding !== computedTotal) {
+    console.warn(`[DataVerify] totalOutstanding mismatch: ctx=${ctx.totalOutstanding}, computed=${computedTotal}. Fixing.`);
+    ctx.totalOutstanding = computedTotal;
+  }
+
+  // ── Verify unsecured + secured = total ──
+  const computedUnsecured = activeAccounts
+    .filter(a => !/home loan|vehicle loan|mortgage|secured/i.test(a.debtType))
+    .reduce((sum, a) => sum + (a.outstandingAmount ?? 0), 0);
+  const computedSecured = computedTotal - computedUnsecured;
+  if (ctx.unsecuredOutstanding !== computedUnsecured) {
+    ctx.unsecuredOutstanding = computedUnsecured;
+    ctx.securedOutstanding = computedSecured;
+  }
+
+  // ── Verify account counts ──
+  const computedActive = activeAccounts.length;
+  if (ctx.activeAccountCount !== computedActive) {
+    console.warn(`[DataVerify] activeAccountCount mismatch: ctx=${ctx.activeAccountCount}, computed=${computedActive}. Fixing.`);
+    ctx.activeAccountCount = computedActive;
+  }
+
+  const computedDelinquent = activeAccounts.filter(a => (a.maxDPD ?? 0) > 0 || (a.overdueAmount ?? 0) > 0).length;
+  if (ctx.delinquentAccountCount !== computedDelinquent) {
+    console.warn(`[DataVerify] delinquentAccountCount mismatch: ctx=${ctx.delinquentAccountCount}, computed=${computedDelinquent}. Fixing.`);
+    ctx.delinquentAccountCount = computedDelinquent;
+  }
+
+  // ── Verify serviceability totals ──
+  const computedServiceable = activeAccounts
+    .filter(a => a.isServicedByFreed && a.serviceableForThisDebtType)
+    .reduce((sum, a) => sum + (a.outstandingAmount ?? 0), 0);
+  if (ctx.serviceableTotalOutstanding !== computedServiceable) {
+    ctx.serviceableTotalOutstanding = computedServiceable;
+  }
+
+  // ── Cross-check with CreditPull if available ──
+  const cp = user?.creditPull;
+  if (cp && computedActive > 0) {
+    // Log significant discrepancies between CreditPull and account data
+    if (cp.accountsTotalOutstanding !== null && cp.accountsTotalOutstanding !== undefined) {
+      const diff = Math.abs(computedTotal - cp.accountsTotalOutstanding);
+      const threshold = Math.max(computedTotal, cp.accountsTotalOutstanding) * 0.15;
+      if (diff > threshold && diff > 5000) {
+        console.warn(
+          `[DataVerify] CreditPull vs account total: CreditPull=${cp.accountsTotalOutstanding}, accounts=${computedTotal} (diff=${diff}). Using account-level data as source of truth.`
+        );
+      }
+    }
+  }
 }
 
 export function buildAdvisorContext(input: {
@@ -705,6 +835,27 @@ export function buildAdvisorContext(input: {
 
   const creditScore = report?.creditScore ?? user?.creditScore ?? null;
   const scoreGapTo750 = creditScore === null ? null : Math.max(0, 750 - creditScore);
+
+  // Dynamic score target: intermediate milestones based on current score
+  let nextScoreTarget: number | null = null;
+  let scoreGapToTarget: number | null = null;
+  if (creditScore !== null) {
+    if (creditScore < 650) nextScoreTarget = 700;
+    else if (creditScore < 750) nextScoreTarget = 750;
+    else if (creditScore < 800) nextScoreTarget = 800;
+    else nextScoreTarget = 850;
+    scoreGapToTarget = nextScoreTarget - creditScore;
+  }
+  // ── EMI enrichment: fill missing estimatedEMI using the EMI calculator ───
+  // This must run BEFORE dominantAccounts/insights so all downstream logic sees EMI data.
+  const calculatedTotalEMI = hasAccountData ? enrichAccountsWithEMI(activeAccounts) : 0;
+
+  // ── Consolidation projection (for DCP-eligible/ineligible segments) ─────
+  let consolidationProjection: ConsolidationProjection | null = null;
+  if (hasAccountData && activeAccounts.length >= 2) {
+    consolidationProjection = projectConsolidation(activeAccounts);
+  }
+
   const dominantAccounts = sortAccountsForDominance(activeAccounts).slice(0, 5);
   const relevantAccounts = selectRelevantAccounts(activeAccounts, userMessage);
 
@@ -771,10 +922,24 @@ export function buildAdvisorContext(input: {
       percentage: a.repaymentPercentage,
     }));
 
+  // ── Serviceability aggregates ────────────────────────────────────────────
+  const serviceableAccounts = activeAccounts.filter(a => a.isServicedByFreed && a.serviceableForThisDebtType);
+  const nonServiceableAccounts = activeAccounts.filter(a => !a.isServicedByFreed || !a.serviceableForThisDebtType);
+  const serviceableAccountCount = serviceableAccounts.length;
+  const nonServiceableAccountCount = nonServiceableAccounts.length;
+  const serviceableTotalOutstanding = serviceableAccounts.reduce((sum, a) => sum + (a.outstandingAmount ?? 0), 0);
+  const nonServiceableTotalOutstanding = nonServiceableAccounts.reduce((sum, a) => sum + (a.outstandingAmount ?? 0), 0);
+  const highPressureLenders = activeAccounts
+    .filter(a => (a.pressureScore ?? 0) >= 7 && (a.overdueAmount ?? 0) > 0)
+    .sort((a, b) => (b.pressureScore ?? 0) - (a.pressureScore ?? 0))
+    .map(a => a.lenderName);
+
   const relevantFacts = buildRelevantFacts({
     user,
     creditScore,
     scoreGapTo750,
+    nextScoreTarget,
+    scoreGapToTarget,
     totalOutstanding,
     relevantAccounts,
     topRisks,
@@ -787,13 +952,15 @@ export function buildAdvisorContext(input: {
     repaymentHighlights,
   });
 
-  return {
+  const result: AdvisorContext = {
     source,
     userName: user?.firstName ?? null,
     segment: user?.segment ?? null,
     financialGoal: user?.financialGoal ?? null,
     creditScore,
     scoreGapTo750,
+    nextScoreTarget,
+    scoreGapToTarget,
     monthlyIncome: user?.monthlyIncome ?? null,
     monthlyObligation: user?.monthlyObligation ?? null,
     foirPercentage: user?.foirPercentage ?? null,
@@ -825,5 +992,18 @@ export function buildAdvisorContext(input: {
     reportDate,
     repaymentHighlights,
     dataCompleteness,
+    calculatedTotalEMI: calculatedTotalEMI > 0 ? calculatedTotalEMI : null,
+    consolidationProjection,
+    // Serviceability aggregates
+    serviceableAccountCount,
+    nonServiceableAccountCount,
+    serviceableTotalOutstanding,
+    nonServiceableTotalOutstanding,
+    highPressureLenders,
   };
+
+  // ── Data consistency verification ──────────────────────────────────────
+  verifyDataConsistency(result, activeAccounts, user);
+
+  return result;
 }

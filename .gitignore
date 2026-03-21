@@ -8,4 +8,5 @@ dataset/
 *.md
 .claude/
 .devsquad/
+config.json
 
