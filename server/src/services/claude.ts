@@ -94,7 +94,11 @@ function normalizeSpace(text: string): string {
 }
 
 function stripEmDashes(text: string): string {
-  return text.replace(/\s*[\u2013\u2014]\s*/g, ' - ').replace(/[\u2013\u2014]/g, '-');
+  return text
+    .replace(/\s*[\u2013\u2014]\s*/g, ', ')
+    .replace(/[\u2013\u2014]/g, ',')
+    .replace(/\s*--\s*/g, ', ')
+    .replace(/--/g, ',');
 }
 
 function stripMarkdownLinks(text: string): string {
@@ -484,6 +488,7 @@ function applyGroundingCorrections(reply: string, grounding?: ResponseGroundingC
   }
 
   corrected = normalizeAmountsNearLenders(corrected, grounding);
+  corrected = correctLenderAmountMismatches(corrected, grounding);
   corrected = normalizeUtilizationNearLenders(corrected, grounding);
   corrected = normalizeCardAccountMentions(corrected, grounding);
   corrected = enforceKnownCreditScore(corrected, grounding);
@@ -826,6 +831,115 @@ function hasBusinessLoanLeak(text: string, grounding?: ResponseGroundingContext)
     }
   }
   return false;
+}
+
+/**
+ * Detect lines where a known lender is mentioned alongside an INR amount
+ * that does not match any known amount for that lender in the grounding context.
+ * Returns the count of such inaccurate lines.
+ */
+function countLenderAmountMismatches(text: string, grounding?: ResponseGroundingContext): number {
+  if (!grounding || !grounding.lenderFacts) return 0;
+  const allowedAliases = buildAllowedLenderAliasSet(grounding);
+  let mismatches = 0;
+
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    const amountTokens = line.match(/₹\s?[\d,]+/g);
+    if (!amountTokens || amountTokens.length === 0) continue;
+
+    const lenderMentions = [...line.matchAll(LENDER_MENTION_PATTERN)].map(m => m[1]);
+    if (lenderMentions.length === 0) continue;
+
+    for (const mention of lenderMentions) {
+      if (isGenericNonLenderPhrase(mention)) continue;
+      if (!isKnownLender(mention, allowedAliases)) continue;
+
+      // Find the matching lender in lenderFacts
+      const mentionKey = lenderKey(mention);
+      let matchedFacts: typeof grounding.lenderFacts[string] | null = null;
+      for (const [lender, facts] of Object.entries(grounding.lenderFacts)) {
+        for (const alias of lenderAliases(lender)) {
+          const aliasKey = lenderKey(alias);
+          if (aliasKey.length >= 3 && (mentionKey.includes(aliasKey) || aliasKey.includes(mentionKey))) {
+            matchedFacts = facts;
+            break;
+          }
+        }
+        if (matchedFacts) break;
+      }
+
+      if (!matchedFacts) continue;
+
+      const validAmounts = [
+        ...(matchedFacts.outstandingAmounts || []),
+        ...(matchedFacts.overdueAmounts || []),
+        ...(matchedFacts.creditLimits || []),
+      ].map(v => Math.round(v)).filter(v => v > 0);
+
+      if (validAmounts.length === 0) continue;
+
+      for (const token of amountTokens) {
+        const parsed = parseINR(token);
+        if (parsed === null || parsed === 0) continue;
+        // Check if the amount is close to any known value (within 5% tolerance for rounding)
+        const isNear = validAmounts.some(known => {
+          const tolerance = Math.max(known * 0.05, 500);
+          return Math.abs(parsed - known) <= tolerance;
+        });
+        // Also check against knownNumericFacts for aggregate numbers that might appear on the same line
+        const isKnownGlobal = grounding.knownNumericFacts?.includes(parsed) ?? false;
+        if (!isNear && !isKnownGlobal) {
+          mismatches++;
+        }
+      }
+    }
+  }
+
+  return mismatches;
+}
+
+/**
+ * Fix lines where a lender is mentioned with an incorrect INR amount
+ * by replacing the wrong amount with the nearest known value for that lender.
+ */
+function correctLenderAmountMismatches(reply: string, grounding: ResponseGroundingContext): string {
+  if (!grounding.lenderFacts) return reply;
+  let corrected = reply;
+
+  for (const [lender, facts] of Object.entries(grounding.lenderFacts)) {
+    const validAmounts = [
+      ...(facts.outstandingAmounts || []),
+      ...(facts.overdueAmounts || []),
+      ...(facts.creditLimits || []),
+    ].map(v => Math.round(v)).filter(v => v > 0);
+
+    if (validAmounts.length === 0) continue;
+
+    for (const alias of lenderAliases(lender)) {
+      const nearContextPattern = new RegExp(`(\\b${escapeRegExp(alias)}\\b[^\\n.?!]{0,200})`, 'gi');
+      corrected = corrected.replace(nearContextPattern, (segment: string) => {
+        const amountTokens = segment.match(/₹\s?[\d,]+/g);
+        if (!amountTokens || amountTokens.length === 0) return segment;
+
+        let updated = segment;
+        for (const token of amountTokens) {
+          const parsed = parseINR(token);
+          if (parsed === null || parsed === 0 || validAmounts.includes(parsed)) continue;
+          // Check global known facts too
+          if (grounding.knownNumericFacts?.includes(parsed)) continue;
+          const replacement = nearestValue(parsed, validAmounts);
+          if (replacement === null) continue;
+          // Only correct if reasonably close (within 50% - beyond that, likely referencing something else)
+          if (Math.abs(parsed - replacement) / Math.max(parsed, replacement) > 0.5) continue;
+          updated = updated.replace(token, formatINR(replacement));
+        }
+        return updated;
+      });
+    }
+  }
+
+  return corrected;
 }
 
 function determineExpectedFormatMode(userMessage: string, history: ChatMessage[], advisorContext?: AdvisorContext): StructuredFormatMode {
@@ -1194,6 +1308,10 @@ function validateBody(turn: StructuredAssistantTurn, expectedFormatMode: Structu
   if (hasBusinessLoanLeak(bodyText, grounding)) {
     issues.push('card lender is still described as a business loan');
   }
+  const amountMismatches = countLenderAmountMismatches(bodyText, grounding);
+  if (amountMismatches > 0) {
+    issues.push(`${amountMismatches} lender-amount mismatch(es) found after correction`);
+  }
 
   return issues;
 }
@@ -1458,7 +1576,7 @@ function buildSafeRedirectNudge(redirect: StructuredRedirect | undefined, ctx?: 
     case '/drp': {
       const variants = [
         `${name}, FREED's Debt Resolution program can negotiate with your lenders to settle overdue accounts at a reduced amount.`,
-        `FREED can help you resolve your overdue accounts through structured settlement -- no upfront fees, single monthly contribution.`,
+        `FREED can help you resolve your overdue accounts through structured settlement. No upfront fees, just a single monthly contribution.`,
       ];
       if (ctx?.delinquentAccountCount && ctx.delinquentAccountCount > 0) {
         variants.push(`With ${ctx.delinquentAccountCount} overdue account${ctx.delinquentAccountCount > 1 ? 's' : ''}, FREED's settlement program could help you get a fresh start.`);
@@ -1467,11 +1585,11 @@ function buildSafeRedirectNudge(redirect: StructuredRedirect | undefined, ctx?: 
     }
     case '/dcp': {
       const variants = [
-        `${name}, FREED's program can combine your loans into a single, lower EMI -- simplifying your payments.`,
+        `${name}, FREED's program can combine your loans into a single, lower EMI, simplifying your payments.`,
         `Explore how FREED can consolidate your EMIs into one manageable payment.`,
       ];
       if (ctx?.activeAccountCount && ctx.activeAccountCount > 2) {
-        variants.push(`Managing ${ctx.activeAccountCount} separate EMIs is tough -- FREED can help combine them into one.`);
+        variants.push(`Managing ${ctx.activeAccountCount} separate EMIs is tough. FREED can help combine them into one.`);
       }
       return variants[Math.floor(Math.random() * variants.length)];
     }
@@ -1485,7 +1603,7 @@ function buildSafeRedirectNudge(redirect: StructuredRedirect | undefined, ctx?: 
     case '/credit-score': {
       const variants = [
         `${name}, check your detailed credit profile on FREED to see exactly where you stand.`,
-        `Your full credit breakdown is available on FREED -- see what's helping and hurting your score.`,
+        `Your full credit breakdown is available on FREED. See what's helping and hurting your score.`,
       ];
       return variants[Math.floor(Math.random() * variants.length)];
     }
@@ -1520,6 +1638,7 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
   const facts = ctx?.relevantFacts.slice(0, expectedFormatMode === 'analysis' ? 4 : 3) || [];
   const opportunities = ctx?.topOpportunities.slice(0, 2).map(item => item.detail) || [];
   const greetingLike = FORMAT_KEYWORDS.plain.test(normalizeSpace(input.userMessage));
+  const isFollowUp = (input.messageCount ?? 0) > 1 || (input.history?.length ?? 0) > 0;
   // Build response body preview for contextual follow-ups
   const safeTurnBody = [...facts, ...opportunities].join(' ');
   const safeFollowUps = buildContextualFollowUps(ctx, input.userMessage, safeTurnBody);
@@ -1529,12 +1648,16 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
 
   if (expectedFormatMode === 'plain' && greetingLike) {
     let opening: string;
-    if (name && goal) {
-      opening = `Hi ${name}! I have your profile loaded and I can see your goal is ${goal.toLowerCase()} -- I'm here to help you with that, along with your credit score and accounts.`;
+    if (isFollowUp) {
+      opening = name ? `${name}, what would you like to look into next?` : 'What would you like to look into next?';
+    } else if (name && goal && ctx?.creditScore) {
+      opening = `Hi ${name}! Your score is ${ctx.creditScore} and your goal is ${goal.toLowerCase()}. Let's figure out the best path forward.`;
+    } else if (name && ctx?.creditScore) {
+      opening = `Hi ${name}! Your credit score is ${ctx.creditScore}. What would you like to explore first?`;
     } else if (name) {
-      opening = `Hi ${name}! I have your profile ready. I'm here to help with your credit score, accounts, or any repayment questions you have.`;
+      opening = `Hi ${name}! I'm here to help with your credit health. What would you like to know?`;
     } else {
-      opening = 'Welcome! I am here to help with your credit profile, score, and repayment questions.';
+      opening = 'Hi! I can help you understand your credit health. What would you like to know?';
     }
     return {
       formatMode: 'plain',
@@ -1547,12 +1670,16 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
 
   if (expectedFormatMode === 'guided') {
     let opening: string;
-    if (name && ctx?.creditScore) {
-      opening = `Good question, ${name}! I looked into your profile -- with a score of ${ctx.creditScore}, here's what stands out.`;
+    if (isFollowUp) {
+      opening = name
+        ? `${name}, here's what I found on that.`
+        : 'Here\'s what I found on that.';
+    } else if (name && ctx?.creditScore) {
+      opening = `${name}, with a score of ${ctx.creditScore}, here's what stands out.`;
     } else if (name) {
-      opening = `Let me dig into that for you, ${name}. Based on your current report, here's what I found.`;
+      opening = `${name}, here's what your credit report shows.`;
     } else {
-      opening = 'Good question! Based on your current report, here are the most relevant details.';
+      opening = 'Here are the most relevant details from your credit report.';
     }
     return {
       formatMode: 'guided',
@@ -1570,12 +1697,16 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
   }
 
   let opening: string;
-  if (name && ctx?.creditScore) {
-    opening = `Here's the full picture from your report, ${name}. Your score is ${ctx.creditScore} and there are ${ctx?.activeAccountCount ?? 0} active accounts to consider.`;
+  if (isFollowUp) {
+    opening = name
+      ? `${name}, here's what I see on that.`
+      : 'Here\'s what I see on that.';
+  } else if (name && ctx?.creditScore) {
+    opening = `${name}, your score is ${ctx.creditScore} across ${ctx?.activeAccountCount ?? 0} active accounts. Let me walk you through what matters most.`;
   } else if (name) {
-    opening = `Let me break this down for you, ${name}. Here's what your report tells us.`;
+    opening = `${name}, let me walk you through what your credit report shows.`;
   } else {
-    opening = 'Let me break this down for you. Here is the clearest view from the data right now.';
+    opening = 'Let me walk you through what stands out in your credit report.';
   }
 
   return {
@@ -1583,12 +1714,12 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
     opening,
     sections: [
       {
-        title: 'KEY RISKS',
+        title: 'What Needs Attention',
         style: 'bullet_list',
         items: facts.length > 0 ? facts.slice(0, 3) : ['I am keeping this answer strictly tied to the verified report data.'],
       },
       {
-        title: 'BEST LEVERS',
+        title: 'Your Best Next Steps',
         style: 'bullet_list',
         items: opportunities.length > 0 ? opportunities.slice(0, 2) : ['Let me know whether your priority is score improvement, payment pressure, or loan eligibility, and I will narrow down the best next step for you.'],
       },

@@ -66,13 +66,14 @@ function buildSignals(account: AdvisorAccountContext): string[] {
     signals.push('moderate_card_utilization');
   }
 
-  if ((account.overdueAmount ?? 0) > 0) {
+  // Only flag delinquency signals when there's actual outstanding debt
+  if ((account.outstandingAmount ?? 0) > 0 && (account.overdueAmount ?? 0) > 0) {
     signals.push('current_overdue');
   }
 
-  if ((account.maxDPD ?? 0) >= 90) {
+  if ((account.outstandingAmount ?? 0) > 0 && (account.maxDPD ?? 0) >= 90) {
     signals.push('severe_dpd_history');
-  } else if ((account.maxDPD ?? 0) > 0) {
+  } else if ((account.outstandingAmount ?? 0) > 0 && (account.maxDPD ?? 0) > 0) {
     signals.push('dpd_history');
   }
 
@@ -86,7 +87,7 @@ function buildSignals(account: AdvisorAccountContext): string[] {
 
   if (account.isServicedByFreed) {
     signals.push('freed_serviceable');
-  } else if ((account.overdueAmount ?? 0) > 0 || (account.maxDPD ?? 0) > 0) {
+  } else if ((account.outstandingAmount ?? 0) > 0 && ((account.overdueAmount ?? 0) > 0 || (account.maxDPD ?? 0) > 0)) {
     signals.push('freed_not_serviceable');
   }
 
@@ -136,15 +137,18 @@ function accountFromReport(report: EnrichedCreditReport): AdvisorAccountContext[
       lenderName: account.lenderName,
     });
 
+    const isClosed = account.status.toUpperCase() === 'CLOSED';
+
     const normalized: AdvisorAccountContext = {
       lenderName: account.lenderName,
       debtType,
       status: account.status,
       outstandingAmount: account.outstandingAmount ?? null,
-      overdueAmount: account.overdueAmount ?? null,
+      // Closed accounts should not show active delinquency signals
+      overdueAmount: isClosed ? null : (account.overdueAmount ?? null),
       creditLimit: account.creditLimit ?? null,
       utilizationPercentage: percentUsed(account.outstandingAmount, account.creditLimit),
-      maxDPD: Math.max(account.dpd.maxDPD ?? 0, account.delinquency ?? 0) || null,
+      maxDPD: isClosed ? null : (Math.max(account.dpd.maxDPD ?? 0, account.delinquency ?? 0) || null),
       interestRate: account.roi ?? null,
       estimatedEMI: account.estimatedEMI ?? null,
       repaymentTenure: account.repaymentTenure ?? null,
@@ -177,15 +181,18 @@ function accountFromCreditor(accounts: CreditorAccount[]): AdvisorAccountContext
       lenderName: account.lenderName,
     });
 
+    const isClosed = (account.accountStatus || '').toUpperCase() === 'CLOSED';
+
     const normalized: AdvisorAccountContext = {
       lenderName: account.lenderName,
       debtType,
       status: account.accountStatus || 'UNKNOWN',
       outstandingAmount: account.outstandingAmount ?? null,
-      overdueAmount: account.overdueAmount ?? null,
+      // Closed accounts should not show active delinquency signals
+      overdueAmount: isClosed ? null : (account.overdueAmount ?? null),
       creditLimit: account.creditLimitAmount ?? null,
       utilizationPercentage: percentUsed(account.outstandingAmount, account.creditLimitAmount),
-      maxDPD: Math.max(0, account.delinquency ?? 0) || null,
+      maxDPD: isClosed ? null : (Math.max(0, account.delinquency ?? 0) || null),
       interestRate: account.roi ?? null,
       estimatedEMI: null,
       repaymentTenure: account.repaymentTenure ?? null,
@@ -243,7 +250,7 @@ function buildRiskInsights(accounts: AdvisorAccountContext[], user: User | null)
       });
     }
 
-    if ((account.overdueAmount ?? 0) > 0) {
+    if ((account.outstandingAmount ?? 0) > 0 && (account.overdueAmount ?? 0) > 0) {
       insights.push({
         label: 'Current overdue amount',
         detail: `${account.lenderName} ${account.debtType.toLowerCase()} still shows ${formatINR(account.overdueAmount)} overdue.`,
@@ -253,7 +260,7 @@ function buildRiskInsights(accounts: AdvisorAccountContext[], user: User | null)
       });
     }
 
-    if ((account.maxDPD ?? 0) > 0) {
+    if ((account.outstandingAmount ?? 0) > 0 && (account.maxDPD ?? 0) > 0) {
       insights.push({
         label: 'Delayed payment history',
         detail: `${account.lenderName} ${account.debtType.toLowerCase()} has a recorded peak delay of ${account.maxDPD} days.`,
@@ -344,7 +351,7 @@ function buildOpportunityInsights(accounts: AdvisorAccountContext[], score: numb
       });
     }
 
-    if ((account.overdueAmount ?? 0) > 0) {
+    if ((account.outstandingAmount ?? 0) > 0 && (account.overdueAmount ?? 0) > 0) {
       insights.push({
         label: 'Overdue clearance opportunity',
         detail: `Clearing the overdue on ${account.lenderName} would remove an active payment issue from your file.`,
@@ -354,7 +361,7 @@ function buildOpportunityInsights(accounts: AdvisorAccountContext[], score: numb
       });
     }
 
-    if ((account.maxDPD ?? 0) > 0) {
+    if ((account.outstandingAmount ?? 0) > 0 && (account.maxDPD ?? 0) > 0) {
       insights.push({
         label: 'Fresh on-time history matters',
         detail: `Keeping ${account.lenderName} current every month helps older delays lose weight over time.`,
@@ -755,7 +762,7 @@ function verifyDataConsistency(
     ctx.activeAccountCount = computedActive;
   }
 
-  const computedDelinquent = activeAccounts.filter(a => (a.maxDPD ?? 0) > 0 || (a.overdueAmount ?? 0) > 0).length;
+  const computedDelinquent = activeAccounts.filter(a => (a.outstandingAmount ?? 0) > 0 && ((a.maxDPD ?? 0) > 0 || (a.overdueAmount ?? 0) > 0)).length;
   if (ctx.delinquentAccountCount !== computedDelinquent) {
     console.warn(`[DataVerify] delinquentAccountCount mismatch: ctx=${ctx.delinquentAccountCount}, computed=${computedDelinquent}. Fixing.`);
     ctx.delinquentAccountCount = computedDelinquent;
@@ -830,7 +837,7 @@ export function buildAdvisorContext(input: {
     ? closedAccounts.length
     : (cp?.accountsClosedCount ?? 0);
   const delinquentAccountCount = hasAccountData
-    ? activeAccounts.filter(account => (account.maxDPD ?? 0) > 0 || (account.overdueAmount ?? 0) > 0).length
+    ? activeAccounts.filter(account => (account.outstandingAmount ?? 0) > 0 && ((account.maxDPD ?? 0) > 0 || (account.overdueAmount ?? 0) > 0)).length
     : (cp?.accountsDelinquentCount ?? 0);
 
   const creditScore = report?.creditScore ?? user?.creditScore ?? null;

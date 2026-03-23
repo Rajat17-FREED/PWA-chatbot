@@ -260,7 +260,16 @@ export async function generateDynamicStarters(
 export function buildWelcomeMessage(user: User, ctx: AdvisorContext): string {
   const name = user.firstName;
 
-  return `Hi ${name}, welcome! I've got your profile ready. Pick a topic below or ask me anything.`;
+  const score = ctx?.creditScore;
+  const goalText = ctx?.financialGoal;
+
+  if (score && goalText) {
+    return `Hi ${name}! Your credit score is **${score}** and your goal is ${goalText.toLowerCase()}. Let's figure out the best way to get there. Pick a topic below or ask me anything.`;
+  }
+  if (score) {
+    return `Hi ${name}! Your credit score is **${score}**. I can help you understand what's affecting it and how to improve. Pick a topic below or ask me anything.`;
+  }
+  return `Hi ${name}! I'm here to help you with your credit health. Pick a topic below or ask me anything about your score, accounts, or payments.`;
 }
 
 // ── Context-Aware Error Responses (template-based, no LLM) ──────────────────

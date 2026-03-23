@@ -115,14 +115,16 @@ export function buildResponseGroundingContext(
         lenderName: account.lenderName,
       });
       const likelyCard = (account.creditLimit ?? 0) > 0 || normalizedDebtType.toLowerCase().includes('card');
+      const isClosed = account.status.toUpperCase() === 'CLOSED';
       register({
         lenderName: account.lenderName,
         debtType: normalizedDebtType,
         likelyCard,
         outstandingAmount: account.outstandingAmount,
-        overdueAmount: account.overdueAmount,
+        // Only register delinquency data for ACTIVE accounts with non-zero outstanding
+        overdueAmount: (isClosed || (account.outstandingAmount ?? 0) === 0) ? null : account.overdueAmount,
         creditLimit: account.creditLimit,
-        maxDPD: account.dpd.maxDPD,
+        maxDPD: (isClosed || (account.outstandingAmount ?? 0) === 0) ? null : account.dpd.maxDPD,
         extraNumbers: [
           account.sanctionedAmount,
           account.estimatedEMI,
@@ -139,14 +141,15 @@ export function buildResponseGroundingContext(
         lenderName: account.lenderName,
       });
       const likelyCard = (account.creditLimitAmount ?? 0) > 0 || normalizedDebtType.toLowerCase().includes('card');
+      const isClosed = (account.accountStatus || '').toUpperCase() === 'CLOSED';
       register({
         lenderName: account.lenderName,
         debtType: normalizedDebtType,
         likelyCard,
         outstandingAmount: account.outstandingAmount,
-        overdueAmount: account.overdueAmount,
+        overdueAmount: (isClosed || (account.outstandingAmount ?? 0) === 0) ? null : account.overdueAmount,
         creditLimit: account.creditLimitAmount,
-        maxDPD: account.delinquency,
+        maxDPD: (isClosed || (account.outstandingAmount ?? 0) === 0) ? null : account.delinquency,
         extraNumbers: [
           account.sanctionedAmount,
           account.repaymentTenure,

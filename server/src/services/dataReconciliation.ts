@@ -101,6 +101,13 @@ function normalizeLenderName(name: string): string {
 /**
  * Fuzzy match two lender names. Returns true if they likely refer to the same entity.
  */
+// Generic financial/geographic words that are too common to count as distinguishing tokens
+const LENDER_STOPWORDS = new Set([
+  'finance', 'financial', 'india', 'indian', 'capital', 'services', 'bank', 'banking',
+  'credit', 'investment', 'investments', 'asset', 'management', 'housing', 'securities',
+  'loans', 'money', 'funds', 'fund', 'leasing', 'fincorp', 'corporation', 'company',
+]);
+
 function lenderMatch(a: string, b: string): boolean {
   const na = normalizeLenderName(a);
   const nb = normalizeLenderName(b);
@@ -111,11 +118,15 @@ function lenderMatch(a: string, b: string): boolean {
   // One contains the other (handles "HDFC Bank" vs "HDFC Bank Ltd")
   if (na.includes(nb) || nb.includes(na)) return true;
 
-  // Token overlap: if 2+ significant tokens match, consider it a match
+  // Token overlap: require 2+ NON-generic tokens to match.
+  // Generic words like "finance", "india", "capital" are filtered out so they
+  // cannot cause unrelated lenders (e.g. "Home Credit India Finance" vs "PayU Finance India")
+  // to be incorrectly matched.
   const tokensA = na.split(' ').filter(t => t.length > 2);
   const tokensB = nb.split(' ').filter(t => t.length > 2);
   const overlap = tokensA.filter(t => tokensB.includes(t));
-  if (overlap.length >= 2) return true;
+  const significantOverlap = overlap.filter(t => !LENDER_STOPWORDS.has(t));
+  if (significantOverlap.length >= 2) return true;
 
   // First significant word match (handles "Hero FinCorp" vs "Hero Fincorp Ltd")
   if (tokensA.length > 0 && tokensB.length > 0 && tokensA[0] === tokensB[0]) {
@@ -401,13 +412,15 @@ function accountFromReportOnly(ra: EnrichedAccount): ReconciledAccount {
 }
 
 function accountFromCreditorOnly(c: CreditorAccount): ReconciledAccount {
+  const isClosed = (c.accountStatus || '').toUpperCase() === 'CLOSED';
   return {
     lenderName: c.lenderName,
     status: c.accountStatus.toUpperCase() || 'UNKNOWN',
     accountType: c.accountType || '',
     debtType: c.debtType,
     outstandingAmount: c.outstandingAmount,
-    overdueAmount: c.overdueAmount,
+    // Never carry delinquency signals on closed accounts — the debt is resolved
+    overdueAmount: isClosed ? null : c.overdueAmount,
     creditLimit: c.creditLimitAmount,
     sanctionedAmount: c.sanctionedAmount,
     roi: c.roi,
@@ -417,10 +430,10 @@ function accountFromCreditorOnly(c: CreditorAccount): ReconciledAccount {
     openDate: formatDateISO(c.openDate),
     closedDate: formatDateISO(c.closedDate),
     lastPaymentDate: formatDateISO(c.lastPaymentDate),
-    delinquency: Math.max(0, c.delinquency ?? 0) || null,
+    delinquency: isClosed ? null : (Math.max(0, c.delinquency ?? 0) || null),
     writtenOffStatus: null,
     suitFiled: c.suitFiledWilfulDefault || null,
-    dpd: defaultDPD(c.delinquency),
+    dpd: isClosed ? defaultDPD(null) : defaultDPD(c.delinquency),
     dataSources: ['creditor_csv'],
     dataAsOf: formatDateISO(c.reportedDate),
   };
@@ -459,7 +472,7 @@ function buildResult(
   const securedOutstanding = securedAccounts.reduce((s, a) => s + (a.outstandingAmount ?? 0), 0);
   const unsecuredOutstanding = totalOutstanding - securedOutstanding;
 
-  const delinquent = active.filter(a => (a.delinquency ?? 0) > 0 || (a.overdueAmount ?? 0) > 0 || (a.dpd.maxDPD ?? 0) > 0);
+  const delinquent = active.filter(a => (a.outstandingAmount ?? 0) > 0 && ((a.delinquency ?? 0) > 0 || (a.overdueAmount ?? 0) > 0 || (a.dpd.maxDPD ?? 0) > 0));
 
   const roiAccounts = active.filter(a => (a.roi ?? 0) > 0).sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0));
   const largestDebt = active.length > 0

@@ -40,6 +40,8 @@ function buildTooltipsFromCreditor(accounts: CreditorAccount[]): MessageTooltips
   }
 
   const overdueItems = accounts
+    .filter(a => (a.accountStatus || '').toUpperCase() !== 'CLOSED')
+    .filter(a => (a.outstandingAmount ?? 0) > 0)
     .filter(a => (a.overdueAmount ?? 0) > 0 || (a.delinquency ?? 0) > 0)
     .map(a => ({
       name: a.lenderName,
@@ -129,8 +131,10 @@ function buildTooltipsFromReport(report: EnrichedCreditReport): MessageTooltips 
     return { accounts: [...map.keys()], details: [...map.values()], rawCount };
   }
 
-  // Overdue: accounts with DPD history or overdue amounts
+  // Overdue: ACTIVE accounts only with DPD history or overdue amounts (and non-zero outstanding)
   const overdueItems = accounts
+    .filter(a => a.status === 'ACTIVE')
+    .filter(a => (a.outstandingAmount ?? 0) > 0)
     .filter(a => a.dpd.maxDPD > 0 || (a.overdueAmount && a.overdueAmount > 0))
     .map(a => ({
       name: a.lenderName,
@@ -497,7 +501,7 @@ router.post('/chat', async (req: Request, res: Response) => {
           ...(advisorContext.dominantAccounts || []),
           ...(advisorContext.relevantAccounts || []),
         ]
-          .filter(a => (a.overdueAmount ?? 0) > 0 || (a.maxDPD ?? 0) > 0)
+          .filter(a => (a.outstandingAmount ?? 0) > 0 && ((a.overdueAmount ?? 0) > 0 || (a.maxDPD ?? 0) > 0))
           .reduce((unique, a) => {
             if (!unique.some(u => u.lenderName === a.lenderName)) unique.push(a);
             return unique;
