@@ -80,6 +80,14 @@ export function indexKnowledgeBase(rawText: string): void {
       title: 'FREED Shield',
       tags: ['shield', 'freed shield', 'harassment', 'recovery agent', 'recovery calls', 'legal protection', 'stop calls', 'collection agent'],
       startPattern: /^6\. FREED Shield/m,
+      endPattern: /^Section 5/m,
+    },
+    {
+      id: 'general_repayment_strategies',
+      title: 'General Debt Repayment Strategies',
+      tags: ['snowball', 'avalanche', 'repayment strategy', 'payment prioritization', 'budget', 'self-help', 'debt management', 'negotiate with lender', 'lender negotiation', 'emi restructuring', 'overdue', 'clear debt', 'pay off debt'],
+      startPattern: /^Section 5 — General Debt Repayment Strategies/m,
+      endPattern: /^FREED Knowledge Base — FAQs/m,
     },
   ];
 
@@ -141,6 +149,7 @@ export function selectKnowledge(
         selected.add('program_drp'); // so bot can explain why not eligible
         selected.add('product_shield');
         selected.add('product_credit_insights');
+        selected.add('general_repayment_strategies'); // snowball, avalanche, self-help methods
         break;
       case 'DCP_Eligible':
         selected.add('program_dcp');
@@ -183,6 +192,7 @@ export function selectKnowledge(
       case 'INTENT_DELINQUENCY_STRESS':
         selected.add('program_drp');
         selected.add('product_shield');
+        selected.add('general_repayment_strategies');
         break;
       case 'INTENT_EMI_OPTIMISATION':
         selected.add('program_dcp');
@@ -266,6 +276,17 @@ export function selectKnowledge(
       'stress': ['program_dcp'],
       'overwhelm': ['program_dcp'],
       'save': ['program_dcp', 'program_dep'],
+      'snowball': ['general_repayment_strategies'],
+      'avalanche': ['general_repayment_strategies'],
+      'repayment strategy': ['general_repayment_strategies'],
+      'repayment plan': ['general_repayment_strategies'],
+      'prioritize payment': ['general_repayment_strategies'],
+      'pay off debt': ['general_repayment_strategies'],
+      'clear overdue': ['general_repayment_strategies'],
+      'manage debt': ['general_repayment_strategies'],
+      'budget': ['general_repayment_strategies'],
+      'what can i do': ['general_repayment_strategies'],
+      'how to pay': ['general_repayment_strategies'],
     };
 
     for (const [keyword, sectionIds] of Object.entries(keywordMap)) {

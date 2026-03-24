@@ -259,17 +259,34 @@ export async function generateDynamicStarters(
 
 export function buildWelcomeMessage(user: User, ctx: AdvisorContext): string {
   const name = user.firstName;
-
   const score = ctx?.creditScore;
   const goalText = ctx?.financialGoal;
+  const delinquent = ctx?.delinquentAccountCount ?? 0;
+  const activeCount = ctx?.activeAccountCount ?? 0;
 
-  if (score && goalText) {
-    return `Hi ${name}! Your credit score is **${score}** and your goal is ${goalText.toLowerCase()}. Let's figure out the best way to get there. Pick a topic below or ask me anything.`;
+  // Vary the opening so it doesn't feel templated
+  const greetings = [
+    `Hey ${name}!`,
+    `Hi ${name}!`,
+    `Hello ${name}!`,
+    `Welcome, ${name}!`,
+  ];
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+  // Build a contextual but conversational message
+  if (goalText && delinquent > 0) {
+    return `${greeting} I see your goal is ${goalText.toLowerCase()}. I can help you figure out the best steps to get there. Pick a topic below or ask me anything.`;
   }
-  if (score) {
-    return `Hi ${name}! Your credit score is **${score}**. I can help you understand what's affecting it and how to improve. Pick a topic below or ask me anything.`;
+  if (goalText) {
+    return `${greeting} Your goal is ${goalText.toLowerCase()}, and I'm here to help you work toward it. Pick a topic below or just ask me anything.`;
   }
-  return `Hi ${name}! I'm here to help you with your credit health. Pick a topic below or ask me anything about your score, accounts, or payments.`;
+  if (delinquent > 0 && activeCount > 0) {
+    return `${greeting} I've looked at your credit profile and have some ideas that could help. Pick a topic below or ask me anything.`;
+  }
+  if (score && activeCount > 0) {
+    return `${greeting} I can help you understand what's going on with your credit and how to improve it. Pick a topic below or ask me anything.`;
+  }
+  return `${greeting} I'm here to help with your credit health. Pick a topic below or ask me anything about your score, accounts, or payments.`;
 }
 
 // ── Context-Aware Error Responses (template-based, no LLM) ──────────────────

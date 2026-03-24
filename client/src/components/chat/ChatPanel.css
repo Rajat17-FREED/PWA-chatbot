@@ -5,8 +5,8 @@
   width: 400px;
   height: 620px;
   background: var(--white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(27, 43, 101, 0.14), 0 1px 4px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -69,7 +69,7 @@
     height: calc(100vh - 48px);
     top: 24px;
     bottom: 24px;
-    border-radius: var(--radius-lg);
+    border-radius: 20px;
   }
 }
 

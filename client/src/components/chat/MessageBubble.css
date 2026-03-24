@@ -15,20 +15,20 @@
 }
 
 .freed-message__avatar {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--freed-peach, #FFF5EE);
+  background: var(--freed-peach);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1.5px solid var(--freed-orange);
+  border: 1.5px solid rgba(232, 115, 42, 0.3);
 }
 
 .freed-message__avatar-img {
-  width: 22px;
+  width: 20px;
   height: auto;
   object-fit: contain;
 }
@@ -36,21 +36,26 @@
 .freed-message__bubble {
   max-width: 85%;
   padding: 12px 16px;
-  border-radius: var(--radius-lg);
-  line-height: 1.5;
-  font-size: 14px;
+  border-radius: 16px;
+  line-height: 1.55;
+  font-size: 13.5px;
   word-wrap: break-word;
+  letter-spacing: -0.005em;
 }
 
+/* Assistant bubble — white card style matching FREED's card components */
 .freed-message__bubble--assistant {
-  background: var(--bot-bubble);
+  background: var(--white);
   color: var(--text-primary);
   border-bottom-left-radius: 4px;
-  margin-left: 40px;
+  margin-left: 38px;
+  box-shadow: 0 1px 3px rgba(27, 43, 101, 0.06);
+  border: 1px solid rgba(229, 231, 235, 0.6);
 }
 
+/* User bubble — FREED navy */
 .freed-message__bubble--user {
-  background: var(--freed-blue);
+  background: var(--freed-navy);
   color: var(--user-text);
   border-bottom-right-radius: 4px;
   margin-left: auto;
@@ -64,9 +69,9 @@
   margin-top: 8px;
 }
 
-/* Bold text styling — key terms, amounts, lender names */
+/* Bold text — FREED navy emphasis */
 .freed-message__bold {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--freed-navy);
 }
 
@@ -82,15 +87,13 @@
 
 .freed-message__list-item {
   margin: 5px 0;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
-/* Style nested bold within list items */
 .freed-message__list-item .freed-message__bold {
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* Tighter spacing between text and lists */
 .freed-message__text + .freed-message__list {
   margin-top: 4px;
 }
@@ -102,14 +105,15 @@
 /* ── Timestamp ──────────────────────────────────────────────────────────────── */
 .freed-message__timestamp {
   font-size: 10px;
-  color: var(--text-secondary, #7a7f9a);
-  opacity: 0.7;
-  margin-top: -4px;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  margin-top: -2px;
   padding: 0 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .freed-message__timestamp--assistant {
-  margin-left: 44px;
+  margin-left: 42px;
 }
 
 .freed-message__timestamp--user {
@@ -117,21 +121,21 @@
   text-align: right;
 }
 
-/* Follow-up suggestion chips */
+/* ── Follow-up chips ─────────────────────────────────────────────────────────── */
 .freed-followups {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-left: 40px;
+  margin-left: 38px;
   margin-right: 12px;
   margin-top: 10px;
-  animation: followupsFadeIn 0.35s ease-out;
+  animation: followupsFadeIn 0.4s ease-out;
 }
 
 @keyframes followupsFadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -139,6 +143,7 @@
   }
 }
 
+/* Follow-up chip — white card with border, matching FREED component style */
 .freed-followups__chip {
   display: flex;
   align-items: flex-start;
@@ -147,7 +152,7 @@
   background: var(--white);
   border: 1.5px solid var(--border-light);
   border-radius: var(--radius-md);
-  color: var(--freed-navy);
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
@@ -167,9 +172,13 @@
   transform: translateX(2px);
 }
 
+.freed-followups__chip:active {
+  transform: translateX(2px) scale(0.98);
+}
+
 .freed-followups__arrow {
   flex-shrink: 0;
-  opacity: 0.4;
+  opacity: 0.3;
   transition: opacity 0.2s, transform 0.2s;
   margin-top: 2px;
 }
@@ -179,7 +188,7 @@
   transform: translateX(2px);
 }
 
-/* Redirect chip — special action styling */
+/* Redirect chip — FREED navy CTA button style (like "Get Started" in designs) */
 .freed-followups__chip--redirect {
   background: var(--freed-navy);
   color: white;
@@ -189,8 +198,8 @@
 }
 
 .freed-followups__chip--redirect:hover {
-  background: var(--freed-navy-dark, #141E4A);
-  border-color: var(--freed-navy-dark, #141E4A);
+  background: var(--freed-navy-dark);
+  border-color: var(--freed-navy-dark);
   color: white;
   transform: translateX(2px);
 }

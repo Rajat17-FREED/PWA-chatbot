@@ -294,18 +294,7 @@ export default function MessageBubble({
       {/* Follow-ups and redirect shown as options (hidden when lender selector is active) */}
       {showFollowUps && !hasLenderSelector && (hasFollowUps || hasRedirect) && (
         <div className="freed-followups">
-          {hasFollowUps && normalizedFollowUps.map((text, i) => (
-            <button
-              key={i}
-              className="freed-followups__chip"
-              onClick={() => onFollowUpClick(text)}
-            >
-              {text}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="freed-followups__arrow">
-                <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          ))}
+          {/* Redirect button shown first — primary CTA */}
           {hasRedirect && (
             <button
               className="freed-followups__chip freed-followups__chip--redirect"
@@ -318,6 +307,18 @@ export default function MessageBubble({
               {redirectLabel}
             </button>
           )}
+          {hasFollowUps && normalizedFollowUps.map((text, i) => (
+            <button
+              key={i}
+              className="freed-followups__chip"
+              onClick={() => onFollowUpClick(text)}
+            >
+              {text}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="freed-followups__arrow">
+                <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ))}
         </div>
       )}
     </div>

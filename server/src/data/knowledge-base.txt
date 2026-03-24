@@ -997,6 +997,70 @@ Users can also view detailed information from their credit report, including:
 
 This transparency helps users better understand their current financial obligations and
 credit behaviour.
+Section 5 — General Debt Repayment Strategies
+
+These are general personal finance strategies that can help borrowers manage and repay
+debt more effectively, even without enrolling in a formal program.
+
+1. Snowball Method
+The snowball method involves paying off debts starting with the smallest balance first,
+while making minimum payments on all other debts.
+
+How it works:
+•   List all debts from smallest to largest balance
+•   Pay as much as possible toward the smallest debt
+•   Once the smallest debt is cleared, move the freed-up amount to the next smallest
+•   Repeat until all debts are paid off
+
+Why it works:
+Clearing small debts quickly builds momentum and motivation. Seeing accounts close
+one by one makes the process feel achievable.
+
+Best suited for:
+Borrowers who feel overwhelmed by multiple debts and need psychological wins to stay
+on track.
+
+2. Avalanche Method
+The avalanche method involves paying off debts starting with the highest interest rate
+first, while making minimum payments on all other debts.
+
+How it works:
+•   List all debts from highest to lowest interest rate
+•   Pay as much as possible toward the highest-interest debt
+•   Once that debt is cleared, move the freed-up amount to the next highest-interest debt
+•   Repeat until all debts are paid off
+
+Why it works:
+This approach minimizes the total interest paid over time, saving the borrower the most
+money compared to other methods.
+
+Best suited for:
+Borrowers who want to minimize total cost and are disciplined enough to stay consistent
+even when progress feels slow initially.
+
+3. Payment Prioritization
+When funds are limited, prioritize payments in this order:
+•   Debts with the highest days past due (to prevent legal escalation)
+•   Debts with the highest interest rates (to reduce cost)
+•   Debts closest to being paid off (for quick wins)
+
+4. Direct Lender Negotiation
+Borrowers can contact their lenders directly to request:
+•   EMI restructuring (longer tenure, lower EMI)
+•   Temporary moratorium or payment holiday
+•   Waiver of late payment charges
+•   Reduced interest rates for hardship cases
+
+Lenders may be willing to negotiate, especially if the borrower demonstrates intent to
+repay but lacks current capacity.
+
+5. Budget-Based Repayment Planning
+A simple budgeting approach can help borrowers allocate more toward debt:
+•   Track monthly income and expenses
+•   Identify non-essential spending that can be temporarily reduced
+•   Allocate the surplus toward debt repayment
+•   Set a fixed monthly amount for debt payments and treat it as non-negotiable
+
 Great. I’ve consolidated all the questions you collected + the answers from the FREED
 site into a single structured FAQ knowledge base.
 

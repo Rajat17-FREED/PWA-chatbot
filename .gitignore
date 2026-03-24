@@ -9,4 +9,5 @@ dataset/
 .claude/
 .devsquad/
 config.json
+server/src/evals/results/
 

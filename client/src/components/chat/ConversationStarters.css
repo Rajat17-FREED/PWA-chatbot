@@ -1,28 +1,68 @@
 .freed-starters {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding: 4px 0;
-  margin-left: 40px;
+  margin-left: 38px;
+  margin-right: 8px;
   margin-bottom: 16px;
 }
 
+/* Starter chip — white card style matching FREED component cards */
 .freed-starters__chip {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   text-align: left;
-  padding: 10px 14px;
+  padding: 11px 14px;
   background: var(--white);
-  border: 1.5px solid var(--bot-bubble);
+  border: 1.5px solid var(--border-light);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.4;
   cursor: pointer;
   transition: all 0.2s ease;
+  animation: starterSlideIn 0.3s ease-out both;
+  box-shadow: 0 1px 2px rgba(27, 43, 101, 0.03);
+}
+
+@keyframes starterSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.freed-starters__text {
+  flex: 1;
+}
+
+.freed-starters__arrow {
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
+  color: var(--freed-orange);
 }
 
 .freed-starters__chip:hover {
   border-color: var(--freed-orange);
   background: var(--freed-peach);
   color: var(--freed-navy);
+}
+
+.freed-starters__chip:hover .freed-starters__arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.freed-starters__chip:active {
+  transform: scale(0.98);
 }

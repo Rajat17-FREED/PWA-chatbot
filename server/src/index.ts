@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
 import chatRouter from './routes/chat';
+import evalsRouter from './routes/evals';
 import { initCreditorData, initKnowledgeBase } from './routes/chat';
 
 dotenv.config();
@@ -16,6 +17,11 @@ app.use(express.json());
 
 // API Routes
 app.use('/api', chatRouter);
+app.use('/api/evals', evalsRouter);
+
+// Serve eval dashboard (static HTML)
+const evalsDashboardPath = path.join(__dirname, '..', 'public', 'evals');
+app.use('/evals', express.static(evalsDashboardPath));
 
 // Serve static client build in production
 const clientBuildPath = path.join(__dirname, '..', '..', 'client', 'dist');

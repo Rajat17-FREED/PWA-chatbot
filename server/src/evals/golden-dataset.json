@@ -1,0 +1,635 @@
+[
+  {
+    "id": "drp-elig-greeting-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "Hi", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "greets user by first name",
+      "does NOT mention DCP or DEP",
+      "uses plain format (no bullet lists)"
+    ]
+  },
+  {
+    "id": "drp-elig-score-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references user's actual credit score",
+      "mentions specific lenders from user's accounts",
+      "does NOT mention DCP or DEP or consolidation program",
+      "provides actionable steps"
+    ]
+  },
+  {
+    "id": "drp-elig-delinquency-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "Unable to pay my EMI and credit card dues", "intentTag": "INTENT_DELINQUENCY_STRESS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "acknowledges emotional stress",
+      "references specific overdue accounts",
+      "mentions DRP or debt resolution as solution",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-elig-harassment-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "Recovery agents keep calling me", "intentTag": "INTENT_HARASSMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "mentions FREED Shield",
+      "shows lender selector",
+      "acknowledges emotional distress",
+      "does NOT mention DCP or DEP",
+      "names actual lenders from user's accounts"
+    ]
+  },
+  {
+    "id": "drp-elig-score-target-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "Help me reach a credit score of 750", "intentTag": "INTENT_CREDIT_SCORE_TARGET", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references current score and gap to 750",
+      "provides numbered steps",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-elig-loan-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "I want to get a loan - what should I do?", "intentTag": "INTENT_GOAL_BASED_LOAN", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "assesses loan readiness based on user's profile",
+      "references specific debts blocking eligibility",
+      "suggests DRP as path to loan readiness",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-elig-multiturn-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 },
+      { "userMessage": "Tell me more about my overdue accounts", "messageCount": 2 }
+    ],
+    "expectedBehaviors": [
+      "does NOT repeat information from first turn",
+      "dives deeper into overdue account details",
+      "references specific lender names and amounts"
+    ]
+  },
+
+  {
+    "id": "drp-elig-low-score-001",
+    "user": "69270800ec6fe446eb97b39c",
+    "userName": "Robin Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references low score (543)",
+      "sets realistic score target (700)",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-elig-low-score-loan-001",
+    "user": "69270800ec6fe446eb97b39c",
+    "userName": "Robin Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "I want to get a loan - what should I do?", "intentTag": "INTENT_GOAL_BASED_LOAN", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "acknowledges low score makes loan difficult",
+      "suggests improving score first",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+
+  {
+    "id": "drp-inelig-score-001",
+    "user": "6928562ae43c2e1b12fe70a2",
+    "userName": "Shankar Shilvanth",
+    "segment": "DRP_Ineligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT suggest DRP or settlement",
+      "does NOT mention DCP or DEP",
+      "provides self-help credit improvement advice",
+      "references user's actual score"
+    ]
+  },
+  {
+    "id": "drp-inelig-delinquency-001",
+    "user": "6928562ae43c2e1b12fe70a2",
+    "userName": "Shankar Shilvanth",
+    "segment": "DRP_Ineligible",
+    "turns": [
+      { "userMessage": "I'm struggling with payments - what can I do?", "intentTag": "INTENT_DELINQUENCY_STRESS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "acknowledges financial stress",
+      "does NOT suggest DRP or settlement program",
+      "provides self-help strategies",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-inelig-harassment-001",
+    "user": "6928562ae43c2e1b12fe70a2",
+    "userName": "Shankar Shilvanth",
+    "segment": "DRP_Ineligible",
+    "turns": [
+      { "userMessage": "Recovery agents won't stop calling me", "intentTag": "INTENT_HARASSMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "mentions FREED Shield",
+      "acknowledges emotional distress",
+      "does NOT suggest DRP or settlement program",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-inelig-score-target-001",
+    "user": "6928562ae43c2e1b12fe70a2",
+    "userName": "Shankar Shilvanth",
+    "segment": "DRP_Ineligible",
+    "turns": [
+      { "userMessage": "Help me reach a credit score of 750", "intentTag": "INTENT_CREDIT_SCORE_TARGET", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references current score and gap to target",
+      "does NOT suggest DRP or settlement program",
+      "does NOT mention DCP or DEP"
+    ]
+  },
+  {
+    "id": "drp-inelig-debt-options-001",
+    "user": "6928562ae43c2e1b12fe70a2",
+    "userName": "Shankar Shilvanth",
+    "segment": "DRP_Ineligible",
+    "turns": [
+      { "userMessage": "What are my options to manage my debt?", "intentTag": "INTENT_GOAL_BASED_LOAN", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "provides self-help debt management advice",
+      "does NOT suggest DRP, DCP, or DEP programs",
+      "references user's actual accounts"
+    ]
+  },
+
+  {
+    "id": "dcp-elig-greeting-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "Hi", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "greets user by first name",
+      "does NOT mention DRP or DEP",
+      "uses plain format"
+    ]
+  },
+  {
+    "id": "dcp-elig-score-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references user's actual credit score",
+      "does NOT mention DRP or DEP or settlement",
+      "provides actionable advice"
+    ]
+  },
+  {
+    "id": "dcp-elig-emi-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "I want to reduce my monthly EMI burden", "intentTag": "INTENT_EMI_OPTIMISATION", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references user's EMI burden and FOIR",
+      "mentions DCP or debt consolidation",
+      "shows potential savings from consolidation",
+      "does NOT mention DRP or DEP or settlement"
+    ]
+  },
+  {
+    "id": "dcp-elig-stress-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "Managing multiple EMI payments is stressful", "intentTag": "INTENT_EMI_STRESS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "acknowledges EMI management stress",
+      "mentions DCP or consolidation",
+      "does NOT mention DRP or DEP or settlement"
+    ]
+  },
+  {
+    "id": "dcp-elig-goal-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "What's the best path for my financial goal?", "intentTag": "INTENT_GOAL_BASED_PATH", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references user's stated financial goal",
+      "suggests DCP as path forward",
+      "does NOT mention DRP or DEP or settlement"
+    ]
+  },
+  {
+    "id": "dcp-elig-multiturn-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "I want to reduce my monthly EMI burden", "intentTag": "INTENT_EMI_OPTIMISATION", "messageCount": 1 },
+      { "userMessage": "How much would I save exactly?", "messageCount": 2 }
+    ],
+    "expectedBehaviors": [
+      "provides specific savings numbers",
+      "does NOT repeat first turn information",
+      "references actual loan amounts"
+    ]
+  },
+
+  {
+    "id": "dcp-inelig-score-001",
+    "user": "68269f71311408196c732a58",
+    "userName": "Parmar Bhavesh",
+    "segment": "DCP_Ineligible",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT suggest DCP or consolidation",
+      "does NOT mention DRP or DEP or settlement",
+      "provides self-help score improvement advice"
+    ]
+  },
+  {
+    "id": "dcp-inelig-emi-001",
+    "user": "68269f71311408196c732a58",
+    "userName": "Parmar Bhavesh",
+    "segment": "DCP_Ineligible",
+    "turns": [
+      { "userMessage": "How can I get a lower EMI?", "intentTag": "INTENT_EMI_OPTIMISATION", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT suggest DCP or consolidation program",
+      "provides self-help EMI management advice",
+      "does NOT mention DRP or DEP or settlement"
+    ]
+  },
+  {
+    "id": "dcp-inelig-stress-001",
+    "user": "68269f71311408196c732a58",
+    "userName": "Parmar Bhavesh",
+    "segment": "DCP_Ineligible",
+    "turns": [
+      { "userMessage": "Managing multiple payments is overwhelming", "intentTag": "INTENT_EMI_STRESS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "acknowledges stress",
+      "does NOT suggest DCP, DRP, or DEP programs",
+      "provides self-help strategies"
+    ]
+  },
+  {
+    "id": "dcp-inelig-rejection-001",
+    "user": "68269f71311408196c732a58",
+    "userName": "Parmar Bhavesh",
+    "segment": "DCP_Ineligible",
+    "turns": [
+      { "userMessage": "My loan applications keep getting rejected", "intentTag": "INTENT_LOAN_ELIGIBILITY", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "explains why loans may be rejected based on user's profile",
+      "does NOT suggest DCP, DRP, or DEP",
+      "provides steps to improve eligibility"
+    ]
+  },
+  {
+    "id": "dcp-inelig-goal-001",
+    "user": "68557335a5c01224a041dad8",
+    "userName": "Gurmukh Singh",
+    "segment": "DCP_Ineligible",
+    "turns": [
+      { "userMessage": "What's the best path for my financial goal?", "intentTag": "INTENT_GOAL_BASED_PATH", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT suggest DCP, DRP, or DEP",
+      "provides self-help guidance",
+      "references user's actual financial situation"
+    ]
+  },
+
+  {
+    "id": "dep-greeting-001",
+    "user": "69323f7ca2fc153ab73ebe4b",
+    "userName": "Govind Kumar",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "Hi", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "greets user by first name",
+      "does NOT mention DRP or DCP",
+      "uses plain format"
+    ]
+  },
+  {
+    "id": "dep-score-001",
+    "user": "69323f7ca2fc153ab73ebe4b",
+    "userName": "Govind Kumar",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references user's actual score (756)",
+      "does NOT mention DRP or DCP or settlement or consolidation",
+      "provides actionable score improvement steps"
+    ]
+  },
+  {
+    "id": "dep-interest-001",
+    "user": "69323f7ca2fc153ab73ebe4b",
+    "userName": "Govind Kumar",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "Am I paying too much interest on my loans?", "intentTag": "INTENT_INTEREST_OPTIMISATION", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "analyzes user's interest rates",
+      "mentions DEP or accelerated repayment",
+      "does NOT mention DRP or DCP or settlement or consolidation"
+    ]
+  },
+  {
+    "id": "dep-loan-001",
+    "user": "69323f7ca2fc153ab73ebe4b",
+    "userName": "Govind Kumar",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "I want to get the best rate on my next loan", "intentTag": "INTENT_GOAL_BASED_LOAN", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "assesses loan readiness",
+      "does NOT mention DRP or DCP or settlement or consolidation"
+    ]
+  },
+  {
+    "id": "dep-profile-001",
+    "user": "69323f7ca2fc153ab73ebe4b",
+    "userName": "Govind Kumar",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "What does my financial profile look like?", "intentTag": "INTENT_PROFILE_ANALYSIS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "provides holistic profile analysis",
+      "references actual accounts, score, outstanding",
+      "does NOT mention DRP or DCP or settlement or consolidation"
+    ]
+  },
+  {
+    "id": "dep-score-target-001",
+    "user": "692d79702e9d896071687967",
+    "userName": "Abhishek Verma",
+    "segment": "DEP",
+    "turns": [
+      { "userMessage": "Help me reach a credit score of 800", "intentTag": "INTENT_CREDIT_SCORE_TARGET", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references current score (799) and small gap to 800",
+      "does NOT mention DRP or DCP",
+      "provides fine-tuning advice for near-perfect score"
+    ]
+  },
+
+  {
+    "id": "ntc-greeting-001",
+    "user": "691dcd8cb4dea42e98f19988",
+    "userName": "Toton Mondal",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "Hi", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "greets user by first name",
+      "does NOT mention DRP, DCP, DEP, or any program eligibility",
+      "uses plain format"
+    ]
+  },
+  {
+    "id": "ntc-what-is-credit-001",
+    "user": "691dcd8cb4dea42e98f19988",
+    "userName": "Toton Mondal",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "What is a credit score and why does it matter?", "intentTag": "INTENT_SCORE_DIAGNOSIS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "explains credit score in simple terms",
+      "does NOT mention DRP, DCP, DEP programs",
+      "does NOT assume user has debt problems"
+    ]
+  },
+  {
+    "id": "ntc-build-credit-001",
+    "user": "691dcd8cb4dea42e98f19988",
+    "userName": "Toton Mondal",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "How do I start building my credit?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "provides credit building guidance",
+      "does NOT mention DRP, DCP, DEP programs",
+      "mentions Goal Tracker or Credit Insights as tools"
+    ]
+  },
+  {
+    "id": "ntc-loan-001",
+    "user": "691dcd8cb4dea42e98f19988",
+    "userName": "Toton Mondal",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "I want to get a loan - what do I need?", "intentTag": "INTENT_LOAN_ELIGIBILITY", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "explains loan eligibility requirements",
+      "does NOT mention DRP, DCP, DEP programs",
+      "references user's actual score if available"
+    ]
+  },
+  {
+    "id": "ntc-freed-help-001",
+    "user": "691dcd8cb4dea42e98f19988",
+    "userName": "Toton Mondal",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "How can FREED help someone like me?", "intentTag": "INTENT_PROFILE_ANALYSIS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "explains FREED's tools (Credit Insights, Goal Tracker)",
+      "does NOT pitch DRP, DCP, DEP programs"
+    ]
+  },
+  {
+    "id": "ntc-low-score-001",
+    "user": "68f0659446ec2f2a1abec6a6",
+    "userName": "Vicky Kumar",
+    "segment": "NTC",
+    "turns": [
+      { "userMessage": "How do I start building my credit?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references low score (488)",
+      "provides beginner-friendly credit building steps",
+      "does NOT mention DRP, DCP, DEP programs"
+    ]
+  },
+
+  {
+    "id": "others-score-001",
+    "user": "685230c2ab769165001c35f9",
+    "userName": "Vengam Naidu",
+    "segment": "Others",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT mention DRP, DCP, DEP programs",
+      "provides self-help score improvement advice",
+      "references user's actual score"
+    ]
+  },
+  {
+    "id": "others-goal-tracking-001",
+    "user": "685230c2ab769165001c35f9",
+    "userName": "Vengam Naidu",
+    "segment": "Others",
+    "turns": [
+      { "userMessage": "I want to reach 750 - can you help?", "intentTag": "INTENT_GOAL_TRACKING", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references current score and gap to 750",
+      "does NOT mention DRP, DCP, DEP programs",
+      "mentions Goal Tracker"
+    ]
+  },
+  {
+    "id": "others-diagnosis-001",
+    "user": "685230c2ab769165001c35f9",
+    "userName": "Vengam Naidu",
+    "segment": "Others",
+    "turns": [
+      { "userMessage": "What's affecting my credit score the most?", "intentTag": "INTENT_SCORE_DIAGNOSIS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "identifies key factors affecting score",
+      "does NOT mention DRP, DCP, DEP programs",
+      "references actual credit data"
+    ]
+  },
+  {
+    "id": "others-behaviour-001",
+    "user": "685230c2ab769165001c35f9",
+    "userName": "Vengam Naidu",
+    "segment": "Others",
+    "turns": [
+      { "userMessage": "Should I close my old credit cards?", "intentTag": "INTENT_BEHAVIOUR_IMPACT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "explains impact of closing old cards on credit age",
+      "does NOT mention DRP, DCP, DEP programs",
+      "provides balanced advice"
+    ]
+  },
+  {
+    "id": "others-low-score-001",
+    "user": "66a4aa51037a4b187983ae36",
+    "userName": "Rohit Kumar",
+    "segment": "Others",
+    "turns": [
+      { "userMessage": "How can I improve my credit score?", "intentTag": "INTENT_SCORE_IMPROVEMENT", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "references very low score (465)",
+      "provides foundational credit improvement advice",
+      "does NOT mention DRP, DCP, DEP programs"
+    ]
+  },
+
+  {
+    "id": "edge-offtopic-001",
+    "user": "69227e3565bc017d909e5bd3",
+    "userName": "Sanjay Kumar",
+    "segment": "DRP_Eligible",
+    "turns": [
+      { "userMessage": "What's the weather like today?", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "politely redirects to financial topics",
+      "does NOT answer off-topic question",
+      "does NOT hallucinate weather data"
+    ]
+  },
+  {
+    "id": "edge-no-jargon-001",
+    "user": "6833fac335a26c6edb07afed",
+    "userName": "Dhanraj Shetty",
+    "segment": "DCP_Eligible",
+    "turns": [
+      { "userMessage": "What's wrong with my finances?", "intentTag": "INTENT_PROFILE_ANALYSIS", "messageCount": 1 }
+    ],
+    "expectedBehaviors": [
+      "does NOT use jargon: FOIR, DPD, delinquent, utilization",
+      "uses plain language equivalents",
+      "references actual financial data"
+    ]
+  }
+]

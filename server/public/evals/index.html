@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FREED Chatbot — Eval Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.9/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1e; color: #e2e8f0; }
+    .tab-active { border-bottom: 2px solid #38bdf8; color: #f0f9ff; background: rgba(56,189,248,0.06); }
+    .badge-pass { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-fail { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-warn { background: rgba(234,179,8,0.15); color: #fbbf24; border: 1px solid rgba(234,179,8,0.2); }
+    .badge-neutral { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.15); }
+    .gauge-ring { transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .card { background: linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9)); border: 1px solid rgba(51,65,85,0.5); border-radius: 0.875rem; backdrop-filter: blur(8px); }
+    .card-hover:hover { border-color: rgba(56,189,248,0.3); box-shadow: 0 0 20px rgba(56,189,248,0.05); }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+    .btn-primary:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+    .btn-danger { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .btn-danger:hover { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .btn-secondary { background: rgba(51,65,85,0.6); border: 1px solid rgba(71,85,105,0.5); }
+    .btn-secondary:hover { background: rgba(71,85,105,0.6); border-color: rgba(100,116,139,0.5); }
+    pre { white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; }
+    .spinner { border: 2px solid rgba(51,65,85,0.5); border-top: 2px solid #38bdf8; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    input, select, textarea { background: rgba(15,23,42,0.8); border: 1px solid rgba(71,85,105,0.5); color: #e2e8f0; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,0.15); }
+    .toast { animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1); }
+    @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .segment-drp { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+    .segment-dcp { background: rgba(168,85,247,0.1); color: #c084fc; border-color: rgba(168,85,247,0.2); }
+    .segment-dep { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.2); }
+    .segment-ntc { background: rgba(56,189,248,0.1); color: #38bdf8; border-color: rgba(56,189,248,0.2); }
+    .segment-others { background: rgba(148,163,184,0.1); color: #94a3b8; border-color: rgba(148,163,184,0.15); }
+    .collapse-enter { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .collapse-enter-active { max-height: 2000px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(71,85,105,0.5); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.6); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    // ── API ─────────────────────────────────────────────────────────────────────
+    const API = '/api/evals';
+    async function api(path, opts = {}) {
+      const res = await fetch(`${API}${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────────
+    function segmentClass(seg) {
+      if (!seg) return 'badge-neutral';
+      const s = seg.toLowerCase();
+      if (s.includes('drp')) return 'segment-drp';
+      if (s.includes('dcp')) return 'segment-dcp';
+      if (s.includes('dep')) return 'segment-dep';
+      if (s.includes('ntc')) return 'segment-ntc';
+      return 'segment-others';
+    }
+
+    function StatusIcon({ passed, size = 16 }) {
+      if (passed === true) return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1.5"/>
+          <path d="M5 8l2 2 4-4" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+      if (passed === false) return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth="1.5"/>
+          <path d="M6 6l4 4M10 6l-4 4" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      );
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" fill="rgba(148,163,184,0.1)" stroke="#64748b" strokeWidth="1.5"/>
+          <path d="M8 5v3M8 10v1" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      );
+    }
+
+    // ── Gauge ───────────────────────────────────────────────────────────────────
+    function Gauge({ label, passed, total, size = 88 }) {
+      const rate = total > 0 ? (passed / total) * 100 : 0;
+      const r = (size - 10) / 2;
+      const circ = 2 * Math.PI * r;
+      const offset = circ - (rate / 100) * circ;
+      const color = rate >= 90 ? '#22c55e' : rate >= 70 ? '#eab308' : '#ef4444';
+      const bgColor = rate >= 90 ? 'rgba(34,197,94,0.08)' : rate >= 70 ? 'rgba(234,179,8,0.08)' : 'rgba(239,68,68,0.08)';
+      return (
+        <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl" style={{background: bgColor}}>
+          <svg width={size} height={size} className="transform -rotate-90">
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(51,65,85,0.4)" strokeWidth="5" />
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="5"
+              strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" className="gauge-ring" />
+          </svg>
+          <span className="text-xl font-bold tracking-tight" style={{ color }}>{rate.toFixed(0)}%</span>
+          <span className="text-xs text-slate-400 font-medium">{label.replace(/_/g, ' ')}</span>
+          <span className="text-[10px] text-slate-500">{passed}/{total}</span>
+        </div>
+      );
+    }
+
+    // ── Toast ───────────────────────────────────────────────────────────────────
+    function Toast({ message, type, onClose }) {
+      useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, []);
+      const styles = {
+        error: 'bg-red-950/80 border-red-800/50 text-red-200',
+        success: 'bg-green-950/80 border-green-800/50 text-green-200',
+        info: 'bg-blue-950/80 border-blue-800/50 text-blue-200',
+      };
+      return (
+        <div className={`toast fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border backdrop-blur-sm ${styles[type] || styles.info} text-sm max-w-sm shadow-xl`}>
+          <div className="flex items-center gap-2">
+            <span className="flex-1">{message}</span>
+            <button onClick={onClose} className="text-white/40 hover:text-white/80 ml-2 text-lg leading-none">&times;</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Stat Card ───────────────────────────────────────────────────────────────
+    function StatCard({ label, value, color, icon }) {
+      return (
+        <div className="card card-hover p-5 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{background: `linear-gradient(90deg, transparent, ${color}, transparent)`}} />
+          <div className="text-3xl font-bold tracking-tight" style={{color}}>{value}</div>
+          <div className="text-xs text-slate-400 mt-1.5 font-medium uppercase tracking-wider">{label}</div>
+        </div>
+      );
+    }
+
+    // ── Overview ────────────────────────────────────────────────────────────────
+    function OverviewView({ report, onRunEvals, running }) {
+      if (!report) {
+        return (
+          <div className="flex flex-col items-center justify-center py-24 gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6M9 14l2 2 4-4"/></svg>
+            </div>
+            <div className="text-center">
+              <p className="text-slate-300 text-lg font-medium">No eval reports yet</p>
+              <p className="text-slate-500 text-sm mt-1">Run your first eval suite to see results here</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => onRunEvals('full')} disabled={running} className="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-all">
+                {running ? <><span className="spinner mr-2" />Running...</> : 'Run Full Evals'}
+              </button>
+              <button onClick={() => onRunEvals('code')} disabled={running} className="btn-secondary px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-all">
+                Code Only
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const codeEntries = Object.entries(report.codeEvals || {});
+      const judgeEntries = Object.entries(report.llmJudge || {});
+
+      return (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Total Cases" value={report.totalCases} color="#38bdf8" />
+            <StatCard label="Passed" value={report.passedCases} color="#22c55e" />
+            <StatCard label="Failed" value={report.failedCases} color="#ef4444" />
+            <StatCard label="Pass Rate" value={report.overallRate} color={parseFloat(report.overallRate) >= 80 ? '#22c55e' : parseFloat(report.overallRate) >= 60 ? '#eab308' : '#ef4444'} />
+          </div>
+
+          <div className="flex gap-3 items-center">
+            <button onClick={() => onRunEvals('full')} disabled={running} className="btn-primary px-5 py-2 rounded-xl text-sm font-medium disabled:opacity-50 transition-all">
+              {running ? <><span className="spinner mr-2" />Running...</> : 'Run Full Evals'}
+            </button>
+            <button onClick={() => onRunEvals('code')} disabled={running} className="btn-secondary px-5 py-2 rounded-xl text-sm font-medium disabled:opacity-50 transition-all">
+              Code Only
+            </button>
+            <span className="text-xs text-slate-500 ml-2">Last: {new Date(report.timestamp).toLocaleString()}</span>
+          </div>
+
+          {report.regressions?.length > 0 && (
+            <div className="card p-4 border-amber-700/50">
+              <div className="flex items-center gap-2 mb-2">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l7 13H1L8 1z" fill="rgba(234,179,8,0.2)" stroke="#eab308" strokeWidth="1.5"/><path d="M8 6v3M8 11v1" stroke="#eab308" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <h3 className="text-amber-400 font-semibold text-sm">Regressions Detected</h3>
+              </div>
+              {report.regressions.map((r, i) => (
+                <div key={i} className="text-sm text-amber-300/80 py-1 pl-6">{r.message}</div>
+              ))}
+            </div>
+          )}
+
+          {codeEntries.length > 0 && (
+            <div className="card p-6">
+              <h3 className="text-sm font-semibold text-slate-300 mb-5 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 11l-3-3 3-3M11 5l3 3-3 3" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Code Evals
+              </h3>
+              <div className="flex flex-wrap gap-4 justify-center">
+                {codeEntries.map(([cat, s]) => (
+                  <Gauge key={cat} label={cat} passed={s.passed} total={s.passed + s.failed} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {judgeEntries.length > 0 && (
+            <div className="card p-6">
+              <h3 className="text-sm font-semibold text-slate-300 mb-5 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                LLM Judge
+              </h3>
+              <div className="flex flex-wrap gap-4 justify-center">
+                {judgeEntries.map(([cat, s]) => (
+                  <Gauge key={cat} label={cat} passed={s.passed} total={s.passed + s.failed} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Test Case Manager ───────────────────────────────────────────────────────
+    function TestCaseView({ showToast, report }) {
+      const [cases, setCases] = useState([]);
+      const [users, setUsers] = useState([]);
+      const [segments, setSegments] = useState([]);
+      const [intents, setIntents] = useState([]);
+      const [filter, setFilter] = useState({ segment: '', search: '', status: '' });
+      const [editing, setEditing] = useState(null);
+      const [showForm, setShowForm] = useState(false);
+      const [loading, setLoading] = useState(true);
+
+      const failedIds = useMemo(() => {
+        if (!report?.failures) return new Set();
+        return new Set(report.failures.map(f => f.caseId));
+      }, [report]);
+
+      const passedIds = useMemo(() => {
+        if (!report) return new Set();
+        const all = new Set();
+        for (let i = 0; i < report.totalCases; i++) {
+          // We know total but not IDs; build from failures inverse
+        }
+        return all;
+      }, [report]);
+
+      const getCaseStatus = (caseId) => {
+        if (!report) return null; // no report = unknown
+        if (failedIds.has(caseId)) return false;
+        return true; // if there's a report and it's not in failures, it passed
+      };
+
+      const load = useCallback(async () => {
+        setLoading(true);
+        try {
+          const [ds, us, sg] = await Promise.all([api('/dataset'), api('/users'), api('/segments')]);
+          setCases(ds.cases || []);
+          setUsers(us.users || []);
+          setSegments(sg.segments || []);
+          setIntents(sg.intents || []);
+        } catch (e) { showToast(e.message, 'error'); }
+        setLoading(false);
+      }, []);
+
+      useEffect(() => { load(); }, [load]);
+
+      const filtered = cases.filter(c => {
+        if (filter.segment && c.segment !== filter.segment) return false;
+        if (filter.search && !c.id.toLowerCase().includes(filter.search.toLowerCase()) &&
+            !(c.userName || '').toLowerCase().includes(filter.search.toLowerCase())) return false;
+        if (filter.status === 'pass' && getCaseStatus(c.id) !== true) return false;
+        if (filter.status === 'fail' && getCaseStatus(c.id) !== false) return false;
+        if (filter.status === 'unknown' && getCaseStatus(c.id) !== null) return false;
+        return true;
+      });
+
+      const deleteCase = async (id) => {
+        if (!confirm(`Delete test case "${id}"?`)) return;
+        try {
+          await api(`/dataset/${id}`, { method: 'DELETE' });
+          setCases(prev => prev.filter(c => c.id !== id));
+          showToast(`Deleted ${id}`, 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const saveCase = async (tc) => {
+        try {
+          if (editing) {
+            await api(`/dataset/${tc.id}`, { method: 'PUT', body: JSON.stringify(tc) });
+            setCases(prev => prev.map(c => c.id === tc.id ? tc : c));
+            showToast(`Updated ${tc.id}`, 'success');
+          } else {
+            await api('/dataset', { method: 'POST', body: JSON.stringify(tc) });
+            setCases(prev => [...prev, tc]);
+            showToast(`Created ${tc.id}`, 'success');
+          }
+          setEditing(null);
+          setShowForm(false);
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
+
+      const passCount = cases.filter(c => getCaseStatus(c.id) === true).length;
+      const failCount = cases.filter(c => getCaseStatus(c.id) === false).length;
+
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <input type="text" placeholder="Search by ID or user..." value={filter.search}
+              onChange={e => setFilter(f => ({ ...f, search: e.target.value }))}
+              className="px-3 py-2 rounded-xl text-sm w-64" />
+            <select value={filter.segment} onChange={e => setFilter(f => ({ ...f, segment: e.target.value }))}
+              className="px-3 py-2 rounded-xl text-sm">
+              <option value="">All Segments</option>
+              {segments.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={filter.status} onChange={e => setFilter(f => ({ ...f, status: e.target.value }))}
+              className="px-3 py-2 rounded-xl text-sm">
+              <option value="">All Status</option>
+              <option value="pass">Passed</option>
+              <option value="fail">Failed</option>
+              <option value="unknown">Not Run</option>
+            </select>
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span>{filtered.length} of {cases.length}</span>
+              {report && <span className="flex items-center gap-1"><StatusIcon passed={true} size={12}/>{passCount} <StatusIcon passed={false} size={12}/>{failCount}</span>}
+            </div>
+            <button onClick={() => { setEditing(null); setShowForm(true); }}
+              className="btn-primary px-4 py-2 rounded-xl text-sm font-medium ml-auto transition-all">+ Add Test Case</button>
+          </div>
+
+          {(showForm || editing) && (
+            <TestCaseForm tc={editing} users={users} segments={segments} intents={intents}
+              onSave={saveCase} onCancel={() => { setEditing(null); setShowForm(false); }} />
+          )}
+
+          <div className="card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-800/60 text-slate-400 text-[11px] uppercase tracking-wider">
+                  <th className="px-4 py-3 text-center w-10">Status</th>
+                  <th className="px-4 py-3 text-left">ID</th>
+                  <th className="px-4 py-3 text-left">Segment</th>
+                  <th className="px-4 py-3 text-left">User</th>
+                  <th className="px-4 py-3 text-center">Turns</th>
+                  <th className="px-4 py-3 text-left">Intent</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(c => {
+                  const status = getCaseStatus(c.id);
+                  return (
+                    <tr key={c.id} className="border-t border-slate-700/50 hover:bg-slate-800/30 transition-colors">
+                      <td className="px-4 py-2.5 text-center"><StatusIcon passed={status} /></td>
+                      <td className="px-4 py-2.5 font-mono text-xs text-sky-300">{c.id}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${segmentClass(c.segment)}`}>{c.segment}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-300">{c.userName || c.user}</td>
+                      <td className="px-4 py-2.5 text-center text-slate-400">{c.turns?.length || 0}</td>
+                      <td className="px-4 py-2.5 text-[11px] text-slate-500 font-mono">{c.turns?.[0]?.intentTag?.replace('INTENT_', '') || '-'}</td>
+                      <td className="px-4 py-2.5 text-right space-x-3">
+                        <button onClick={() => { setEditing(c); setShowForm(false); }}
+                          className="text-xs text-sky-400 hover:text-sky-300 transition-colors">Edit</button>
+                        <button onClick={() => deleteCase(c.id)}
+                          className="text-xs text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-slate-500 text-sm">No test cases match your filters.</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Test Case Form ──────────────────────────────────────────────────────────
+    function TestCaseForm({ tc, users, segments, intents, onSave, onCancel }) {
+      const [form, setForm] = useState(() => tc ? { ...tc } : {
+        id: '', user: '', userName: '', segment: '', turns: [{ userMessage: '', intentTag: '', messageCount: 1 }],
+        expectedBehaviors: [''],
+      });
+      const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+      const setTurn = (i, k, v) => { const turns = [...form.turns]; turns[i] = { ...turns[i], [k]: v }; set('turns', turns); };
+      const addTurn = () => set('turns', [...form.turns, { userMessage: '', messageCount: form.turns.length + 1 }]);
+      const removeTurn = (i) => set('turns', form.turns.filter((_, j) => j !== i).map((t, j) => ({ ...t, messageCount: j + 1 })));
+      const setBehavior = (i, v) => { const b = [...form.expectedBehaviors]; b[i] = v; set('expectedBehaviors', b); };
+      const addBehavior = () => set('expectedBehaviors', [...form.expectedBehaviors, '']);
+      const removeBehavior = (i) => set('expectedBehaviors', form.expectedBehaviors.filter((_, j) => j !== i));
+      const selectUser = (leadRefId) => {
+        const u = users.find(u => u.leadRefId === leadRefId);
+        if (u) { set('user', u.leadRefId); set('userName', `${u.firstName} ${u.lastName}`); set('segment', u.segment); }
+      };
+      const submit = (e) => {
+        e.preventDefault();
+        const clean = { ...form, turns: form.turns.filter(t => t.userMessage.trim()), expectedBehaviors: form.expectedBehaviors.filter(b => b.trim()) };
+        if (!clean.id || !clean.user || !clean.segment || !clean.turns.length) { alert('Please fill in ID, User, Segment, and at least one turn.'); return; }
+        onSave(clean);
+      };
+      return (
+        <form onSubmit={submit} className="card p-6 space-y-5">
+          <h3 className="text-sm font-semibold text-slate-200">{tc ? 'Edit Test Case' : 'New Test Case'}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">ID</label>
+              <input value={form.id} onChange={e => set('id', e.target.value)} disabled={!!tc}
+                className="w-full px-3 py-2 rounded-xl text-sm disabled:opacity-50" placeholder="drp-eligible-stress-001" />
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">User</label>
+              <select value={form.user} onChange={e => selectUser(e.target.value)} className="w-full px-3 py-2 rounded-xl text-sm">
+                <option value="">Select user...</option>
+                {users.map(u => (<option key={u.leadRefId} value={u.leadRefId}>{u.firstName} {u.lastName} ({u.segment})</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Segment</label>
+              <select value={form.segment} onChange={e => set('segment', e.target.value)} className="w-full px-3 py-2 rounded-xl text-sm">
+                <option value="">Select...</option>
+                {segments.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">Turns</label>
+            {form.turns.map((t, i) => (
+              <div key={i} className="flex gap-2 mb-2 items-start">
+                <span className="text-xs text-slate-500 mt-2.5 w-6 text-right">{i + 1}.</span>
+                <input value={t.userMessage} onChange={e => setTurn(i, 'userMessage', e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="User message..." />
+                {i === 0 && (
+                  <select value={t.intentTag || ''} onChange={e => setTurn(i, 'intentTag', e.target.value)}
+                    className="px-3 py-2 rounded-xl text-sm w-56">
+                    <option value="">No intent</option>
+                    {intents.map(it => <option key={it} value={it}>{it}</option>)}
+                  </select>
+                )}
+                {form.turns.length > 1 && (
+                  <button type="button" onClick={() => removeTurn(i)} className="text-red-400 hover:text-red-300 text-sm mt-2">&times;</button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={addTurn} className="text-xs text-sky-400 hover:text-sky-300 mt-1">+ Add turn</button>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">Expected Behaviors</label>
+            {form.expectedBehaviors.map((b, i) => (
+              <div key={i} className="flex gap-2 mb-2">
+                <input value={b} onChange={e => setBehavior(i, e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="e.g., mentions FREED Shield" />
+                <button type="button" onClick={() => removeBehavior(i)} className="text-red-400 hover:text-red-300 text-sm">&times;</button>
+              </div>
+            ))}
+            <button type="button" onClick={addBehavior} className="text-xs text-sky-400 hover:text-sky-300 mt-1">+ Add behavior</button>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="submit" className="btn-primary px-5 py-2 rounded-xl text-sm font-medium transition-all">
+              {tc ? 'Save Changes' : 'Create Test Case'}
+            </button>
+            <button type="button" onClick={onCancel} className="btn-secondary px-5 py-2 rounded-xl text-sm transition-all">Cancel</button>
+          </div>
+        </form>
+      );
+    }
+
+    // ── Trace Viewer ────────────────────────────────────────────────────────────
+    function TraceView({ showToast, report }) {
+      const [cases, setCases] = useState([]);
+      const [selectedCase, setSelectedCase] = useState(null);
+      const [trace, setTrace] = useState(null);
+      const [result, setResult] = useState(null);
+      const [runningCase, setRunningCase] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [sidebarSearch, setSidebarSearch] = useState('');
+
+      const failedIds = useMemo(() => new Set((report?.failures || []).map(f => f.caseId)), [report]);
+
+      useEffect(() => {
+        api('/dataset').then(d => { setCases(d.cases || []); setLoading(false); }).catch(e => {
+          showToast(e.message, 'error'); setLoading(false);
+        });
+      }, []);
+
+      const loadTrace = async (caseId) => {
+        setSelectedCase(caseId);
+        setTrace(null);
+        setResult(null);
+        try {
+          const data = await api(`/traces/${caseId}`);
+          setTrace(data.trace);
+          setResult(data.result);
+        } catch (e) {
+          setTrace(null);
+          setResult(null);
+        }
+      };
+
+      const runSingle = async (caseId) => {
+        setRunningCase(caseId);
+        try {
+          const data = await api(`/run/single/${caseId}`, { method: 'POST' });
+          setResult(data.result);
+          showToast(`${caseId}: ${data.result.allPassed ? 'PASSED' : 'FAILED'}`, data.result.allPassed ? 'success' : 'error');
+          try { const td = await api(`/traces/${caseId}`); setTrace(td.trace); setResult(td.result); } catch {}
+        } catch (e) { showToast(e.message, 'error'); }
+        setRunningCase(null);
+      };
+
+      const filteredCases = cases.filter(c =>
+        !sidebarSearch || c.id.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
+        (c.userName || '').toLowerCase().includes(sidebarSearch.toLowerCase())
+      );
+
+      if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
+
+      return (
+        <div className="flex gap-4 h-[calc(100vh-140px)]">
+          <div className="w-80 shrink-0 card overflow-hidden flex flex-col">
+            <div className="p-3 border-b border-slate-700/50">
+              <input value={sidebarSearch} onChange={e => setSidebarSearch(e.target.value)}
+                placeholder="Filter cases..." className="w-full px-3 py-1.5 rounded-lg text-xs" />
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {filteredCases.map(c => {
+                const status = report ? (failedIds.has(c.id) ? false : true) : null;
+                return (
+                  <button key={c.id} onClick={() => loadTrace(c.id)}
+                    className={`w-full text-left px-3 py-2.5 text-sm border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors flex items-center gap-2.5 ${selectedCase === c.id ? 'bg-slate-800/60 border-l-2 border-l-sky-400' : ''}`}>
+                    <StatusIcon passed={status} size={14} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono text-[11px] text-sky-300 truncate">{c.id}</div>
+                      <div className="text-[10px] text-slate-500">{c.segment}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex-1 card overflow-y-auto">
+            {!selectedCase ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 15l5 5M10 17a7 7 0 110-14 7 7 0 010 14z"/></svg>
+                <span className="text-sm">Select a test case to view its trace</span>
+              </div>
+            ) : (
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <h3 className="font-semibold text-slate-200 text-lg">{selectedCase}</h3>
+                  <button onClick={() => runSingle(selectedCase)} disabled={!!runningCase}
+                    className="btn-primary px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 transition-all">
+                    {runningCase === selectedCase ? <><span className="spinner mr-1" style={{width:12,height:12}} />Running...</> : 'Re-run'}
+                  </button>
+                  {result && (
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${result.allPassed ? 'badge-pass' : 'badge-fail'}`}>
+                      {result.allPassed ? 'PASSED' : 'FAILED'}
+                    </span>
+                  )}
+                </div>
+
+                {!result && !trace && (
+                  <div className="card p-8 text-center text-slate-500">
+                    <p className="text-sm">No trace data available for this case.</p>
+                    <p className="text-xs mt-1">Run the eval to generate a trace.</p>
+                  </div>
+                )}
+
+                {result && (
+                  <div className="space-y-4">
+                    {result.expectedBehaviors?.length > 0 && (
+                      <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
+                        <h4 className="text-[11px] text-slate-400 font-medium uppercase tracking-wider mb-2">Expected Behaviors</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {result.expectedBehaviors.map((b, i) => (
+                            <span key={i} className="badge-neutral px-2 py-0.5 rounded-md text-[11px]">{b}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {result.turns?.map((t, i) => (
+                      <div key={i} className="bg-slate-900/50 rounded-xl border border-slate-700/30 overflow-hidden">
+                        <div className="px-4 py-3 bg-slate-800/30 border-b border-slate-700/30 flex items-center gap-2">
+                          <span className="text-xs font-medium text-slate-400">Turn {i + 1}</span>
+                          <span className="text-xs text-slate-500">|</span>
+                          <span className="text-sm text-slate-200">{t.userMessage}</span>
+                        </div>
+                        {t.response && (
+                          <div className="p-4 space-y-3">
+                            <pre className="bg-slate-950/50 rounded-lg p-3 text-xs text-slate-300 max-h-72 overflow-y-auto leading-relaxed border border-slate-800/50">{t.response.reply}</pre>
+                            {t.response.followUps?.length > 0 && (
+                              <div>
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wider">Follow-ups</span>
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {t.response.followUps.map((f, j) => (
+                                    <span key={j} className="px-2 py-1 rounded-lg text-[11px] bg-slate-800/50 text-slate-400 border border-slate-700/30">{f}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {t.response.redirectUrl && (
+                              <div className="text-xs text-slate-500">
+                                <span className="text-[10px] uppercase tracking-wider">Redirect:</span> <span className="text-sky-400 font-mono">{t.response.redirectUrl}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {t.codeEvals?.length > 0 && (
+                          <div className="px-4 py-3 border-t border-slate-700/30 bg-slate-800/20">
+                            <div className="flex flex-wrap gap-1.5">
+                              {t.codeEvals.map((e, j) => (
+                                <span key={j} className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${e.passed ? 'badge-pass' : 'badge-fail'}`}
+                                  title={e.details || ''}>
+                                  {e.evalName}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {t.error && <div className="px-4 py-2 text-red-400 text-xs bg-red-950/20">Error: {t.error}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {trace && typeof trace === 'string' && (
+                  <details className="mt-4" open={!result}>
+                    <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-300 mb-2">Raw Trace Output</summary>
+                    <pre className="bg-slate-950/50 rounded-xl p-4 text-[11px] text-slate-400 overflow-x-auto border border-slate-800/50">{trace}</pre>
+                  </details>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Enhanced Failure Analysis ────────────────────────────────────────────────
+    function FailureView({ report }) {
+      const [expanded, setExpanded] = useState({});
+
+      if (!report || !report.failures?.length) {
+        return (
+          <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-500">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+            <span className="text-sm">{report ? 'No failures in the latest report.' : 'No reports available. Run evals first.'}</span>
+          </div>
+        );
+      }
+
+      const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+
+      // Group failures by eval type
+      const groups = {};
+      for (const f of report.failures) {
+        for (const eval_ of [...f.failedCodeEvals, ...f.failedJudgeEvals]) {
+          if (!groups[eval_]) groups[eval_] = { cases: [], isJudge: f.failedJudgeEvals.includes(eval_) };
+          groups[eval_].cases.push(f);
+        }
+      }
+      const sortedGroups = Object.entries(groups).sort((a, b) => b[1].cases.length - a[1].cases.length);
+
+      // Category descriptions
+      const evalDescriptions = {
+        no_jargon: 'Response contains technical jargon (FOIR, DPD, delinquent, utilization) that users may not understand. The bot should use plain language equivalents.',
+        segment_isolation: 'Response mentions programs/features from a different segment. Critical: DRP users should never see DCP content, and vice versa.',
+        credit_score_accuracy: 'Credit score mentioned in response does not match the user\'s actual score from the data source.',
+        lender_accuracy: 'Response mentions a lender name not found in the user\'s account list.',
+        amount_accuracy: 'A rupee amount in the response doesn\'t match any known value from the user\'s data (within 5% tolerance).',
+        follow_up_quality: 'Follow-up suggestions don\'t meet quality criteria: must have exactly 3, each 8-100 chars, no generic patterns.',
+        user_name_mentioned: 'The bot\'s first response doesn\'t address the user by their first name.',
+        no_em_dashes: 'Response contains em dashes, en dashes, or double hyphens which should be avoided.',
+        redirect_correctness: 'Redirect URL doesn\'t match the allowed routes for this segment.',
+        no_false_no_loans: 'Response claims user has no loans/debt when they actually have active accounts.',
+        no_business_loan_leak: 'A credit card lender was mislabeled as a business loan provider.',
+        personalization: 'Response doesn\'t reference enough specific data points from the user\'s profile. Should feel tailored, not generic.',
+        empathy: 'Response lacks emotional acknowledgment for stress/harassment situations. Should be warm and supportive.',
+        actionability: 'Response describes the situation but doesn\'t give clear, actionable next steps the user can take.',
+        coherence: 'In multi-turn conversation, response repeats information or ignores prior context.',
+        program_pitch: 'FREED program introduction feels forced, pushy, or unjustified given the user\'s situation.',
+      };
+
+      const reproSteps = (f) => {
+        const steps = [
+          `1. Open the chatbot with user: ${f.userName} (${f.segment})`,
+          `2. Navigate to: http://localhost:3001/?eval=true`,
+          `3. Enter the user's name to start the conversation`,
+        ];
+        const tc = report.failures.find(x => x.caseId === f.caseId);
+        if (tc) {
+          steps.push(`4. Case ID: ${f.caseId}`);
+          steps.push(`5. Run: npm run eval -- ${f.caseId}`);
+        }
+        return steps;
+      };
+
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-200">Failure Analysis</h2>
+              <p className="text-sm text-slate-400 mt-0.5">{report.failures.length} failing cases across {sortedGroups.length} eval categories</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setExpanded({})} className="btn-secondary px-3 py-1.5 rounded-lg text-xs transition-all">Collapse All</button>
+              <button onClick={() => {
+                const all = {};
+                sortedGroups.forEach(([name]) => { all[name] = true; });
+                setExpanded(all);
+              }} className="btn-secondary px-3 py-1.5 rounded-lg text-xs transition-all">Expand All</button>
+            </div>
+          </div>
+
+          {sortedGroups.map(([evalName, group]) => {
+            const isOpen = expanded[evalName];
+            const isJudge = group.isJudge;
+            return (
+              <div key={evalName} className="card overflow-hidden">
+                <button onClick={() => toggle(evalName)}
+                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-slate-800/30 transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                    className={`transform transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                    <path d="M5 3l4 4-4 4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${isJudge ? 'badge-warn' : 'badge-fail'}`}>
+                    {group.cases.length}
+                  </span>
+                  <span className="font-semibold text-slate-200 text-sm flex-1">{evalName}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wider ${isJudge ? 'badge-warn' : 'badge-fail'}`}>
+                    {isJudge ? 'LLM Judge' : 'Code Eval'}
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-slate-700/30">
+                    {evalDescriptions[evalName] && (
+                      <div className="px-5 py-3 bg-slate-800/20 border-b border-slate-700/30">
+                        <p className="text-xs text-slate-400 leading-relaxed">{evalDescriptions[evalName]}</p>
+                      </div>
+                    )}
+
+                    <div className="divide-y divide-slate-700/30">
+                      {group.cases.map((c, i) => {
+                        const caseKey = `${evalName}-${c.caseId}`;
+                        const caseOpen = expanded[caseKey];
+                        const relevantDetails = c.details?.filter(d =>
+                          d.toLowerCase().includes(evalName.toLowerCase())
+                        ) || [];
+                        // If no relevant details, show all details
+                        const displayDetails = relevantDetails.length > 0 ? relevantDetails : (c.details || []);
+
+                        return (
+                          <div key={i}>
+                            <button onClick={() => toggle(caseKey)}
+                              className="w-full text-left px-5 py-3 flex items-center gap-3 hover:bg-slate-800/20 transition-colors">
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                                className={`transform transition-transform ${caseOpen ? 'rotate-90' : ''}`}>
+                                <path d="M3.5 2l3.5 3-3.5 3" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <StatusIcon passed={false} size={14} />
+                              <span className="font-mono text-xs text-sky-300">{c.caseId}</span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] border ${segmentClass(c.segment)}`}>{c.segment}</span>
+                              <span className="text-xs text-slate-500">{c.userName}</span>
+                              <span className="text-[10px] text-slate-600 ml-auto">
+                                {[...c.failedCodeEvals, ...c.failedJudgeEvals].length} failures
+                              </span>
+                            </button>
+
+                            {caseOpen && (
+                              <div className="px-5 pb-4 pl-12 space-y-3">
+                                {/* All failed evals for this case */}
+                                <div>
+                                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">All Failed Evals</span>
+                                  <div className="flex flex-wrap gap-1.5 mt-1">
+                                    {c.failedCodeEvals.map((e, j) => (
+                                      <span key={`c-${j}`} className="badge-fail px-2 py-0.5 rounded-md text-[11px] font-medium">{e}</span>
+                                    ))}
+                                    {c.failedJudgeEvals.map((e, j) => (
+                                      <span key={`j-${j}`} className="badge-warn px-2 py-0.5 rounded-md text-[11px] font-medium">{e}</span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Failure details */}
+                                {displayDetails.length > 0 && (
+                                  <div>
+                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">What Went Wrong</span>
+                                    <div className="mt-1 space-y-1">
+                                      {displayDetails.map((d, j) => (
+                                        <div key={j} className="text-xs text-slate-400 bg-slate-900/50 rounded-lg px-3 py-2 border border-slate-800/50 leading-relaxed">
+                                          {d}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Reproduction steps */}
+                                <div>
+                                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">How to Reproduce</span>
+                                  <div className="mt-1 bg-slate-900/50 rounded-lg px-3 py-2 border border-slate-800/50">
+                                    {reproSteps(c).map((s, j) => (
+                                      <div key={j} className="text-[11px] text-slate-400 py-0.5 font-mono">{s}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ── Reports History ─────────────────────────────────────────────────────────
+    function ReportsView({ showToast }) {
+      const [reports, setReports] = useState([]);
+      const [selected, setSelected] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        api('/reports').then(d => { setReports(d.reports || []); setLoading(false); }).catch(e => {
+          showToast(e.message, 'error'); setLoading(false);
+        });
+      }, []);
+
+      const loadReport = async (filename) => {
+        try { const data = await api(`/reports/${filename}`); setSelected(data.report); }
+        catch (e) { showToast(e.message, 'error'); }
+      };
+
+      if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
+
+      return (
+        <div className="space-y-4">
+          {reports.length === 0 ? (
+            <div className="text-center py-20 text-slate-500 text-sm">No reports yet. Run evals to generate reports.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="card overflow-y-auto max-h-[70vh]">
+                <div className="p-3 border-b border-slate-700/50">
+                  <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reports ({reports.length})</h3>
+                </div>
+                {reports.map(r => (
+                  <button key={r} onClick={() => loadReport(r)}
+                    className={`w-full text-left px-3 py-2.5 text-xs border-b border-slate-800/50 hover:bg-slate-800/40 font-mono transition-colors ${selected?.timestamp && r.includes(selected.timestamp.replace(/[:.]/g, '-')) ? 'bg-slate-800/60 border-l-2 border-l-sky-400' : ''}`}>
+                    {r.replace('report-', '').replace('.json', '')}
+                  </button>
+                ))}
+              </div>
+              <div className="md:col-span-3">
+                {selected ? (
+                  <OverviewView report={selected} onRunEvals={() => {}} running={false} />
+                ) : (
+                  <div className="card flex items-center justify-center h-64 text-slate-500 text-sm">Select a report to view</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── App ─────────────────────────────────────────────────────────────────────
+    function App() {
+      const [tab, setTab] = useState('overview');
+      const [report, setReport] = useState(null);
+      const [running, setRunning] = useState(false);
+      const [toast, setToast] = useState(null);
+
+      const showToast = useCallback((message, type = 'info') => {
+        setToast({ message, type, key: Date.now() });
+      }, []);
+
+      useEffect(() => {
+        api('/reports/latest').then(d => setReport(d.report)).catch(() => {});
+      }, []);
+
+      const runEvals = async (type) => {
+        setRunning(true);
+        showToast(`Starting ${type} eval run...`, 'info');
+        try {
+          const endpoint = type === 'code' ? '/run/code' : '/run';
+          const data = await api(endpoint, { method: 'POST' });
+          setReport(data.report);
+          showToast(
+            `Complete: ${data.report.passedCases}/${data.report.totalCases} passed (${data.report.overallRate})`,
+            data.report.failedCases > 0 ? 'error' : 'success'
+          );
+        } catch (e) { showToast(e.message, 'error'); }
+        setRunning(false);
+      };
+
+      const tabs = [
+        { id: 'overview', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+        { id: 'cases', label: 'Test Cases', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6' },
+        { id: 'traces', label: 'Traces', icon: 'M15 15l5 5M10 17a7 7 0 110-14 7 7 0 010 14z' },
+        { id: 'failures', label: 'Failures', badge: report?.failedCases },
+        { id: 'reports', label: 'Reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+      ];
+
+      return (
+        <div className="min-h-screen">
+          {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+          <header className="border-b border-slate-700/50 bg-slate-900/30 backdrop-blur-xl sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">F</span>
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-white">FREED</span>
+                  <span className="text-sm text-slate-400 ml-1.5">Eval Dashboard</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                {report && <span>Last run: {new Date(report.timestamp).toLocaleString()}</span>}
+                {running && <><span className="spinner" /><span className="text-sky-400">Running...</span></>}
+              </div>
+            </div>
+            <nav className="max-w-7xl mx-auto px-6 flex gap-1">
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${tab === t.id ? 'tab-active' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'}`}>
+                  {t.label}
+                  {t.id === 'failures' && t.badge > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-red-500/20 text-red-400 font-bold">{t.badge}</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-6 py-6">
+            {tab === 'overview' && <OverviewView report={report} onRunEvals={runEvals} running={running} />}
+            {tab === 'cases' && <TestCaseView showToast={showToast} report={report} />}
+            {tab === 'traces' && <TraceView showToast={showToast} report={report} />}
+            {tab === 'failures' && <FailureView report={report} />}
+            {tab === 'reports' && <ReportsView showToast={showToast} />}
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

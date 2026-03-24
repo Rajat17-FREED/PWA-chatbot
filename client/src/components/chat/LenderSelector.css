@@ -1,5 +1,5 @@
 .freed-lender-selector {
-  margin-left: 40px;
+  margin-left: 38px;
   margin-right: 12px;
   margin-top: 10px;
   animation: lenderSelectorFadeIn 0.35s ease-out;
@@ -45,6 +45,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+  box-shadow: 0 1px 2px rgba(27, 43, 101, 0.03);
 }
 
 .freed-lender-selector__option:hover {
@@ -123,6 +124,7 @@
   color: var(--text-muted);
 }
 
+/* Submit button — FREED navy CTA style */
 .freed-lender-selector__submit {
   display: block;
   width: 100%;
@@ -140,7 +142,7 @@
 }
 
 .freed-lender-selector__submit:hover:not(:disabled) {
-  background: var(--freed-navy-dark, #141E4A);
+  background: var(--freed-navy-dark);
 }
 
 .freed-lender-selector__submit:disabled {

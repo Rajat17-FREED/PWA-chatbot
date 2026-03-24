@@ -493,6 +493,7 @@ function applyGroundingCorrections(reply: string, grounding?: ResponseGroundingC
   corrected = normalizeCardAccountMentions(corrected, grounding);
   corrected = enforceKnownCreditScore(corrected, grounding);
   corrected = stripUnknownLenderClaims(corrected, grounding);
+  corrected = fixSettlementSameAmount(corrected);
 
   return corrected;
 }
@@ -940,6 +941,26 @@ function correctLenderAmountMismatches(reply: string, grounding: ResponseGroundi
   }
 
   return corrected;
+}
+
+/**
+ * Detect and fix settlement examples where the LLM outputs the same amount for
+ * both original debt and settlement (e.g. "reduce ₹2,00,214 to ₹2,00,214").
+ * Computes the correct 45% settlement amount.
+ */
+function fixSettlementSameAmount(reply: string): string {
+  // Pattern: "₹X ... to ... ₹Y" in settlement context where X === Y
+  const settlementPattern = /(₹\s?[\d,]+)\s*(?:to\s+(?:an\s+)?(?:estimated\s+)?(?:around\s+)?)(₹\s?[\d,]+)/gi;
+  return reply.replace(settlementPattern, (match, origToken: string, settledToken: string) => {
+    const origVal = parseINR(origToken);
+    const settledVal = parseINR(settledToken);
+    if (origVal === null || settledVal === null) return match;
+    // Only fix when both amounts are identical (the bug case)
+    if (origVal !== settledVal) return match;
+    // Compute 45% settlement
+    const correctSettlement = Math.round(origVal * 0.45);
+    return match.replace(settledToken, formatINR(correctSettlement));
+  });
 }
 
 function determineExpectedFormatMode(userMessage: string, history: ChatMessage[], advisorContext?: AdvisorContext): StructuredFormatMode {
@@ -1827,6 +1848,20 @@ async function finalizeStructuredTurn(
         }, input.grounding);
       }
     }
+  }
+
+  // ── Follow-up decay: reduce follow-ups as conversation deepens ──
+  // Early messages (1-4): full 3 follow-ups to guide exploration
+  // Mid conversation (5-6): 2 follow-ups — user has context, fewer nudges needed
+  // Deep conversation (7-8): 1 follow-up — by now the solution has been pitched
+  // Very deep (9+): 0 follow-ups — only the redirect CTA remains
+  const depth = input.messageCount ?? input.history.length;
+  if (depth >= 9) {
+    turn = { ...turn, followUps: [] };
+  } else if (depth >= 7) {
+    turn = { ...turn, followUps: turn.followUps.slice(0, 1) };
+  } else if (depth >= 5) {
+    turn = { ...turn, followUps: turn.followUps.slice(0, 2) };
   }
 
   return renderStructuredTurn(turn);

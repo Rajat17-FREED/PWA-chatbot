@@ -11,7 +11,12 @@
     "audit:credit-reports": "tsx src/scripts/auditCreditReports.ts",
     "verify:structured": "tsx src/scripts/verifyStructuredPipeline.ts",
     "verify:grounding": "tsx src/scripts/verifyGroundingAllUsers.ts",
-    "simulate:dhanraj": "tsx src/scripts/simulateDhanraj.ts"
+    "simulate:dhanraj": "tsx src/scripts/simulateDhanraj.ts",
+    "eval": "tsx src/evals/runAllEvals.ts",
+    "eval:code": "tsx src/evals/runCodeEvals.ts",
+    "eval:judge": "tsx src/evals/runLlmJudge.ts",
+    "eval:trace": "tsx src/evals/runTrace.ts",
+    "eval:report": "tsx src/evals/runReport.ts"
   },
   "keywords": [],
   "author": "",
