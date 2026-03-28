@@ -1,0 +1,22 @@
+.yt-widget {
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(27, 43, 101, 0.1);
+}
+
+.yt-widget__frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  display: block;
+}
+
+.yt-widget__title {
+  padding: 10px 14px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--freed-navy, #1b2b65);
+}

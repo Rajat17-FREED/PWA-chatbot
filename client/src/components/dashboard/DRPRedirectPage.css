@@ -1,0 +1,349 @@
+.drp-page {
+  min-height: 100%;
+  padding: 10px 14px 18px;
+  background:
+    radial-gradient(circle at top, rgba(254, 244, 238, 0.95), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+}
+
+.drp-page__topbar {
+  display: grid;
+  grid-template-columns: 24px 1fr 28px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.drp-page__back {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--freed-navy);
+  cursor: pointer;
+}
+
+.drp-page__logo {
+  height: 30px;
+  width: auto;
+}
+
+.drp-page__locale-pill {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(27, 43, 101, 0.08);
+  color: #61718a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.drp-page__progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 0 4px;
+}
+
+.drp-page__progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.drp-page__progress-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid #cfd6e2;
+  background: #fff;
+}
+
+.drp-page__progress-step--active .drp-page__progress-dot {
+  border-color: #2f68b5;
+  box-shadow: inset 0 0 0 4px #2f68b5;
+}
+
+.drp-page__progress-step small {
+  color: #5f7cb2;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.drp-page__progress-line {
+  flex: 1;
+  height: 2px;
+  margin-top: 6px;
+  background: #d9dee8;
+}
+
+.drp-page__score-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(57, 108, 173, 0.55);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(27, 43, 101, 0.06);
+}
+
+.drp-page__score-card strong {
+  display: block;
+  font-size: 14px;
+  color: #32404f;
+}
+
+.drp-page__score-card span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #8b97aa;
+}
+
+.drp-page__score-value {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.drp-page__hero {
+  padding: 18px 12px 10px;
+  text-align: center;
+}
+
+.drp-page__hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.drp-page__hero-kicker span {
+  width: 28px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #5b87c7, transparent);
+}
+
+.drp-page__hero-kicker strong {
+  color: var(--freed-navy);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+}
+
+.drp-page__hero-copy {
+  font-size: 18px;
+  color: #4e586b;
+}
+
+.drp-page__hero-amount {
+  margin-top: 8px;
+  font-size: 52px;
+  line-height: 1;
+  font-weight: 900;
+  color: #20c26b;
+}
+
+.drp-page__settlement-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(47, 104, 181, 0.7);
+  background: #fff;
+  color: #2462a9;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drp-page__settlement-chevron {
+  transition: transform 0.18s ease;
+}
+
+.drp-page__settlement-chevron--open {
+  transform: rotate(90deg);
+}
+
+.drp-page__settlement-body {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(27, 43, 101, 0.05);
+  font-size: 13px;
+  line-height: 1.55;
+  color: #61718a;
+  text-align: left;
+}
+
+.drp-page__trust {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.drp-page__trust h2 {
+  font-size: 27px;
+  line-height: 1.08;
+  color: var(--freed-navy);
+}
+
+.drp-page__trust p {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #7d889b;
+}
+
+.drp-page__accounts {
+  margin-top: 18px;
+  padding: 18px 12px 12px;
+  border-radius: 26px 26px 0 0;
+  background: #eef1f6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.drp-page__accounts h3 {
+  font-size: 28px;
+  line-height: 1.05;
+  color: #303a49;
+}
+
+.drp-page__toggle {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.drp-page__toggle-btn {
+  min-width: 92px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #f28d54;
+  background: #fff;
+  color: #5d6779;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drp-page__toggle-btn--active {
+  background: linear-gradient(180deg, #ff9a4f 0%, #ff7d28 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+.drp-page__account-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.drp-page__account-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(27, 43, 101, 0.05);
+}
+
+.drp-page__account-card--empty {
+  align-items: flex-start;
+}
+
+.drp-page__account-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff6b3d 0%, #f0f4fb 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drp-page__account-logo span {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid #ef4d36;
+  display: block;
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.drp-page__account-copy {
+  flex: 1;
+}
+
+.drp-page__account-copy strong {
+  display: block;
+  font-size: 15px;
+  color: #344255;
+}
+
+.drp-page__account-copy span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8a94a7;
+}
+
+.drp-page__account-values {
+  text-align: right;
+}
+
+.drp-page__account-values small {
+  display: block;
+  font-size: 10px;
+  color: #8d98aa;
+}
+
+.drp-page__account-strike {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #7a879a;
+  text-decoration: line-through;
+}
+
+.drp-page__account-values strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 22px;
+  line-height: 1;
+  color: #20c26b;
+}
+
+.drp-page__account-values--muted strong {
+  font-size: 13px;
+  color: #546173;
+}
+
+.drp-page__footer {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 0 6px;
+  background: linear-gradient(180deg, rgba(246, 247, 251, 0) 0%, #f6f7fb 26%, #f6f7fb 100%);
+}
+
+.drp-page__cta {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: var(--freed-navy);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(27, 43, 101, 0.18);
+  cursor: pointer;
+}

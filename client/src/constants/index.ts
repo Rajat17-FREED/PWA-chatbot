@@ -14,7 +14,31 @@ export const COLORS = {
   error: '#EF4444',
 };
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+function resolveApiBase(): string {
+  const envApiUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (typeof window === 'undefined') {
+    return envApiUrl || 'http://localhost:3001';
+  }
+
+  const host = window.location.hostname;
+  const isLocalFrontend = host === 'localhost' || host === '127.0.0.1';
+  const isTunnelUrl = !!envApiUrl && /devtunnels\.ms|ngrok|trycloudflare\.com/i.test(envApiUrl);
+
+  // Local frontend sessions should talk to the local API by default.
+  // This avoids stale tunnel URLs silently breaking login and chat.
+  if (isLocalFrontend && (!envApiUrl || isTunnelUrl)) {
+    return 'http://localhost:3001';
+  }
+
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+
+  return `${window.location.protocol}//${window.location.host}`;
+}
+
+export const API_BASE = resolveApiBase();
 
 export const SEGMENT_LABELS: Record<string, string> = {
   DRP_Eligible: 'Debt Resolution',

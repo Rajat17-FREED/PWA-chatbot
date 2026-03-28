@@ -1,0 +1,77 @@
+.carousel-widget {
+  width: 100%;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.carousel-widget__scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 12px;
+  scrollbar-width: none;
+}
+
+.carousel-widget__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-widget__card {
+  flex: 0 0 78%;
+  scroll-snap-align: start;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid rgba(27, 43, 101, 0.08);
+  box-shadow: 0 6px 16px rgba(27, 43, 101, 0.06);
+}
+
+.carousel-widget__card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  color: #ef4444;
+}
+
+.carousel-widget__card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--freed-navy, #1b2b65);
+  margin-bottom: 6px;
+}
+
+.carousel-widget__card-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #61718a;
+}
+
+.carousel-widget__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.carousel-widget__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #d1d5db;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+
+.carousel-widget__dot--active {
+  width: 16px;
+  background: var(--freed-navy, #1b2b65);
+}

@@ -1,21 +1,11 @@
 import { createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useAuth } from '../../context/AuthContext';
 import AccountTooltip from './AccountTooltip';
 import LenderSelector from './LenderSelector';
-import type { MessageTooltips, TooltipGroup, LenderSelector as LenderSelectorType } from '../../types';
+import RedirectionWidget from './RedirectionWidget';
+import InlineWidgetRenderer from './InlineWidgetRenderer';
+import type { MessageTooltips, TooltipGroup, LenderSelector as LenderSelectorType, InlineWidget } from '../../types';
 import './MessageBubble.css';
-
-// Map route URLs to dashboard tab actions
-const REDIRECT_TAB_MAP: Record<string, string> = {
-  '/dep': 'program',
-  '/drp': 'program',
-  '/dcp': 'program',
-  '/credit-score': 'home',
-  '/goal-tracker': 'savings',
-  '/freed-shield': 'shield',
-  '/dispute': 'shield',
-};
 
 // ── Contexts ──────────────────────────────────────────────────────────────────
 // ParagraphTextContext: the plain-text content of the current <p> element.
@@ -132,8 +122,27 @@ function resolveTooltipGroup(
 // ── Custom ReactMarkdown components (static — defined outside component) ──────
 // These read from the two contexts above; no closures over props.
 
+const YOUTUBE_MARKER_RE = /^\{\{youtube:([a-zA-Z0-9_-]+)\}\}$/;
+
 const ParagraphComponent = ({ children }: any) => {
   const text = extractText(children);
+
+  // Detect {{youtube:VIDEO_ID}} marker — render inline iframe instead of <p>
+  const ytMatch = text.trim().match(YOUTUBE_MARKER_RE);
+  if (ytMatch) {
+    const videoId = ytMatch[1];
+    return (
+      <div className="freed-message__inline-video">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`}
+          title="Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+
   return (
     <ParagraphTextContext.Provider value={text}>
       <p className="freed-message__text">{children}</p>
@@ -215,6 +224,7 @@ interface MessageBubbleProps {
   followUps?: string[];
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelectorType;
+  inlineWidgets?: InlineWidget[];
   isLatest?: boolean;
   onFollowUpClick?: (text: string) => void;
 }
@@ -228,29 +238,16 @@ export default function MessageBubble({
   followUps,
   tooltips,
   lenderSelector,
+  inlineWidgets,
   isLatest,
   onFollowUpClick,
 }: MessageBubbleProps) {
-  const { isLoggedIn } = useAuth();
   const normalizedContent = role === 'assistant' ? normalizeAssistantContent(content) : content;
   const normalizedFollowUps = (followUps || []).slice(0, 3);
   const showFollowUps = isLatest && role === 'assistant' && onFollowUpClick;
   const hasFollowUps = normalizedFollowUps.length > 0;
   const hasRedirect = redirectUrl && redirectLabel;
   const hasLenderSelector = isLatest && role === 'assistant' && lenderSelector && onFollowUpClick;
-
-  const handleRedirectClick = () => {
-    if (!redirectUrl) return;
-    if (redirectUrl.startsWith('/')) {
-      if (isLoggedIn) {
-        const tab = REDIRECT_TAB_MAP[redirectUrl] || 'home';
-        window.dispatchEvent(new CustomEvent('freed-switch-tab', { detail: { tab } }));
-      }
-      window.dispatchEvent(new CustomEvent('freed-close-chat'));
-    } else {
-      window.open(redirectUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
 
   return (
     <div className={`freed-message freed-message--${role}`}>
@@ -274,6 +271,15 @@ export default function MessageBubble({
         ) : (
           <p className="freed-message__text">{normalizedContent}</p>
         )}
+        {/* Carousel rendered inside the message bubble */}
+        {inlineWidgets && inlineWidgets.filter(w => w.type === 'carousel').length > 0 && (
+          <div className="freed-message__inline-carousel">
+            <p className="freed-message__text"><strong className="freed-message__bold">WHAT COUNTS AS HARASSMENT</strong></p>
+            {inlineWidgets.filter(w => w.type === 'carousel').map((widget, i) => (
+              <InlineWidgetRenderer key={`carousel-${i}`} widget={widget} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Timestamp */}
@@ -291,23 +297,24 @@ export default function MessageBubble({
         />
       )}
 
-      {/* Follow-ups and redirect shown as options (hidden when lender selector is active) */}
-      {showFollowUps && !hasLenderSelector && (hasFollowUps || hasRedirect) && (
+      {/* Non-carousel inline widgets (hidden when lender selector is active) */}
+      {showFollowUps && !hasLenderSelector && inlineWidgets && inlineWidgets.filter(w => w.type !== 'carousel').length > 0 && (
+        <div className="freed-message__inline-widgets">
+          {inlineWidgets.filter(w => w.type !== 'carousel').map((widget, i) => (
+            <InlineWidgetRenderer key={`widget-${i}`} widget={widget} />
+          ))}
+        </div>
+      )}
+
+      {/* Redirection widget shown as rich card (hidden when lender selector is active) */}
+      {showFollowUps && !hasLenderSelector && hasRedirect && redirectUrl && redirectLabel && (
+        <RedirectionWidget url={redirectUrl} label={redirectLabel} />
+      )}
+
+      {/* Follow-ups shown as chips below the widget (hidden when lender selector is active) */}
+      {showFollowUps && !hasLenderSelector && hasFollowUps && (
         <div className="freed-followups">
-          {/* Redirect button shown first — primary CTA */}
-          {hasRedirect && (
-            <button
-              className="freed-followups__chip freed-followups__chip--redirect"
-              onClick={handleRedirectClick}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="freed-followups__redirect-icon">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {redirectLabel}
-            </button>
-          )}
-          {hasFollowUps && normalizedFollowUps.map((text, i) => (
+          {normalizedFollowUps.map((text, i) => (
             <button
               key={i}
               className="freed-followups__chip"

@@ -163,6 +163,17 @@ function findReportMatch(
     // Score the match quality
     let score = 1; // base: lender name matches
 
+    // Account status match — critical for disambiguating multiple accounts from
+    // the same lender (e.g. one active, one closed). Status match gets the
+    // highest weight so an active CSV account pairs with the active report account.
+    const credStatus = (creditor.accountStatus || '').toUpperCase();
+    const reportStatus = (ra.status || '').toUpperCase();
+    if (credStatus && reportStatus && credStatus === reportStatus) {
+      score += 5; // strongest signal — prevents cross-matching active/closed accounts
+    } else if (credStatus && reportStatus && credStatus !== reportStatus) {
+      score -= 2; // penalise status mismatch to avoid pairing active with closed
+    }
+
     // Open date match
     const credOpenDate = formatDateISO(creditor.openDate);
     const reportOpenDate = ra.openDate;

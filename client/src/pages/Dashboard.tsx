@@ -8,11 +8,14 @@ import HomeTab from '../components/dashboard/tabs/HomeTab';
 import SavingsTab from '../components/dashboard/tabs/SavingsTab';
 import ProgramTab from '../components/dashboard/tabs/ProgramTab';
 import ShieldTab from '../components/dashboard/tabs/ShieldTab';
+import PaywallPage from '../components/dashboard/PaywallPage';
+import DCPRedirectPage from '../components/dashboard/DCPRedirectPage';
+import DRPRedirectPage from '../components/dashboard/DRPRedirectPage';
 import './Dashboard.css';
 
 function DashboardContent() {
   const { user } = useAuth();
-  const { activeTab, setActiveTab } = useDashboard();
+  const { activeTab, setActiveTab, currentView } = useDashboard();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Listen for tab-switch events from RedirectCard
@@ -31,6 +34,21 @@ function DashboardContent() {
 
   if (!user) return null;
 
+  const isOverlayView = currentView !== 'dashboard';
+
+  const renderOverlay = () => {
+    switch (currentView) {
+      case 'paywall':
+        return <PaywallPage />;
+      case 'dcp-redirect':
+        return <DCPRedirectPage />;
+      case 'drp-redirect':
+        return <DRPRedirectPage />;
+      default:
+        return null;
+    }
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'home':
@@ -47,17 +65,26 @@ function DashboardContent() {
   };
 
   return (
-    <div className="dashboard">
-      <TopHeader
-        onMenuOpen={() => setMenuOpen(true)}
-      />
+    <div className={`dashboard ${isOverlayView ? 'dashboard--overlay' : ''}`}>
+      {!isOverlayView && (
+        <TopHeader
+          onMenuOpen={() => setMenuOpen(true)}
+        />
+      )}
 
-      <main className="dashboard__content" key={activeTab}>
-        {renderTab()}
+      <main
+        className={`dashboard__content ${isOverlayView ? 'dashboard__content--overlay' : ''}`}
+        key={isOverlayView ? currentView : activeTab}
+      >
+        {isOverlayView ? renderOverlay() : renderTab()}
       </main>
 
-      <BottomNav />
-      <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      {!isOverlayView && (
+        <>
+          <BottomNav />
+          <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+        </>
+      )}
     </div>
   );
 }

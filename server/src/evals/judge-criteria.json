@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "model": "gpt-4o-mini",
+  "temperature": 0,
+  "maxTokens": 250,
+  "criteria": [
+    {
+      "id": "personalization",
+      "name": "Personalization",
+      "description": "Response references specific user data and feels tailored, not generic",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot response is personalized to the user's specific situation.\n\nCRITERIA:\n- The response references at least 2 specific data points from the user's profile (e.g., actual credit score, specific lender names, specific amounts, number of accounts, FOIR percentage)\n- The response feels tailored to THIS user, not a generic template that could apply to anyone\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"Sanjay, your credit score is **735** and you have **7 overdue accounts** with a total outstanding of **₹5,09,489**. Your **HDFC Bank** personal loan alone accounts for ₹1,80,000.\"\nEvidence: References credit score (735), account count (7), total outstanding (₹5,09,489), specific lender (HDFC Bank), specific amount (₹1,80,000) — 5 data points.\nVerdict: PASS — clearly personalized with multiple specific data points.\n\nExample 2 — FAIL:\nResponse: \"It's important to manage your debt and make timely payments. You can improve your credit score by paying off overdue accounts and keeping your credit utilization low.\"\nEvidence: No specific score, no lender names, no amounts, no account counts — could apply to anyone.\nVerdict: FAIL — generic advice with zero personalization.\n\nFirst, quote the specific text evidence. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": "personalization"
+    },
+    {
+      "id": "empathy",
+      "name": "Empathy",
+      "description": "Response acknowledges emotional state before diving into data/solutions",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["INTENT_DELINQUENCY_STRESS", "INTENT_HARASSMENT", "INTENT_EMI_STRESS"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot response demonstrates appropriate empathy.\n\nCRITERIA:\n- For stress/harassment/delinquency intents: the response acknowledges the user's emotional state\n- The tone is warm and supportive without being patronizing or dismissive\n- The response does not jump straight into data/solutions without first acknowledging the human element\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"I understand how stressful it can be when recovery agents keep calling, Robin. That kind of pressure is overwhelming, and you're not alone in facing this. Let me show you how we can help protect you...\"\nEvidence: \"I understand how stressful\" — emotional acknowledgment. \"overwhelming, and you're not alone\" — validation. Appears BEFORE any financial data. Warm but not patronizing.\nVerdict: PASS — empathetic opening that acknowledges stress before moving to solutions.\n\nExample 2 — FAIL:\nResponse: \"You have 3 overdue accounts: HDFC Bank (₹1,20,000), ICICI (₹80,000), and Bajaj Finance (₹60,000). Your total outstanding is ₹2,60,000. Here are your options...\"\nEvidence: Jumps straight into data and amounts. No acknowledgment of the user's emotional state despite a harassment/stress intent. Cold and clinical.\nVerdict: FAIL — no emotional acknowledgment, data-first approach for a stress scenario.\n\nNote: For purely informational queries (score improvement, profile analysis), empathy expectations are lower — a professional, helpful tone is sufficient.\n\nFirst, quote the specific text evidence. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": "empathy"
+    },
+    {
+      "id": "actionability",
+      "name": "Actionability",
+      "description": "Response provides clear, concrete next steps the user can take",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot response gives clear, actionable next steps.\n\nCRITERIA:\n- The response tells the user what they can DO, not just what their situation IS\n- There is at least one concrete next step the user can take\n- Follow-up suggestions (if present) are specific enough to move the conversation forward\n- The user should feel they know what to do after reading the response\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"...Here's what you can do: 1. **Start by clearing the ₹12,000 overdue on your HDFC card** — this has the highest impact on your score. 2. **Keep your Bajaj card usage below 30%** of your ₹50,000 limit. 3. **Explore FREED's DRP** to negotiate your Kotak loan — I can walk you through it.\"\nEvidence: Three numbered, specific steps. Each names a lender and amount. \"Explore FREED's DRP\" is a concrete CTA. User knows exactly what to do next.\nVerdict: PASS — clear, specific, actionable steps with concrete next actions.\n\nExample 2 — FAIL:\nResponse: \"Your credit score is affected by multiple factors including payment history, utilization, and credit age. It's important to maintain good financial habits and manage your accounts responsibly.\"\nEvidence: No specific steps. \"maintain good financial habits\" is vague. No lender-specific actions. User doesn't know what to do differently tomorrow.\nVerdict: FAIL — describes the situation without providing concrete next steps.\n\nFirst, quote the specific text evidence. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": "actionability"
+    },
+    {
+      "id": "coherence",
+      "name": "Coherence",
+      "description": "Multi-turn response builds on prior conversation without repeating information",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 2
+      },
+      "prompt": "You are evaluating whether a multi-turn chatbot response maintains coherence with the conversation.\n\nCRITERIA:\n- The response does NOT repeat information that was already covered in prior turns\n- The response builds on what was discussed before\n- The response acknowledges or relates to the prior conversation context\n- There are no contradictions with earlier responses\n\nIf this is the first message in the conversation, PASS by default (coherence is only meaningful in multi-turn).\n\nEXAMPLES:\n\nExample 1 — PASS:\nPrior turn: Bot explained credit score is 650 and listed 3 overdue accounts.\nCurrent response: \"Diving deeper into those overdue accounts — your **HDFC personal loan** has the highest overdue at ₹45,000, which has been overdue for 3 months. Clearing this one first would have the biggest impact...\"\nEvidence: References \"those overdue accounts\" (prior context). Doesn't re-explain the score or re-list all accounts. Builds on prior information by going deeper into one specific account.\nVerdict: PASS — builds on prior turn without repetition.\n\nExample 2 — FAIL:\nPrior turn: Bot explained credit score is 650 and listed 3 overdue accounts.\nCurrent response: \"Your credit score is 650. You have 3 overdue accounts: HDFC (₹45,000), ICICI (₹30,000), and Bajaj (₹20,000). Here's what you can do...\"\nEvidence: Repeats the score (650) and all 3 accounts that were already covered. Does not acknowledge the prior conversation or build on it.\nVerdict: FAIL — repeats prior turn's information verbatim.\n\nFirst, quote the specific text evidence. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "program_pitch",
+      "name": "Program Pitch",
+      "description": "Program introduction (if any) feels natural, justified, and non-pushy",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["DRP_Eligible", "DCP_Eligible", "DEP"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot introduces a FREED program appropriately.\n\nCRITERIA:\n- If a program (DRP, DCP, DEP) is mentioned, it is positioned as a solution to the user's stated problem\n- The program is introduced naturally within the conversation flow, not as a hard sell\n- The user's actual financial situation justifies the program recommendation\n- The pitch does not feel pushy or premature\n\nIf no program is mentioned in the response, PASS by default.\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"...With ₹5 lakh in unsecured debt across 4 lenders and missed payments on 3 of them, resolving these debts through negotiation could be a practical path. FREED's Debt Resolution Program works with your lenders to settle for around 45% of the outstanding — that could bring your ₹5 lakh down to roughly ₹2.25 lakh. Want me to walk you through how it works?\"\nEvidence: Program introduced AFTER explaining the user's specific situation. Connected to their actual debt (₹5 lakh, 4 lenders, missed payments). Framed as \"could be a practical path\" — not \"you must\" or \"sign up now.\" Ends with a question, not a demand.\nVerdict: PASS — natural, justified, non-pushy introduction connected to user's stated problem.\n\nExample 2 — FAIL:\nResponse: \"Hi Sanjay! Welcome to FREED. Have you heard about our Debt Resolution Program? It's a great way to settle your debts for less than you owe. You should definitely enroll today!\"\nEvidence: Program pitch in the very first message before any analysis. \"You should definitely enroll today\" is a hard sell. No reference to user's specific situation or why DRP is appropriate for them.\nVerdict: FAIL — premature, pushy pitch with no personalized justification.\n\nFirst, quote the specific text evidence. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "calculation_accuracy",
+      "name": "Calculation Accuracy",
+      "description": "Financial numbers (settlement %, savings, EMI) are mathematically correct and consistent",
+      "enabled": true,
+      "category": "accuracy",
+      "appliesWhen": {
+        "segments": ["DRP_Eligible", "DCP_Eligible", "DEP"],
+        "intents": ["INTENT_DELINQUENCY_STRESS", "INTENT_EMI_OPTIMISATION", "INTENT_EMI_STRESS", "INTENT_INTEREST_OPTIMISATION", "INTENT_GOAL_BASED_LOAN", "INTENT_GOAL_BASED_PATH"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether the financial calculations in a chatbot response are mathematically correct and internally consistent.\n\nCRITERIA:\n- If the response mentions an original amount and a reduced/settled amount, the savings = original - reduced (must be consistent)\n- Settlement percentages should be roughly correct (e.g., \"settle for 45%\" means settled amount ≈ 0.45 × original)\n- EMI savings should be positive and meaningful (not ₹0 or near-zero when claimed as a benefit)\n- Percentages and ratios should be mathematically plausible\n- Numbers should not contradict each other (e.g., don't say \"save ₹2 lakh\" when original is ₹1 lakh)\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"Your total outstanding of ₹5,00,000 could potentially be settled for around ₹2,25,000, saving you approximately ₹2,75,000.\"\nEvidence: 5,00,000 - 2,25,000 = 2,75,000 ✓. Settlement at 45% of outstanding ✓. All numbers consistent.\nVerdict: PASS — calculations are correct and internally consistent.\n\nExample 2 — FAIL:\nResponse: \"Your outstanding of ₹26,170 could be reduced to ₹26,100, saving you ₹70.\"\nEvidence: 26,170 - 26,100 = 70 (mathematically correct) BUT savings of ₹70 on ₹26,170 is only 0.3% — not a meaningful settlement. A real settlement would be ~45%, i.e., ≈₹11,777. The numbers suggest a bug, not a real settlement.\nVerdict: FAIL — while arithmetic is correct, the savings are implausibly small for a settlement program.\n\nFirst, check the math. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "response_length",
+      "name": "Response Length",
+      "description": "Response length is appropriate for the query type — concise for greetings, detailed for analysis",
+      "enabled": true,
+      "category": "format",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a chatbot response has an appropriate length for the query type.\n\nCRITERIA:\n- Greetings (\"Hi\", \"Hello\"): Response should be SHORT (under 150 words). No walls of text for a simple greeting.\n- Simple questions: Response should be MODERATE (100-300 words). Enough to answer but not overwhelming.\n- Complex analysis (score improvement, profile analysis, loan readiness): Response should be DETAILED (200-500 words). Enough depth to be useful.\n- Follow-up turns: Generally shorter than the first turn — the user already has context.\n- No response should exceed 600 words — that's too long for a chat interface.\n\nEXAMPLES:\n\nExample 1 — PASS:\nUser message: \"Hi\"\nResponse: Short, friendly greeting with the user's name. ~40 words. Appropriate for a greeting.\nVerdict: PASS — response length matches the query type.\n\nExample 2 — FAIL:\nUser message: \"Hi\"\nResponse: 400-word detailed analysis of the user's financial situation with bullet points, lender breakdowns, and program recommendations.\nVerdict: FAIL — excessively long response for a simple greeting. Save the analysis for when the user asks for it.\n\nFirst, estimate the word count and query type. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "tone_appropriateness",
+      "name": "Tone Appropriateness",
+      "description": "Response tone matches context — no pushy sales, no jargon, no condescension",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot response has an appropriate tone.\n\nCRITERIA:\n- No pushy or aggressive sales language (\"you MUST enroll\", \"sign up NOW\", \"don't miss out\")\n- No condescending or patronizing language (\"you should have known\", \"it's simple really\")\n- No unnecessary jargon unless the user used it first (FOIR, DPD, utilization, delinquent)\n- Professional but warm — a helpful financial advisor, not a telemarketer or a textbook\n- For stress/harassment situations: extra sensitivity, no blame language\n- No false urgency or fear-mongering (\"your score will crash\", \"you'll lose everything\")\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"Based on your profile, consolidating your loans could help simplify your monthly payments. Your current total EMI of ₹20,134 across 5 lenders could potentially come down to around ₹15,000 with a single payment. Would you like me to explain how this works?\"\nEvidence: Professional tone. \"could help\", \"potentially\" — not pushy. Ends with an invitation, not a demand. No jargon. Warm but not patronizing.\nVerdict: PASS — appropriate advisory tone.\n\nExample 2 — FAIL:\nResponse: \"You NEED to act fast! Your delinquent accounts are destroying your CIBIL score. If you don't enroll in DRP immediately, your FOIR will keep climbing and you'll never get a loan again!\"\nEvidence: \"NEED to act fast\" — false urgency. \"delinquent\", \"CIBIL\", \"FOIR\" — unnecessary jargon. \"never get a loan again\" — fear-mongering. Aggressive, pushy tone.\nVerdict: FAIL — inappropriate tone with jargon, fear-mongering, and aggressive language.\n\nFirst, quote tone-relevant text. Then give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "information_completeness",
+      "name": "Information Completeness",
+      "description": "Response addresses what the user actually asked and doesn't leave key questions unanswered",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a chatbot response fully addresses the user's question or concern.\n\nCRITERIA:\n- The response directly answers what the user asked (not a tangential topic)\n- Key information relevant to the query is not missing\n- If the user asked about a specific topic (e.g., \"my credit score\"), the response covers it\n- The user should not need to ask the same question again to get a complete answer\n- It's OK to not cover everything in one response — but the core question must be addressed\n\nEXAMPLES:\n\nExample 1 — PASS:\nUser: \"How can I improve my credit score?\"\nResponse: References current score, identifies top factors dragging it down (overdue payments, high utilization), provides specific improvement steps.\nEvidence: Directly answers \"how can I improve\" with specific, personalized steps. Core question fully addressed.\nVerdict: PASS — complete answer to the user's question.\n\nExample 2 — FAIL:\nUser: \"How can I improve my credit score?\"\nResponse: \"FREED offers various programs to help you manage your debt better. Our DRP program can help settle your outstanding loans at a reduced amount. Would you like to know more?\"\nEvidence: User asked about credit score improvement. Response talks only about DRP enrollment. Doesn't mention current score, improvement factors, or any steps. Core question not addressed.\nVerdict: FAIL — response doesn't answer the question asked.\n\nFirst, identify what the user asked. Then check if the response addresses it. Give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "redirect_timing",
+      "name": "Redirect Timing",
+      "description": "CTA/redirect appears at an appropriate point — not too early (before context), not absent when needed",
+      "enabled": true,
+      "category": "format",
+      "appliesWhen": {
+        "segments": ["DRP_Eligible", "DCP_Eligible", "DEP"],
+        "intents": ["INTENT_DELINQUENCY_STRESS", "INTENT_EMI_OPTIMISATION", "INTENT_EMI_STRESS", "INTENT_GOAL_BASED_LOAN", "INTENT_GOAL_BASED_PATH", "INTENT_INTEREST_OPTIMISATION"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a chatbot's call-to-action (CTA) or redirect appears at the right moment in the conversation.\n\nCRITERIA:\n- For eligible segments with program-relevant intents: a CTA or redirect to the program page should be present\n- The CTA should appear AFTER the bot has explained the user's situation and why the program helps\n- The CTA should NOT appear in the very first sentence before any context is provided\n- The CTA should feel like a natural next step, not an interruption\n- If the user is asking about something unrelated to the program (e.g., score improvement), a CTA may not be needed\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: [Explains user's debt situation, mentions settlement benefits] → \"If you'd like to explore this, I can take you to the enrollment page.\" [redirect to /drp]\nEvidence: CTA appears after context. User understands why before seeing the action. Natural flow.\nVerdict: PASS — CTA well-timed after explanation.\n\nExample 2 — FAIL:\nResponse: [Immediately shows redirect to /drp] \"Click here to enroll in DRP!\" [followed by explanation]\nEvidence: CTA appears before any context or explanation. User doesn't know why they should click.\nVerdict: FAIL — premature CTA before user has context.\n\nFirst, locate the CTA/redirect. Then assess its timing. Give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "follow_up_contextuality",
+      "name": "Follow-Up Contextuality",
+      "description": "Follow-up prompts relate to what was just discussed in THIS response, not generic topics",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["*"],
+        "intents": ["*"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a chatbot's follow-up prompts (suggested next questions) are contextually relevant to what was just discussed in the response.\n\nCRITERIA:\n- Follow-ups should relate to the SPECIFIC content of THIS response, not generic financial topics\n- If the response discussed settlement and specific lenders, follow-ups should ask about those aspects\n- If the response discussed harassment protection, follow-ups should deepen that topic\n- Follow-ups should NOT pivot to completely unrelated topics (e.g., response about DRP settlement → follow-up about card utilization)\n- At least 2 of 3 follow-ups should be directly traceable to something mentioned in the response\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse discusses settling overdue accounts with PayU and VIVRITI for ₹2.64L, potential savings of ₹1.45L.\nFollow-ups: [\"How much would I save with PayU?\", \"Will settlement affect my score?\", \"How long does the process take?\"]\nEvidence: All 3 follow-ups relate directly to settlement (the response topic). First references a specific lender from the response. Clear context connection.\nVerdict: PASS — follow-ups are contextually relevant to response content.\n\nExample 2 — FAIL:\nResponse discusses settling overdue accounts and DRP benefits.\nFollow-ups: [\"How can I reduce my card utilization?\", \"What's the best path to reach my score target?\", \"Can you make a plan to tackle my overdue accounts?\"]\nEvidence: \"Card utilization\" was never discussed. \"Score target\" is tangential. Only the third is somewhat related. Follow-ups feel like generic suggestions, not natural next questions.\nVerdict: FAIL — follow-ups don't connect to this response's content.\n\nFirst, identify the response's main topic. Then check if follow-ups relate to it. Give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    },
+    {
+      "id": "lender_perspective_loan",
+      "name": "Lender Perspective (Loan Intent)",
+      "description": "For DRP_Eligible users asking about loans, response subtly includes how a lender would view their profile",
+      "enabled": true,
+      "category": "quality",
+      "appliesWhen": {
+        "segments": ["DRP_Eligible"],
+        "intents": ["INTENT_GOAL_BASED_LOAN"],
+        "minTurn": 1
+      },
+      "prompt": "You are evaluating whether a financial chatbot response includes a subtle lender's perspective for a user asking about getting a loan.\n\nCRITERIA:\n- The response should include some mention of how lenders evaluate loan applications (overdue flags, FOIR/debt-to-income, credit score thresholds)\n- The perspective should feel like helpful insider knowledge, not a harsh rejection\n- It should NOT use blunt language like 'you will be rejected' or 'no lender will approve you'\n- It SHOULD use soft framing like 'lenders typically look for...', 'from a lender's perspective...', 'your profile would likely get flagged for...'\n- The lender perspective should reference the user's actual data (their specific overdue count, score, FOIR)\n\nEXAMPLES:\n\nExample 1 — PASS:\nResponse: \"When a lender reviews your application, they'll see 4 overdue accounts and 78% of your income going to EMIs. Even though your score of 735 is close to the 750 threshold, the overdue flags signal repayment risk, which typically means higher interest rates or a smaller loan amount.\"\nEvidence: Explains lender evaluation criteria. Uses specific user data (4 accounts, 78% FOIR, 735 score). Framed as insight (\"they'll see\"), not as rejection. No harsh language.\nVerdict: PASS — subtle, informative lender perspective.\n\nExample 2 — FAIL (too harsh):\nResponse: \"No bank will give you a loan with 4 overdue accounts. You need to fix your mess before even thinking about applying.\"\nEvidence: \"No bank will give you\" — harsh rejection. \"Fix your mess\" — condescending. No constructive framing.\nVerdict: FAIL — harsh language, not a helpful perspective.\n\nExample 3 — FAIL (missing):\nResponse: \"Your credit score is 735, just 15 points from 750. Your outstanding is ₹5,09,489. Consider settling your debts first to improve your profile.\"\nEvidence: Lists data and suggests settling debts, but never explains WHY from a lender's viewpoint. No mention of how lenders evaluate applications.\nVerdict: FAIL — missing lender perspective entirely.\n\nFirst, search for lender perspective content. Then assess tone. Give your verdict: PASS or FAIL with a brief reason.",
+      "preCheck": null
+    }
+  ]
+}

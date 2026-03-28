@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { finalizeStructuredTurnCandidate } from '../services/claude';
+import { debugStructuredPayload, finalizeStructuredTurnCandidate } from '../services/claude';
 import { buildAdvisorContext } from '../services/advisorContext';
 import { buildResponseGroundingContext } from '../services/groundingContext';
+import { getCurrentUserTurnCount, resolveConversationIntentTag } from '../services/conversationContext';
 import { getUserByLeadRefId } from '../services/userLookup';
 import { EnrichedCreditReport, StructuredAssistantTurn } from '../types';
 
@@ -22,12 +23,6 @@ function assert(condition: boolean, message: string): void {
 
 function countBullets(reply: string): number {
   return (reply.match(/^\s*-\s+/gm) || []).length;
-}
-
-function countNextStepItems(reply: string): number {
-  const blockMatch = reply.match(/NEXT STEPS YOU CAN EXPLORE([\s\S]*)$/i);
-  if (!blockMatch) return 0;
-  return (blockMatch[1].match(/^\s*\d+[.)]\s+/gm) || []).length;
 }
 
 async function run(): Promise<void> {
@@ -100,7 +95,7 @@ async function run(): Promise<void> {
 
   const guidedResponse = await finalizeStructuredTurnCandidate({ candidate: guidedTurn, context: guidedContext, allowRepair: false });
   assert(countBullets(guidedResponse.reply) >= 2, 'guided mode should render a focused bullet list');
-  assert(countNextStepItems(guidedResponse.reply) === 3, 'guided mode should render exactly 3 next steps when follow-ups are valid');
+  assert((guidedResponse.followUps || []).length === 3, 'guided mode should return exactly 3 follow-ups when follow-ups are valid');
   assert(/HDFC Bank Ltd credit card/i.test(guidedResponse.reply), 'guided mode should preserve credit card wording in card context');
 
   const analysisContext = {
@@ -154,7 +149,7 @@ async function run(): Promise<void> {
   assert(/KEY RISKS/i.test(analysisResponse.reply), 'analysis mode should render visible section headers');
   assert(/BEST LEVERS/i.test(analysisResponse.reply), 'analysis mode should render multiple visible section headers');
   assert(countBullets(analysisResponse.reply) >= 3, 'analysis mode should render scoped bullets');
-  assert(countNextStepItems(analysisResponse.reply) === 3, 'analysis mode should render exactly 3 next steps');
+  assert((analysisResponse.followUps || []).length === 3, 'analysis mode should return exactly 3 follow-ups');
   assert(/credit score is 737/i.test(analysisResponse.reply), 'analysis mode should correct grounded score mentions');
 
   const genericFollowUpTurn: StructuredAssistantTurn = {
@@ -190,11 +185,55 @@ async function run(): Promise<void> {
   };
 
   const genericResponse = await finalizeStructuredTurnCandidate({ candidate: genericFollowUpTurn, context: analysisContext, allowRepair: false });
-  assert((genericResponse.followUps || []).length === 0, 'generic follow-ups should fail closed');
-  assert(!/NEXT STEPS YOU CAN EXPLORE/i.test(genericResponse.reply), 'generic follow-up failure should remove the next steps block');
+  assert((genericResponse.followUps || []).length === 3, 'generic follow-ups should be replaced with contextual follow-ups');
+  assert(!/NEXT STEPS YOU CAN EXPLORE/i.test(genericResponse.reply), 'generic follow-up failure should not leak any legacy next-steps block');
+
+  const harassmentHistory = [
+    {
+      role: 'user' as const,
+      content: 'Recovery agents keep calling me',
+      intentTag: 'INTENT_HARASSMENT',
+    },
+    {
+      role: 'assistant' as const,
+      content: [
+        'Dealing with recovery agents can be incredibly stressful, Dhanraj. Let\'s address this together.',
+        'YOU ARE NOT ALONE IN THIS',
+        '- Many borrowers face similar pressures from lenders when payments are overdue.',
+        '- You have 4 accounts with missed payments, which can lead to increased contact from lenders.',
+        'WHEN IT CROSSES THE LINE',
+        '- Non-stop calls throughout the day, sometimes even on weekends or late at night.',
+      ].join('\n\n'),
+    },
+  ];
+  const harassmentMessage = 'I\'m facing harassment from PayU Finance India PVT Ltd and Krazybee Services Private Limited';
+  const carriedIntent = resolveConversationIntentTag(harassmentMessage, harassmentHistory);
+  assert(carriedIntent === 'INTENT_HARASSMENT', 'harassment follow-up should keep the harassment intent active');
+  assert(getCurrentUserTurnCount(harassmentHistory, 1) === 2, 'follow-up turn count should include the current user turn');
+
+  const harassmentPayload = debugStructuredPayload({
+    history: harassmentHistory,
+    userMessage: harassmentMessage,
+    messageCount: 1,
+    knowledgeBase: '',
+    advisorContext: buildAdvisorContext({ user: user ?? null, report, creditorAccounts: [], userMessage: harassmentMessage }),
+    grounding,
+    userName: user?.firstName ?? null,
+    segment: user?.segment ?? null,
+    intentTag: carriedIntent,
+  });
+
+  assert(harassmentPayload.message_count === 2, 'structured payload should normalize follow-up turn counts');
+  assert(harassmentPayload.conversation_state.is_follow_up, 'conversation_state should mark the lender-selection response as a follow-up');
+  assert(harassmentPayload.conversation_state.harassment_overview_already_given, 'conversation_state should detect that the harassment overview already happened');
+  assert(harassmentPayload.conversation_state.named_lenders_in_user_message, 'conversation_state should detect named lenders in the follow-up user message');
+  assert(
+    /Do not repeat the empathy block/i.test(harassmentPayload.conversation_state.continuation_directive),
+    'continuation directive should explicitly prevent repeating the harassment overview stage'
+  );
 
   console.log(JSON.stringify({
-    checks: 4,
+    checks: 5,
     status: 'pass',
   }, null, 2));
 }

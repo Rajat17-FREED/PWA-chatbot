@@ -48,6 +48,7 @@ export default function MessageList({
           followUps={msg.followUps}
           tooltips={msg.tooltips}
           lenderSelector={msg.lenderSelector}
+          inlineWidgets={msg.inlineWidgets}
           isLatest={idx === lastAssistantIdx && !isLoading && phase === 'chatting'}
           onFollowUpClick={onFollowUpClick}
         />

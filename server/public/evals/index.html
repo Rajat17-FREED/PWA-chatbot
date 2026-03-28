@@ -27,6 +27,14 @@
     .badge-fail { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
     .badge-warn { background: rgba(234,179,8,0.15); color: #fbbf24; border: 1px solid rgba(234,179,8,0.2); }
     .badge-neutral { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.15); }
+    .badge-easy { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-medium { background: rgba(234,179,8,0.15); color: #fbbf24; border: 1px solid rgba(234,179,8,0.2); }
+    .badge-hard { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-manual { background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.2); }
+    .badge-captured { background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
+    .badge-template { background: rgba(251,146,60,0.12); color: #fb923c; border: 1px solid rgba(251,146,60,0.2); }
+    .badge-error { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.2); }
+    .badge-never { background: rgba(71,85,105,0.2); color: #64748b; border: 1px solid rgba(71,85,105,0.3); }
     .gauge-ring { transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1); }
     .card { background: linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9)); border: 1px solid rgba(51,65,85,0.5); border-radius: 0.875rem; backdrop-filter: blur(8px); }
     .card-hover:hover { border-color: rgba(56,189,248,0.3); box-shadow: 0 0 20px rgba(56,189,248,0.05); }
@@ -36,6 +44,8 @@
     .btn-danger:hover { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .btn-secondary { background: rgba(51,65,85,0.6); border: 1px solid rgba(71,85,105,0.5); }
     .btn-secondary:hover { background: rgba(71,85,105,0.6); border-color: rgba(100,116,139,0.5); }
+    .btn-success { background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 2px 8px rgba(22,163,74,0.3); }
+    .btn-success:hover { background: linear-gradient(135deg, #22c55e, #16a34a); }
     pre { white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; }
     .spinner { border: 2px solid rgba(51,65,85,0.5); border-top: 2px solid #38bdf8; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -43,6 +53,7 @@
     input:focus, select:focus, textarea:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,0.15); }
     .toast { animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1); }
     @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(20px); opacity: 0; } }
     .segment-drp { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
     .segment-dcp { background: rgba(168,85,247,0.1); color: #c084fc; border-color: rgba(168,85,247,0.2); }
     .segment-dep { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.2); }
@@ -54,13 +65,29 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(71,85,105,0.5); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.6); }
+    .wizard-step { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .wizard-step-enter { opacity: 0; transform: translateX(20px); }
+    .wizard-step-active { opacity: 1; transform: translateX(0); }
+    .chip { cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .chip:hover { filter: brightness(1.2); }
+    .chip-selected { ring: 2px; box-shadow: 0 0 0 2px rgba(56,189,248,0.5); }
+    .coverage-cell { transition: all 0.15s ease; cursor: pointer; }
+    .coverage-cell:hover { transform: scale(1.05); z-index: 10; }
+    .tooltip-trigger { position: relative; }
+    .tooltip-content { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.95); border: 1px solid rgba(71,85,105,0.6); backdrop-filter: blur(12px); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.75rem; color: #cbd5e1; white-space: normal; width: max-content; max-width: 280px; z-index: 50; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; line-height: 1.5; }
+    .tooltip-trigger:hover .tooltip-content { opacity: 1; }
+    .progress-bar { background: rgba(51,65,85,0.4); border-radius: 9999px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #2563eb, #38bdf8); border-radius: 9999px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); height: 100%; }
+    .starter-chip { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); color: #7dd3fc; border-radius: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.75rem; cursor: pointer; transition: all 0.15s ease; }
+    .starter-chip:hover { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.4); }
+    .tag-chip { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); color: #c084fc; border-radius: 9999px; padding: 0.125rem 0.5rem; font-size: 0.6875rem; display: inline-flex; align-items: center; gap: 0.25rem; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    const { useState, useEffect, useCallback, useMemo } = React;
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
     // ── API ─────────────────────────────────────────────────────────────────────
     const API = '/api/evals';
@@ -82,6 +109,73 @@
       return 'segment-others';
     }
 
+    function relativeTime(dateStr) {
+      if (!dateStr) return '';
+      const now = Date.now();
+      const then = new Date(dateStr).getTime();
+      const diff = now - then;
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return `${mins}m ago`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}d ago`;
+      return new Date(dateStr).toLocaleDateString();
+    }
+
+    function segmentShort(seg) {
+      if (!seg) return 'unk';
+      return seg.toLowerCase().replace(/_/g, '-').replace('eligible', 'elig').replace('ineligible', 'inelig');
+    }
+
+    function intentShort(intent) {
+      if (!intent) return 'gen';
+      return intent.replace('INTENT_', '').toLowerCase().replace(/_/g, '-').substring(0, 12);
+    }
+
+    // Behavior suggestions based on segment + intent
+    const BEHAVIOR_SUGGESTIONS = {
+      _all: ['greets user by first name'],
+      _score: ['references user\'s actual credit score', 'provides actionable steps'],
+      _harassment: ['mentions FREED Shield', 'acknowledges emotional distress', 'shows lender selector'],
+      _stress: ['acknowledges emotional stress'],
+      DRP_Eligible: ['does NOT mention DCP or DEP', 'mentions DRP or debt resolution'],
+      DRP_Ineligible: ['does NOT mention DCP or DEP', 'mentions DRP or debt resolution'],
+      DCP_Eligible: ['does NOT mention DRP or DEP', 'mentions DCP or consolidation'],
+      DCP_Ineligible: ['does NOT mention DRP or DEP', 'mentions DCP or consolidation'],
+      DEP: ['does NOT mention DRP or DCP'],
+      NTC: ['does NOT mention DRP, DCP, DEP programs'],
+      Others: ['does NOT mention DRP, DCP, DEP programs'],
+    };
+
+    function getSuggestedBehaviors(segment, intentTag) {
+      const suggestions = [...BEHAVIOR_SUGGESTIONS._all];
+      if (BEHAVIOR_SUGGESTIONS[segment]) {
+        suggestions.push(...BEHAVIOR_SUGGESTIONS[segment]);
+      }
+      const it = (intentTag || '').toLowerCase();
+      if (it.includes('harassment') || it.includes('harass')) {
+        suggestions.push(...BEHAVIOR_SUGGESTIONS._harassment);
+      }
+      if (it.includes('stress') || it.includes('anxiety') || it.includes('depression')) {
+        suggestions.push(...BEHAVIOR_SUGGESTIONS._stress);
+      }
+      if (it.includes('score') || it.includes('credit')) {
+        suggestions.push(...BEHAVIOR_SUGGESTIONS._score);
+      }
+      // Deduplicate
+      return [...new Set(suggestions)];
+    }
+
+    // Tooltip descriptions
+    const TOOLTIPS = {
+      expectedBehaviors: 'What the chatbot response SHOULD or SHOULD NOT contain. Use "does NOT mention X" for negative checks.',
+      codeEvals: 'Deterministic checks run against the response: segment isolation, data accuracy, format compliance, etc.',
+      llmJudge: 'An AI evaluates subjective quality: personalization, empathy, actionability, coherence.',
+      difficulty: 'How challenging this test case is for the chatbot. Hard cases may involve edge cases or conflicting intents.',
+    };
+
     function StatusIcon({ passed, size = 16 }) {
       if (passed === true) return (
         <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
@@ -100,6 +194,19 @@
           <circle cx="8" cy="8" r="7" fill="rgba(148,163,184,0.1)" stroke="#64748b" strokeWidth="1.5"/>
           <path d="M8 5v3M8 10v1" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
+      );
+    }
+
+    // ── Help Tooltip ──────────────────────────────────────────────────────────────
+    function HelpTooltip({ text }) {
+      return (
+        <span className="tooltip-trigger inline-flex items-center ml-1 cursor-help">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#475569" strokeWidth="1.2"/>
+            <path d="M6.5 6.5a1.5 1.5 0 112.12 1.37c-.42.24-.62.63-.62 1.13M8 11h.01" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="tooltip-content">{text}</span>
+        </span>
       );
     }
 
@@ -126,8 +233,8 @@
     }
 
     // ── Toast ───────────────────────────────────────────────────────────────────
-    function Toast({ message, type, onClose }) {
-      useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, []);
+    function Toast({ message, type, onClose, action }) {
+      useEffect(() => { const t = setTimeout(onClose, 5000); return () => clearTimeout(t); }, []);
       const styles = {
         error: 'bg-red-950/80 border-red-800/50 text-red-200',
         success: 'bg-green-950/80 border-green-800/50 text-green-200',
@@ -137,6 +244,11 @@
         <div className={`toast fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border backdrop-blur-sm ${styles[type] || styles.info} text-sm max-w-sm shadow-xl`}>
           <div className="flex items-center gap-2">
             <span className="flex-1">{message}</span>
+            {action && (
+              <button onClick={action.onClick} className="text-xs font-medium underline underline-offset-2 opacity-80 hover:opacity-100 whitespace-nowrap">
+                {action.label}
+              </button>
+            )}
             <button onClick={onClose} className="text-white/40 hover:text-white/80 ml-2 text-lg leading-none">&times;</button>
           </div>
         </div>
@@ -144,7 +256,7 @@
     }
 
     // ── Stat Card ───────────────────────────────────────────────────────────────
-    function StatCard({ label, value, color, icon }) {
+    function StatCard({ label, value, color }) {
       return (
         <div className="card card-hover p-5 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-0.5" style={{background: `linear-gradient(90deg, transparent, ${color}, transparent)`}} />
@@ -217,6 +329,7 @@
               <h3 className="text-sm font-semibold text-slate-300 mb-5 flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 11l-3-3 3-3M11 5l3 3-3 3" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Code Evals
+                <HelpTooltip text={TOOLTIPS.codeEvals} />
               </h3>
               <div className="flex flex-wrap gap-4 justify-center">
                 {codeEntries.map(([cat, s]) => (
@@ -231,6 +344,7 @@
               <h3 className="text-sm font-semibold text-slate-300 mb-5 flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 LLM Judge
+                <HelpTooltip text={TOOLTIPS.llmJudge} />
               </h3>
               <div className="flex flex-wrap gap-4 justify-center">
                 {judgeEntries.map(([cat, s]) => (
@@ -243,35 +357,591 @@
       );
     }
 
-    // ── Test Case Manager ───────────────────────────────────────────────────────
-    function TestCaseView({ showToast, report }) {
+    // ── Wizard Progress Bar ─────────────────────────────────────────────────────
+    function WizardProgress({ currentStep, steps }) {
+      return (
+        <div className="flex items-center gap-2 mb-6">
+          {steps.map((label, i) => {
+            const step = i + 1;
+            const isActive = step === currentStep;
+            const isDone = step < currentStep;
+            return (
+              <React.Fragment key={i}>
+                {i > 0 && <div className={`flex-1 h-0.5 rounded-full ${isDone ? 'bg-sky-500' : 'bg-slate-700'}`} />}
+                <div className="flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    isActive ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' :
+                    isDone ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' :
+                    'bg-slate-800 text-slate-500 border border-slate-700'
+                  }`}>
+                    {isDone ? (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    ) : step}
+                  </div>
+                  <span className={`text-xs font-medium hidden md:inline ${isActive ? 'text-sky-300' : isDone ? 'text-slate-400' : 'text-slate-600'}`}>{label}</span>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ── Test Case Creation Wizard ───────────────────────────────────────────────
+    function TestCaseWizard({ users, segments, intents, onSave, onCancel, showToast, existingCaseCount }) {
+      const [step, setStep] = useState(1);
+      const [starters, setStarters] = useState([]);
+      const [loadingStarters, setLoadingStarters] = useState(false);
+      const [saving, setSaving] = useState(false);
+
+      const [form, setForm] = useState({
+        user: '', userName: '', segment: '',
+        turns: [{ userMessage: '', intentTag: '', messageCount: 1 }],
+        expectedBehaviors: [],
+        tags: [],
+        difficulty: 'medium',
+        notes: '',
+        source: 'manual',
+        multiTurn: false,
+        manualUser: false,
+        manualLeadRefId: '',
+      });
+
+      const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+      const [userSearch, setUserSearch] = useState('');
+      const [tagInput, setTagInput] = useState('');
+
+      // Load starters when segment changes
+      useEffect(() => {
+        if (!form.segment) { setStarters([]); return; }
+        setLoadingStarters(true);
+        api(`/starters/${form.segment}`).then(d => {
+          setStarters(d.starters || []);
+        }).catch(() => setStarters([])).finally(() => setLoadingStarters(false));
+      }, [form.segment]);
+
+      const filteredUsers = useMemo(() => {
+        if (!userSearch) return users.slice(0, 20);
+        const q = userSearch.toLowerCase();
+        return users.filter(u =>
+          u.firstName.toLowerCase().includes(q) ||
+          u.lastName.toLowerCase().includes(q) ||
+          u.leadRefId.toLowerCase().includes(q) ||
+          u.segment.toLowerCase().includes(q)
+        ).slice(0, 20);
+      }, [users, userSearch]);
+
+      const selectUser = (u) => {
+        set('user', u.leadRefId);
+        set('userName', `${u.firstName} ${u.lastName}`);
+        set('segment', u.segment);
+        set('manualUser', false);
+        setUserSearch('');
+      };
+
+      const setTurn = (i, k, v) => {
+        const turns = [...form.turns];
+        turns[i] = { ...turns[i], [k]: v };
+        set('turns', turns);
+      };
+
+      const addTurn = () => set('turns', [...form.turns, { userMessage: '', messageCount: form.turns.length + 1 }]);
+      const removeTurn = (i) => set('turns', form.turns.filter((_, j) => j !== i).map((t, j) => ({ ...t, messageCount: j + 1 })));
+
+      const toggleBehavior = (b) => {
+        setForm(f => {
+          const exists = f.expectedBehaviors.includes(b);
+          return { ...f, expectedBehaviors: exists ? f.expectedBehaviors.filter(x => x !== b) : [...f.expectedBehaviors, b] };
+        });
+      };
+
+      const addCustomBehavior = (text) => {
+        if (text.trim() && !form.expectedBehaviors.includes(text.trim())) {
+          set('expectedBehaviors', [...form.expectedBehaviors, text.trim()]);
+        }
+      };
+
+      const removeTag = (tag) => set('tags', form.tags.filter(t => t !== tag));
+      const addTag = () => {
+        const newTags = tagInput.split(',').map(t => t.trim()).filter(t => t && !form.tags.includes(t));
+        if (newTags.length) {
+          set('tags', [...form.tags, ...newTags]);
+          setTagInput('');
+        }
+      };
+
+      const generatedId = useMemo(() => {
+        const seg = segmentShort(form.segment);
+        const intent = form.turns[0]?.intentTag ? intentShort(form.turns[0].intentTag) : 'gen';
+        const counter = String(existingCaseCount + 1).padStart(3, '0');
+        return `${seg}-${intent}-${counter}`;
+      }, [form.segment, form.turns, existingCaseCount]);
+
+      const canProceed = (s) => {
+        switch (s) {
+          case 1: return form.user && form.segment;
+          case 2: return form.turns.some(t => t.userMessage.trim());
+          case 3: return form.expectedBehaviors.length >= 1;
+          case 4: return true;
+          default: return true;
+        }
+      };
+
+      const handleSave = async () => {
+        setSaving(true);
+        const tc = {
+          id: generatedId,
+          user: form.user,
+          userName: form.userName,
+          segment: form.segment,
+          turns: form.turns.filter(t => t.userMessage.trim()),
+          expectedBehaviors: form.expectedBehaviors,
+          tags: form.tags.length > 0 ? form.tags : undefined,
+          difficulty: form.difficulty,
+          notes: form.notes || undefined,
+          source: 'manual',
+          createdAt: new Date().toISOString(),
+        };
+        try {
+          await onSave(tc);
+        } catch (e) {
+          // error handled by parent
+        }
+        setSaving(false);
+      };
+
+      const runAfterSave = async () => {
+        setSaving(true);
+        const tc = {
+          id: generatedId,
+          user: form.user,
+          userName: form.userName,
+          segment: form.segment,
+          turns: form.turns.filter(t => t.userMessage.trim()),
+          expectedBehaviors: form.expectedBehaviors,
+          tags: form.tags.length > 0 ? form.tags : undefined,
+          difficulty: form.difficulty,
+          notes: form.notes || undefined,
+          source: 'manual',
+          createdAt: new Date().toISOString(),
+        };
+        try {
+          await onSave(tc, true);
+        } catch (e) {}
+        setSaving(false);
+      };
+
+      const stepLabels = ['User', 'Message', 'Behaviors', 'Metadata', 'Review'];
+
+      const filteredIntents = useMemo(() => {
+        // Show all intents but could be filtered by segment relevance in the future
+        return intents;
+      }, [intents, form.segment]);
+
+      const suggestions = useMemo(() => {
+        return getSuggestedBehaviors(form.segment, form.turns[0]?.intentTag);
+      }, [form.segment, form.turns[0]?.intentTag]);
+
+      const [customBehavior, setCustomBehavior] = useState('');
+
+      return (
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-200">Create Test Case</h3>
+            <button onClick={onCancel} className="text-slate-500 hover:text-slate-300 text-sm">&times; Close</button>
+          </div>
+
+          <WizardProgress currentStep={step} steps={stepLabels} />
+
+          {/* Step 1: Select User */}
+          {step === 1 && (
+            <div className="space-y-4 wizard-step">
+              <h4 className="text-sm font-medium text-slate-300">Step 1: Select User</h4>
+
+              {!form.manualUser ? (
+                <div className="space-y-3">
+                  <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Search by name, ID, or segment..."
+                    className="w-full px-3 py-2 rounded-xl text-sm" />
+
+                  <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-700/50 bg-slate-900/50">
+                    {filteredUsers.map(u => (
+                      <button key={u.leadRefId} onClick={() => selectUser(u)}
+                        className={`w-full text-left px-4 py-2.5 text-sm border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors flex items-center justify-between ${form.user === u.leadRefId ? 'bg-sky-500/10 border-l-2 border-l-sky-400' : ''}`}>
+                        <div>
+                          <span className="text-slate-200 font-medium">{u.firstName} {u.lastName}</span>
+                          <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] border ${segmentClass(u.segment)}`}>{u.segment}</span>
+                        </div>
+                        <span className="text-xs text-slate-500 font-mono">Score: {u.creditScore}</span>
+                      </button>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <div className="text-center py-6 text-slate-500 text-xs">No users found</div>
+                    )}
+                  </div>
+
+                  <button onClick={() => set('manualUser', true)} className="text-xs text-sky-400 hover:text-sky-300">
+                    Or enter leadRefId manually
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Lead Ref ID</label>
+                      <input value={form.manualLeadRefId} onChange={e => { set('manualLeadRefId', e.target.value); set('user', e.target.value); }}
+                        className="w-full px-3 py-2 rounded-xl text-sm" placeholder="e.g., USR12345" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">User Name</label>
+                      <input value={form.userName} onChange={e => set('userName', e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl text-sm" placeholder="First Last" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Segment</label>
+                      <select value={form.segment} onChange={e => set('segment', e.target.value)} className="w-full px-3 py-2 rounded-xl text-sm">
+                        <option value="">Select...</option>
+                        {segments.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <button onClick={() => set('manualUser', false)} className="text-xs text-sky-400 hover:text-sky-300">
+                    Back to user search
+                  </button>
+                </div>
+              )}
+
+              {form.user && form.segment && (
+                <div className="bg-slate-800/30 rounded-xl p-3 border border-slate-700/30 flex items-center gap-3">
+                  <StatusIcon passed={true} size={16} />
+                  <span className="text-sm text-slate-300">
+                    Selected: <strong>{form.userName || form.user}</strong>
+                    <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] border ${segmentClass(form.segment)}`}>{form.segment}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Configure Message */}
+          {step === 2 && (
+            <div className="space-y-4 wizard-step">
+              <h4 className="text-sm font-medium text-slate-300">Step 2: Configure Message</h4>
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5 flex items-center">
+                  Intent Tag
+                </label>
+                <select value={form.turns[0]?.intentTag || ''} onChange={e => setTurn(0, 'intentTag', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl text-sm">
+                  <option value="">No specific intent</option>
+                  {filteredIntents.map(it => <option key={it} value={it}>{it}</option>)}
+                </select>
+              </div>
+
+              {starters.length > 0 && (
+                <div>
+                  <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">
+                    Starter Templates ({form.segment})
+                  </label>
+                  {loadingStarters ? (
+                    <span className="spinner" />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {starters.map((s, i) => (
+                        <button key={i} type="button" onClick={() => {
+                          setTurn(0, 'userMessage', s.text);
+                          if (s.intentTag) setTurn(0, 'intentTag', s.intentTag);
+                        }}
+                          className="starter-chip text-left">
+                          <span className="block">{s.text}</span>
+                          {s.intentTag && <span className="text-[10px] text-slate-500 block mt-0.5">{s.intentTag}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">User Messages</label>
+                {form.turns.map((t, i) => (
+                  <div key={i} className="flex gap-2 mb-2 items-start">
+                    <span className="text-xs text-slate-500 mt-2.5 w-6 text-right shrink-0">{i + 1}.</span>
+                    <input value={t.userMessage} onChange={e => setTurn(i, 'userMessage', e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="What would the user say?" />
+                    {form.turns.length > 1 && (
+                      <button type="button" onClick={() => removeTurn(i)} className="text-red-400 hover:text-red-300 text-sm mt-2 shrink-0">&times;</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+                  <input type="checkbox" checked={form.multiTurn}
+                    onChange={e => {
+                      set('multiTurn', e.target.checked);
+                      if (!e.target.checked && form.turns.length > 1) {
+                        set('turns', [form.turns[0]]);
+                      }
+                    }}
+                    className="rounded border-slate-600" />
+                  Multi-turn conversation
+                </label>
+                {form.multiTurn && (
+                  <button type="button" onClick={addTurn} className="text-xs text-sky-400 hover:text-sky-300">+ Add another turn</button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Expected Behaviors */}
+          {step === 3 && (
+            <div className="space-y-4 wizard-step">
+              <h4 className="text-sm font-medium text-slate-300 flex items-center">
+                Step 3: Expected Behaviors
+                <HelpTooltip text={TOOLTIPS.expectedBehaviors} />
+              </h4>
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">
+                  Suggested (click to add)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((s, i) => {
+                    const isSelected = form.expectedBehaviors.includes(s);
+                    return (
+                      <button key={i} type="button" onClick={() => toggleBehavior(s)}
+                        className={`chip px-3 py-1.5 rounded-lg text-xs border transition-all ${
+                          isSelected
+                            ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-sm shadow-sky-500/10'
+                            : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-600'
+                        }`}>
+                        {isSelected && <span className="mr-1">&#10003;</span>}
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">
+                  Selected Behaviors ({form.expectedBehaviors.length})
+                </label>
+                {form.expectedBehaviors.length === 0 ? (
+                  <p className="text-xs text-slate-600">Click suggestions above or add custom behaviors below. Minimum 1 required.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {form.expectedBehaviors.map((b, i) => (
+                      <span key={i} className="badge-pass px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5">
+                        {b}
+                        <button type="button" onClick={() => toggleBehavior(b)} className="text-green-300 hover:text-white ml-0.5">&times;</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <input type="text" value={customBehavior} onChange={e => setCustomBehavior(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomBehavior(customBehavior); setCustomBehavior(''); } }}
+                  className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="Add custom behavior (press Enter)" />
+                <button type="button" onClick={() => { addCustomBehavior(customBehavior); setCustomBehavior(''); }}
+                  className="btn-secondary px-3 py-2 rounded-xl text-sm">Add</button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Metadata */}
+          {step === 4 && (
+            <div className="space-y-4 wizard-step">
+              <h4 className="text-sm font-medium text-slate-300">Step 4: Metadata</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5 flex items-center">
+                    Difficulty
+                    <HelpTooltip text={TOOLTIPS.difficulty} />
+                  </label>
+                  <div className="flex gap-2">
+                    {['easy', 'medium', 'hard'].map(d => (
+                      <button key={d} type="button" onClick={() => set('difficulty', d)}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                          form.difficulty === d
+                            ? d === 'easy' ? 'bg-green-500/15 border-green-500/40 text-green-400'
+                              : d === 'medium' ? 'bg-yellow-500/15 border-yellow-500/40 text-yellow-400'
+                              : 'bg-red-500/15 border-red-500/40 text-red-400'
+                            : 'bg-slate-800/50 border-slate-700/50 text-slate-500 hover:border-slate-600'
+                        }`}>
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">
+                    Generated ID
+                  </label>
+                  <div className="px-3 py-2 rounded-xl text-sm font-mono bg-slate-900/50 border border-slate-700/30 text-sky-300">
+                    {generatedId}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Tags</label>
+                <div className="flex gap-2 items-center mb-2">
+                  <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="Add tags (comma-separated, press Enter)" />
+                  <button type="button" onClick={addTag} className="btn-secondary px-3 py-2 rounded-xl text-sm">Add</button>
+                </div>
+                {form.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {form.tags.map((tag, i) => (
+                      <span key={i} className="tag-chip">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="text-purple-300 hover:text-white">&times;</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Notes</label>
+                <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl text-sm h-20 resize-none" placeholder="Optional notes about this test case..." />
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Review & Save */}
+          {step === 5 && (
+            <div className="space-y-4 wizard-step">
+              <h4 className="text-sm font-medium text-slate-300">Step 5: Review & Save</h4>
+
+              <div className="card p-5 space-y-4 border-sky-500/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-sm text-sky-300 font-semibold">{generatedId}</span>
+                  <div className="flex gap-2">
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${segmentClass(form.segment)}`}>{form.segment}</span>
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium badge-${form.difficulty}`}>{form.difficulty}</span>
+                    <span className="badge-manual px-2 py-0.5 rounded-md text-[11px] font-medium border">manual</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">User</span>
+                    <p className="text-slate-300">{form.userName || form.user}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Lead Ref ID</span>
+                    <p className="text-slate-400 font-mono text-xs">{form.user}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">Turns ({form.turns.filter(t => t.userMessage.trim()).length})</span>
+                  {form.turns.filter(t => t.userMessage.trim()).map((t, i) => (
+                    <div key={i} className="flex gap-2 mt-1.5 items-start">
+                      <span className="text-xs text-slate-600 w-5 text-right shrink-0">{i + 1}.</span>
+                      <div>
+                        <p className="text-sm text-slate-300">{t.userMessage}</p>
+                        {t.intentTag && <span className="text-[10px] text-slate-500 font-mono">{t.intentTag}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">Expected Behaviors ({form.expectedBehaviors.length})</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {form.expectedBehaviors.map((b, i) => (
+                      <span key={i} className="badge-pass px-2 py-0.5 rounded-md text-[11px]">{b}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {form.tags.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Tags</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {form.tags.map((tag, i) => <span key={i} className="tag-chip">{tag}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                {form.notes && (
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Notes</span>
+                    <p className="text-xs text-slate-400 mt-1">{form.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-700/30">
+            <button type="button" onClick={step === 1 ? onCancel : () => setStep(s => s - 1)}
+              className="btn-secondary px-4 py-2 rounded-xl text-sm transition-all">
+              {step === 1 ? 'Cancel' : 'Back'}
+            </button>
+
+            <div className="text-xs text-slate-500">Step {step} of 5</div>
+
+            {step < 5 ? (
+              <button type="button" onClick={() => setStep(s => s + 1)} disabled={!canProceed(step)}
+                className="btn-primary px-5 py-2 rounded-xl text-sm font-medium disabled:opacity-40 transition-all">
+                Next
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button type="button" onClick={handleSave} disabled={saving}
+                  className="btn-primary px-5 py-2 rounded-xl text-sm font-medium disabled:opacity-50 transition-all">
+                  {saving ? <><span className="spinner mr-2" style={{width:14,height:14}} />Saving...</> : 'Save'}
+                </button>
+                <button type="button" onClick={runAfterSave} disabled={saving}
+                  className="btn-success px-5 py-2 rounded-xl text-sm font-medium disabled:opacity-50 transition-all text-white">
+                  Save & Run
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Test Case Manager (Enhanced) ────────────────────────────────────────────
+    function TestCaseView({ showToast, report, onNavigateToCase }) {
       const [cases, setCases] = useState([]);
       const [users, setUsers] = useState([]);
       const [segments, setSegments] = useState([]);
       const [intents, setIntents] = useState([]);
-      const [filter, setFilter] = useState({ segment: '', search: '', status: '' });
+      const [filter, setFilter] = useState({ segment: '', search: '', status: '', difficulty: '', source: '', tag: '' });
       const [editing, setEditing] = useState(null);
-      const [showForm, setShowForm] = useState(false);
+      const [showWizard, setShowWizard] = useState(false);
       const [loading, setLoading] = useState(true);
+      const [expandedNotes, setExpandedNotes] = useState({});
 
       const failedIds = useMemo(() => {
         if (!report?.failures) return new Set();
         return new Set(report.failures.map(f => f.caseId));
       }, [report]);
 
-      const passedIds = useMemo(() => {
-        if (!report) return new Set();
-        const all = new Set();
-        for (let i = 0; i < report.totalCases; i++) {
-          // We know total but not IDs; build from failures inverse
-        }
-        return all;
-      }, [report]);
-
-      const getCaseStatus = (caseId) => {
-        if (!report) return null; // no report = unknown
-        if (failedIds.has(caseId)) return false;
-        return true; // if there's a report and it's not in failures, it passed
+      const getCaseStatus = (c) => {
+        // Prefer case-level lastRunResult
+        if (c.lastRunResult === 'pass') return true;
+        if (c.lastRunResult === 'fail') return false;
+        if (c.lastRunResult === 'error') return 'error';
+        if (!report) return null;
+        if (failedIds.has(c.id)) return false;
+        return true;
       };
 
       const load = useCallback(async () => {
@@ -288,15 +958,28 @@
 
       useEffect(() => { load(); }, [load]);
 
-      const filtered = cases.filter(c => {
+      const allTags = useMemo(() => {
+        const tagSet = new Set();
+        cases.forEach(c => (c.tags || []).forEach(t => tagSet.add(t)));
+        return [...tagSet].sort();
+      }, [cases]);
+
+      const filtered = useMemo(() => cases.filter(c => {
         if (filter.segment && c.segment !== filter.segment) return false;
-        if (filter.search && !c.id.toLowerCase().includes(filter.search.toLowerCase()) &&
-            !(c.userName || '').toLowerCase().includes(filter.search.toLowerCase())) return false;
-        if (filter.status === 'pass' && getCaseStatus(c.id) !== true) return false;
-        if (filter.status === 'fail' && getCaseStatus(c.id) !== false) return false;
-        if (filter.status === 'unknown' && getCaseStatus(c.id) !== null) return false;
+        if (filter.search) {
+          const q = filter.search.toLowerCase();
+          if (!c.id.toLowerCase().includes(q) && !(c.userName || '').toLowerCase().includes(q)) return false;
+        }
+        const status = getCaseStatus(c);
+        if (filter.status === 'pass' && status !== true) return false;
+        if (filter.status === 'fail' && status !== false) return false;
+        if (filter.status === 'error' && status !== 'error') return false;
+        if (filter.status === 'unknown' && status !== null) return false;
+        if (filter.difficulty && c.difficulty !== filter.difficulty) return false;
+        if (filter.source && c.source !== filter.source) return false;
+        if (filter.tag && !(c.tags || []).includes(filter.tag)) return false;
         return true;
-      });
+      }), [cases, filter, report]);
 
       const deleteCase = async (id) => {
         if (!confirm(`Delete test case "${id}"?`)) return;
@@ -307,7 +990,7 @@
         } catch (e) { showToast(e.message, 'error'); }
       };
 
-      const saveCase = async (tc) => {
+      const saveCase = async (tc, runAfter) => {
         try {
           if (editing) {
             await api(`/dataset/${tc.id}`, { method: 'PUT', body: JSON.stringify(tc) });
@@ -316,24 +999,41 @@
           } else {
             await api('/dataset', { method: 'POST', body: JSON.stringify(tc) });
             setCases(prev => [...prev, tc]);
-            showToast(`Created ${tc.id}`, 'success');
+            if (runAfter) {
+              showToast(`Created ${tc.id} — running eval...`, 'info');
+              try {
+                const data = await api(`/run/single/${tc.id}`, { method: 'POST' });
+                showToast(`${tc.id}: ${data.result?.allPassed ? 'PASSED' : 'FAILED'}`, data.result?.allPassed ? 'success' : 'error');
+              } catch (e) { showToast(`Eval run error: ${e.message}`, 'error'); }
+            } else {
+              showToast(`Created ${tc.id}`, 'success');
+            }
           }
           setEditing(null);
-          setShowForm(false);
+          setShowWizard(false);
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const runSingle = async (id) => {
+        showToast(`Running ${id}...`, 'info');
+        try {
+          const data = await api(`/run/single/${id}`, { method: 'POST' });
+          showToast(`${id}: ${data.result?.allPassed ? 'PASSED' : 'FAILED'}`, data.result?.allPassed ? 'success' : 'error');
         } catch (e) { showToast(e.message, 'error'); }
       };
 
       if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
 
-      const passCount = cases.filter(c => getCaseStatus(c.id) === true).length;
-      const failCount = cases.filter(c => getCaseStatus(c.id) === false).length;
+      const passCount = cases.filter(c => getCaseStatus(c) === true).length;
+      const failCount = cases.filter(c => getCaseStatus(c) === false).length;
 
       return (
         <div className="space-y-4">
+          {/* Filter bar */}
           <div className="flex flex-wrap gap-3 items-center">
             <input type="text" placeholder="Search by ID or user..." value={filter.search}
               onChange={e => setFilter(f => ({ ...f, search: e.target.value }))}
-              className="px-3 py-2 rounded-xl text-sm w-64" />
+              className="px-3 py-2 rounded-xl text-sm w-52" />
             <select value={filter.segment} onChange={e => setFilter(f => ({ ...f, segment: e.target.value }))}
               className="px-3 py-2 rounded-xl text-sm">
               <option value="">All Segments</option>
@@ -344,49 +1044,113 @@
               <option value="">All Status</option>
               <option value="pass">Passed</option>
               <option value="fail">Failed</option>
+              <option value="error">Error</option>
               <option value="unknown">Not Run</option>
             </select>
+            <select value={filter.difficulty} onChange={e => setFilter(f => ({ ...f, difficulty: e.target.value }))}
+              className="px-3 py-2 rounded-xl text-sm">
+              <option value="">All Difficulty</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <select value={filter.source} onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
+              className="px-3 py-2 rounded-xl text-sm">
+              <option value="">All Sources</option>
+              <option value="manual">Manual</option>
+              <option value="captured">Captured</option>
+              <option value="template">Template</option>
+            </select>
+            {allTags.length > 0 && (
+              <select value={filter.tag} onChange={e => setFilter(f => ({ ...f, tag: e.target.value }))}
+                className="px-3 py-2 rounded-xl text-sm">
+                <option value="">All Tags</option>
+                {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            )}
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span>{filtered.length} of {cases.length}</span>
               {report && <span className="flex items-center gap-1"><StatusIcon passed={true} size={12}/>{passCount} <StatusIcon passed={false} size={12}/>{failCount}</span>}
             </div>
-            <button onClick={() => { setEditing(null); setShowForm(true); }}
+            <button onClick={() => { setEditing(null); setShowWizard(true); }}
               className="btn-primary px-4 py-2 rounded-xl text-sm font-medium ml-auto transition-all">+ Add Test Case</button>
           </div>
 
-          {(showForm || editing) && (
-            <TestCaseForm tc={editing} users={users} segments={segments} intents={intents}
-              onSave={saveCase} onCancel={() => { setEditing(null); setShowForm(false); }} />
+          {showWizard && !editing && (
+            <TestCaseWizard users={users} segments={segments} intents={intents}
+              onSave={saveCase} onCancel={() => setShowWizard(false)} showToast={showToast}
+              existingCaseCount={cases.length} />
           )}
 
+          {editing && (
+            <TestCaseFormEdit tc={editing} users={users} segments={segments} intents={intents}
+              onSave={(tc) => saveCase(tc)} onCancel={() => setEditing(null)} />
+          )}
+
+          {/* Test case table */}
           <div className="card overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-800/60 text-slate-400 text-[11px] uppercase tracking-wider">
-                  <th className="px-4 py-3 text-center w-10">Status</th>
-                  <th className="px-4 py-3 text-left">ID</th>
-                  <th className="px-4 py-3 text-left">Segment</th>
-                  <th className="px-4 py-3 text-left">User</th>
-                  <th className="px-4 py-3 text-center">Turns</th>
-                  <th className="px-4 py-3 text-left">Intent</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-3 py-3 text-center w-10">Status</th>
+                  <th className="px-3 py-3 text-left">ID</th>
+                  <th className="px-3 py-3 text-left">Segment</th>
+                  <th className="px-3 py-3 text-left">User</th>
+                  <th className="px-3 py-3 text-center">Turns</th>
+                  <th className="px-3 py-3 text-left">Intent</th>
+                  <th className="px-3 py-3 text-left">Meta</th>
+                  <th className="px-3 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(c => {
-                  const status = getCaseStatus(c.id);
+                  const status = getCaseStatus(c);
+                  const statusBool = status === true ? true : status === false ? false : null;
                   return (
                     <tr key={c.id} className="border-t border-slate-700/50 hover:bg-slate-800/30 transition-colors">
-                      <td className="px-4 py-2.5 text-center"><StatusIcon passed={status} /></td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-sky-300">{c.id}</td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-3 py-2.5 text-center">
+                        {status === 'error' ? (
+                          <span className="badge-error px-1.5 py-0.5 rounded text-[9px] font-bold">ERR</span>
+                        ) : (
+                          <StatusIcon passed={statusBool} />
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="font-mono text-xs text-sky-300">{c.id}</span>
+                        {c.createdAt && <span className="block text-[10px] text-slate-600">{relativeTime(c.createdAt)}</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
                         <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${segmentClass(c.segment)}`}>{c.segment}</span>
                       </td>
-                      <td className="px-4 py-2.5 text-slate-300">{c.userName || c.user}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-400">{c.turns?.length || 0}</td>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-500 font-mono">{c.turns?.[0]?.intentTag?.replace('INTENT_', '') || '-'}</td>
-                      <td className="px-4 py-2.5 text-right space-x-3">
-                        <button onClick={() => { setEditing(c); setShowForm(false); }}
+                      <td className="px-3 py-2.5 text-slate-300 text-xs">{c.userName || c.user}</td>
+                      <td className="px-3 py-2.5 text-center text-slate-400">{c.turns?.length || 0}</td>
+                      <td className="px-3 py-2.5 text-[11px] text-slate-500 font-mono">{c.turns?.[0]?.intentTag?.replace('INTENT_', '') || '-'}</td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex flex-wrap gap-1 items-center">
+                          {c.difficulty && (
+                            <span className={`badge-${c.difficulty} px-1.5 py-0.5 rounded text-[9px] font-bold uppercase`}>{c.difficulty}</span>
+                          )}
+                          {c.source && (
+                            <span className={`badge-${c.source} px-1.5 py-0.5 rounded text-[9px] font-medium border`}>{c.source}</span>
+                          )}
+                          {(c.tags || []).slice(0, 2).map((tag, i) => (
+                            <span key={i} className="tag-chip" style={{fontSize: '9px', padding: '0 4px'}}>{tag}</span>
+                          ))}
+                          {(c.tags || []).length > 2 && (
+                            <span className="text-[9px] text-slate-600">+{c.tags.length - 2}</span>
+                          )}
+                          {c.notes && (
+                            <span className="tooltip-trigger">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 4h8M4 8h5M4 12h7" stroke="#475569" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                              <span className="tooltip-content">{c.notes}</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right space-x-2">
+                        <button onClick={() => runSingle(c.id)}
+                          className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">Run</button>
+                        <button onClick={() => { setEditing(c); setShowWizard(false); }}
                           className="text-xs text-sky-400 hover:text-sky-300 transition-colors">Edit</button>
                         <button onClick={() => deleteCase(c.id)}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors">Delete</button>
@@ -404,12 +1168,17 @@
       );
     }
 
-    // ── Test Case Form ──────────────────────────────────────────────────────────
-    function TestCaseForm({ tc, users, segments, intents, onSave, onCancel }) {
-      const [form, setForm] = useState(() => tc ? { ...tc } : {
-        id: '', user: '', userName: '', segment: '', turns: [{ userMessage: '', intentTag: '', messageCount: 1 }],
-        expectedBehaviors: [''],
-      });
+    // ── Edit Form (simplified, for existing test cases) ─────────────────────────
+    function TestCaseFormEdit({ tc, users, segments, intents, onSave, onCancel }) {
+      const [form, setForm] = useState(() => ({
+        ...tc,
+        tags: tc.tags || [],
+        difficulty: tc.difficulty || 'medium',
+        notes: tc.notes || '',
+        source: tc.source || 'manual',
+      }));
+      const [tagInput, setTagInput] = useState('');
+
       const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
       const setTurn = (i, k, v) => { const turns = [...form.turns]; turns[i] = { ...turns[i], [k]: v }; set('turns', turns); };
       const addTurn = () => set('turns', [...form.turns, { userMessage: '', messageCount: form.turns.length + 1 }]);
@@ -421,21 +1190,32 @@
         const u = users.find(u => u.leadRefId === leadRefId);
         if (u) { set('user', u.leadRefId); set('userName', `${u.firstName} ${u.lastName}`); set('segment', u.segment); }
       };
+      const addTag = () => {
+        const newTags = tagInput.split(',').map(t => t.trim()).filter(t => t && !form.tags.includes(t));
+        if (newTags.length) { set('tags', [...form.tags, ...newTags]); setTagInput(''); }
+      };
+      const removeTag = (tag) => set('tags', form.tags.filter(t => t !== tag));
+
       const submit = (e) => {
         e.preventDefault();
-        const clean = { ...form, turns: form.turns.filter(t => t.userMessage.trim()), expectedBehaviors: form.expectedBehaviors.filter(b => b.trim()) };
-        if (!clean.id || !clean.user || !clean.segment || !clean.turns.length) { alert('Please fill in ID, User, Segment, and at least one turn.'); return; }
+        const clean = {
+          ...form,
+          turns: form.turns.filter(t => t.userMessage.trim()),
+          expectedBehaviors: form.expectedBehaviors.filter(b => b.trim()),
+          updatedAt: new Date().toISOString(),
+        };
+        if (!clean.user || !clean.segment || !clean.turns.length) { alert('Please fill in User, Segment, and at least one turn.'); return; }
         onSave(clean);
       };
+
       return (
         <form onSubmit={submit} className="card p-6 space-y-5">
-          <h3 className="text-sm font-semibold text-slate-200">{tc ? 'Edit Test Case' : 'New Test Case'}</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-200">Edit Test Case: <span className="text-sky-300 font-mono">{tc.id}</span></h3>
+            <button type="button" onClick={onCancel} className="text-slate-500 hover:text-slate-300 text-sm">&times; Close</button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">ID</label>
-              <input value={form.id} onChange={e => set('id', e.target.value)} disabled={!!tc}
-                className="w-full px-3 py-2 rounded-xl text-sm disabled:opacity-50" placeholder="drp-eligible-stress-001" />
-            </div>
             <div>
               <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">User</label>
               <select value={form.user} onChange={e => selectUser(e.target.value)} className="w-full px-3 py-2 rounded-xl text-sm">
@@ -450,7 +1230,16 @@
                 {segments.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Difficulty</label>
+              <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} className="w-full px-3 py-2 rounded-xl text-sm">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
           </div>
+
           <div>
             <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">Turns</label>
             {form.turns.map((t, i) => (
@@ -472,8 +1261,12 @@
             ))}
             <button type="button" onClick={addTurn} className="text-xs text-sky-400 hover:text-sky-300 mt-1">+ Add turn</button>
           </div>
+
           <div>
-            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2">Expected Behaviors</label>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-2 flex items-center">
+              Expected Behaviors
+              <HelpTooltip text={TOOLTIPS.expectedBehaviors} />
+            </label>
             {form.expectedBehaviors.map((b, i) => (
               <div key={i} className="flex gap-2 mb-2">
                 <input value={b} onChange={e => setBehavior(i, e.target.value)}
@@ -483,13 +1276,215 @@
             ))}
             <button type="button" onClick={addBehavior} className="text-xs text-sky-400 hover:text-sky-300 mt-1">+ Add behavior</button>
           </div>
+
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Tags</label>
+            <div className="flex gap-2 items-center mb-2">
+              <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                className="flex-1 px-3 py-2 rounded-xl text-sm" placeholder="Comma-separated tags" />
+              <button type="button" onClick={addTag} className="btn-secondary px-3 py-2 rounded-xl text-sm">Add</button>
+            </div>
+            {form.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {form.tags.map((tag, i) => (
+                  <span key={i} className="tag-chip">
+                    {tag}
+                    <button type="button" onClick={() => removeTag(tag)} className="text-purple-300 hover:text-white">&times;</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">Notes</label>
+            <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
+              className="w-full px-3 py-2 rounded-xl text-sm h-16 resize-none" placeholder="Optional notes..." />
+          </div>
+
           <div className="flex gap-3 pt-2">
-            <button type="submit" className="btn-primary px-5 py-2 rounded-xl text-sm font-medium transition-all">
-              {tc ? 'Save Changes' : 'Create Test Case'}
-            </button>
+            <button type="submit" className="btn-primary px-5 py-2 rounded-xl text-sm font-medium transition-all">Save Changes</button>
             <button type="button" onClick={onCancel} className="btn-secondary px-5 py-2 rounded-xl text-sm transition-all">Cancel</button>
           </div>
         </form>
+      );
+    }
+
+    // ── Coverage Map ────────────────────────────────────────────────────────────
+    function CoverageMapView({ showToast, onFilterCases }) {
+      const [cases, setCases] = useState([]);
+      const [intents, setIntents] = useState([]);
+      const [segments, setSegments] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [report, setReport] = useState(null);
+
+      useEffect(() => {
+        Promise.all([api('/dataset'), api('/segments'), api('/reports/latest').catch(() => ({ report: null }))])
+          .then(([ds, sg, rp]) => {
+            setCases(ds.cases || []);
+            setSegments(sg.segments || []);
+            setIntents(sg.intents || []);
+            setReport(rp.report);
+            setLoading(false);
+          }).catch(e => { showToast(e.message, 'error'); setLoading(false); });
+      }, []);
+
+      const failedIds = useMemo(() => new Set((report?.failures || []).map(f => f.caseId)), [report]);
+
+      const coverageData = useMemo(() => {
+        const data = {};
+        const segTotals = {};
+        const intentTotals = {};
+
+        segments.forEach(seg => {
+          data[seg] = {};
+          segTotals[seg] = 0;
+          intents.forEach(intent => {
+            data[seg][intent] = { count: 0, passed: 0, failed: 0 };
+          });
+          // Also count cases without an intent
+          data[seg]['_none'] = { count: 0, passed: 0, failed: 0 };
+        });
+        intents.forEach(it => { intentTotals[it] = 0; });
+        intentTotals['_none'] = 0;
+
+        cases.forEach(c => {
+          const seg = c.segment;
+          const intent = c.turns?.[0]?.intentTag || '_none';
+          if (!data[seg]) return;
+          if (!data[seg][intent]) {
+            data[seg][intent] = { count: 0, passed: 0, failed: 0 };
+          }
+          data[seg][intent].count++;
+          segTotals[seg] = (segTotals[seg] || 0) + 1;
+          intentTotals[intent] = (intentTotals[intent] || 0) + 1;
+
+          if (report) {
+            if (failedIds.has(c.id)) data[seg][intent].failed++;
+            else data[seg][intent].passed++;
+          }
+        });
+
+        return { data, segTotals, intentTotals };
+      }, [cases, segments, intents, report, failedIds]);
+
+      if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
+
+      const allIntentCols = [...intents, '_none'];
+      const totalCases = cases.length;
+      const coveredCells = segments.reduce((acc, seg) => {
+        return acc + allIntentCols.filter(it => (coverageData.data[seg]?.[it]?.count || 0) > 0).length;
+      }, 0);
+      const totalCells = segments.length * allIntentCols.length;
+      const coveragePercent = totalCells > 0 ? ((coveredCells / totalCells) * 100).toFixed(0) : 0;
+
+      return (
+        <div className="space-y-6">
+          {/* Summary stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Total Cases" value={totalCases} color="#38bdf8" />
+            <StatCard label="Covered Cells" value={`${coveredCells}/${totalCells}`} color="#22c55e" />
+            <StatCard label="Coverage" value={`${coveragePercent}%`} color={coveragePercent >= 50 ? '#22c55e' : coveragePercent >= 25 ? '#eab308' : '#ef4444'} />
+            <StatCard label="Segments" value={segments.length} color="#c084fc" />
+          </div>
+
+          {/* Coverage grid */}
+          <div className="card p-4 overflow-x-auto">
+            <h3 className="text-sm font-semibold text-slate-300 mb-4">Segment x Intent Coverage Grid</h3>
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr>
+                  <th className="px-2 py-2 text-left text-[10px] text-slate-400 font-medium uppercase tracking-wider sticky left-0 bg-slate-900/80 z-10 min-w-[120px]">
+                    Segment
+                  </th>
+                  {allIntentCols.map(it => (
+                    <th key={it} className="px-1 py-2 text-center text-[9px] text-slate-500 font-medium uppercase tracking-wider" style={{writingMode: 'vertical-lr', minWidth: '32px', maxWidth: '40px'}}>
+                      <span className="transform rotate-180 inline-block">
+                        {it === '_none' ? 'No Intent' : it.replace('INTENT_', '')}
+                      </span>
+                    </th>
+                  ))}
+                  <th className="px-2 py-2 text-center text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {segments.map(seg => (
+                  <tr key={seg} className="border-t border-slate-800/50">
+                    <td className="px-2 py-1.5 sticky left-0 bg-slate-900/80 z-10">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${segmentClass(seg)}`}>{seg}</span>
+                    </td>
+                    {allIntentCols.map(it => {
+                      const cell = coverageData.data[seg]?.[it] || { count: 0, passed: 0, failed: 0 };
+                      const bg = cell.count >= 2 ? 'rgba(34,197,94,0.15)' : cell.count === 1 ? 'rgba(234,179,8,0.12)' : 'rgba(51,65,85,0.15)';
+                      const textColor = cell.count >= 2 ? '#4ade80' : cell.count === 1 ? '#fbbf24' : '#334155';
+
+                      return (
+                        <td key={it} className="px-0.5 py-1 text-center">
+                          <div className="coverage-cell rounded-md px-1 py-1.5 mx-auto" style={{background: bg, minWidth: '28px'}}
+                            onClick={() => {
+                              if (cell.count > 0 && onFilterCases) {
+                                onFilterCases(seg, it === '_none' ? '' : it);
+                              }
+                            }}
+                            title={`${seg} / ${it === '_none' ? 'No Intent' : it}: ${cell.count} cases${report ? ` (${cell.passed}P/${cell.failed}F)` : ''}`}>
+                            <span className="font-bold text-[11px]" style={{color: textColor}}>{cell.count}</span>
+                            {report && cell.count > 0 && (
+                              <div className="flex justify-center gap-0.5 mt-0.5">
+                                {cell.passed > 0 && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
+                                {cell.failed > 0 && <div className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1.5 text-center text-slate-400 font-semibold">{coverageData.segTotals[seg] || 0}</td>
+                  </tr>
+                ))}
+                {/* Totals row */}
+                <tr className="border-t-2 border-slate-700/50">
+                  <td className="px-2 py-2 sticky left-0 bg-slate-900/80 z-10 text-[10px] text-slate-400 font-bold uppercase">Total</td>
+                  {allIntentCols.map(it => (
+                    <td key={it} className="px-0.5 py-2 text-center text-[11px] text-slate-400 font-semibold">
+                      {coverageData.intentTotals[it] || 0}
+                    </td>
+                  ))}
+                  <td className="px-2 py-2 text-center text-sm text-sky-400 font-bold">{totalCases}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-4 text-[10px] text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-4 h-3 rounded" style={{background: 'rgba(34,197,94,0.15)'}} />
+                2+ cases
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-4 h-3 rounded" style={{background: 'rgba(234,179,8,0.12)'}} />
+                1 case
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-4 h-3 rounded" style={{background: 'rgba(51,65,85,0.15)'}} />
+                0 cases
+              </span>
+              {report && (
+                <>
+                  <span className="flex items-center gap-1.5 ml-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    Has passing
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    Has failing
+                  </span>
+                </>
+              )}
+              <span className="ml-auto">Click a cell to filter Test Cases</span>
+            </div>
+          </div>
+        </div>
       );
     }
 
@@ -599,7 +1594,10 @@
                   <div className="space-y-4">
                     {result.expectedBehaviors?.length > 0 && (
                       <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-                        <h4 className="text-[11px] text-slate-400 font-medium uppercase tracking-wider mb-2">Expected Behaviors</h4>
+                        <h4 className="text-[11px] text-slate-400 font-medium uppercase tracking-wider mb-2 flex items-center">
+                          Expected Behaviors
+                          <HelpTooltip text={TOOLTIPS.expectedBehaviors} />
+                        </h4>
                         <div className="flex flex-wrap gap-1.5">
                           {result.expectedBehaviors.map((b, i) => (
                             <span key={i} className="badge-neutral px-2 py-0.5 rounded-md text-[11px]">{b}</span>
@@ -681,7 +1679,6 @@
 
       const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-      // Group failures by eval type
       const groups = {};
       for (const f of report.failures) {
         for (const eval_ of [...f.failedCodeEvals, ...f.failedJudgeEvals]) {
@@ -691,7 +1688,6 @@
       }
       const sortedGroups = Object.entries(groups).sort((a, b) => b[1].cases.length - a[1].cases.length);
 
-      // Category descriptions
       const evalDescriptions = {
         no_jargon: 'Response contains technical jargon (FOIR, DPD, delinquent, utilization) that users may not understand. The bot should use plain language equivalents.',
         segment_isolation: 'Response mentions programs/features from a different segment. Critical: DRP users should never see DCP content, and vice versa.',
@@ -717,11 +1713,8 @@
           `2. Navigate to: http://localhost:3001/?eval=true`,
           `3. Enter the user's name to start the conversation`,
         ];
-        const tc = report.failures.find(x => x.caseId === f.caseId);
-        if (tc) {
-          steps.push(`4. Case ID: ${f.caseId}`);
-          steps.push(`5. Run: npm run eval -- ${f.caseId}`);
-        }
+        steps.push(`4. Case ID: ${f.caseId}`);
+        steps.push(`5. Run: npm run eval -- ${f.caseId}`);
         return steps;
       };
 
@@ -777,7 +1770,6 @@
                         const relevantDetails = c.details?.filter(d =>
                           d.toLowerCase().includes(evalName.toLowerCase())
                         ) || [];
-                        // If no relevant details, show all details
                         const displayDetails = relevantDetails.length > 0 ? relevantDetails : (c.details || []);
 
                         return (
@@ -799,7 +1791,6 @@
 
                             {caseOpen && (
                               <div className="px-5 pb-4 pl-12 space-y-3">
-                                {/* All failed evals for this case */}
                                 <div>
                                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">All Failed Evals</span>
                                   <div className="flex flex-wrap gap-1.5 mt-1">
@@ -812,7 +1803,6 @@
                                   </div>
                                 </div>
 
-                                {/* Failure details */}
                                 {displayDetails.length > 0 && (
                                   <div>
                                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">What Went Wrong</span>
@@ -826,7 +1816,6 @@
                                   </div>
                                 )}
 
-                                {/* Reproduction steps */}
                                 <div>
                                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">How to Reproduce</span>
                                   <div className="mt-1 bg-slate-900/50 rounded-lg px-3 py-2 border border-slate-800/50">
@@ -899,15 +1888,244 @@
       );
     }
 
+    // ── Criteria Config View ────────────────────────────────────────────────────
+    function CriteriaView({ showToast }) {
+      const [criteria, setCriteria] = useState([]);
+      const [model, setModel] = useState('gpt-4o-mini');
+      const [loading, setLoading] = useState(true);
+      const [editingId, setEditingId] = useState(null);
+      const [editForm, setEditForm] = useState(null);
+      const [showAdd, setShowAdd] = useState(false);
+      const [addForm, setAddForm] = useState({
+        id: '', name: '', description: '', prompt: '', category: 'custom', enabled: true,
+        appliesWhen: { segments: ['*'], intents: ['*'], minTurn: 1 },
+      });
+
+      const ALL_SEGMENTS = ['DRP_Eligible', 'DRP_Ineligible', 'DCP_Eligible', 'DCP_Ineligible', 'DEP', 'NTC', 'Others'];
+      const CATEGORIES = ['quality', 'accuracy', 'format', 'custom'];
+
+      useEffect(() => {
+        api('/criteria').then(d => {
+          setCriteria(d.criteria || []);
+          setModel(d.model || 'gpt-4o-mini');
+          setLoading(false);
+        }).catch(e => { showToast(e.message, 'error'); setLoading(false); });
+      }, []);
+
+      const toggle = async (id) => {
+        try {
+          const d = await api(`/criteria/${id}/toggle`, { method: 'PATCH' });
+          setCriteria(prev => prev.map(c => c.id === id ? d.criterion : c));
+          showToast(`${d.criterion.name} ${d.criterion.enabled ? 'enabled' : 'disabled'}`, 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const startEdit = (c) => { setEditingId(c.id); setEditForm({ ...c, appliesWhen: { ...c.appliesWhen } }); };
+      const cancelEdit = () => { setEditingId(null); setEditForm(null); };
+
+      const saveEdit = async () => {
+        try {
+          const d = await api(`/criteria/${editingId}`, { method: 'PUT', body: JSON.stringify(editForm) });
+          setCriteria(prev => prev.map(c => c.id === editingId ? d.criterion : c));
+          showToast('Criterion updated', 'success');
+          cancelEdit();
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const deleteCriterion = async (id) => {
+        try {
+          await api(`/criteria/${id}`, { method: 'DELETE' });
+          setCriteria(prev => prev.filter(c => c.id !== id));
+          showToast('Criterion deleted', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const addCriterion = async () => {
+        if (!addForm.id || !addForm.name || !addForm.prompt) {
+          showToast('ID, name, and prompt are required', 'error'); return;
+        }
+        try {
+          const d = await api('/criteria', { method: 'POST', body: JSON.stringify(addForm) });
+          setCriteria(prev => [...prev, d.criterion]);
+          showToast('Criterion added', 'success');
+          setShowAdd(false);
+          setAddForm({ id: '', name: '', description: '', prompt: '', category: 'custom', enabled: true, appliesWhen: { segments: ['*'], intents: ['*'], minTurn: 1 } });
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      const updateModel = async (newModel) => {
+        try {
+          await api('/criteria-config', { method: 'PUT', body: JSON.stringify({ model: newModel }) });
+          setModel(newModel);
+          showToast(`Judge model set to ${newModel}`, 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+      };
+
+      if (loading) return <div className="flex justify-center py-20"><span className="spinner" /></div>;
+
+      const categoryGroups = {};
+      criteria.forEach(c => {
+        if (!categoryGroups[c.category]) categoryGroups[c.category] = [];
+        categoryGroups[c.category].push(c);
+      });
+
+      const CriterionForm = ({ form, setForm, onSave, onCancel, saveLabel }) => (
+        <div className="card p-5 space-y-4 border-sky-500/20">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">ID</label>
+              <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                className="w-full px-3 py-2 rounded-xl text-sm" placeholder="e.g. my_criterion" disabled={saveLabel === 'Save'} />
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl text-sm" placeholder="Display name" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Description</label>
+            <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl text-sm" placeholder="One-line description of what this criterion checks" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Category</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl text-sm">
+                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Min Turn</label>
+              <input type="number" min="1" max="10" value={form.appliesWhen?.minTurn || 1}
+                onChange={e => setForm({ ...form, appliesWhen: { ...form.appliesWhen, minTurn: parseInt(e.target.value) || 1 } })}
+                className="w-full px-3 py-2 rounded-xl text-sm" />
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })} className="accent-sky-500" />
+                <span className="text-sm text-slate-300">Enabled</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">
+              Segments <span className="text-slate-600">(use * for all)</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              <button type="button" onClick={() => setForm({ ...form, appliesWhen: { ...form.appliesWhen, segments: ['*'] } })}
+                className={`chip px-2 py-0.5 rounded-md text-[11px] border ${form.appliesWhen?.segments?.includes('*') ? 'badge-pass chip-selected' : 'badge-neutral'}`}>All (*)</button>
+              {ALL_SEGMENTS.map(seg => {
+                const active = form.appliesWhen?.segments?.includes(seg);
+                return (
+                  <button key={seg} type="button" onClick={() => {
+                    const segs = (form.appliesWhen?.segments || []).filter(s => s !== '*');
+                    setForm({ ...form, appliesWhen: { ...form.appliesWhen, segments: active ? segs.filter(s => s !== seg) : [...segs, seg] } });
+                  }} className={`chip px-2 py-0.5 rounded-md text-[11px] border ${active ? segmentClass(seg) + ' chip-selected' : 'badge-neutral'}`}>{seg}</button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider block mb-1">
+              Prompt <span className="text-slate-600">(system prompt for the LLM judge)</span>
+            </label>
+            <textarea value={form.prompt} onChange={e => setForm({ ...form, prompt: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl text-xs font-mono h-48 resize-y" placeholder="You are evaluating whether..." />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onSave} className="btn-primary px-4 py-2 rounded-xl text-sm font-medium">{saveLabel}</button>
+            <button type="button" onClick={onCancel} className="btn-secondary px-4 py-2 rounded-xl text-sm">Cancel</button>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="space-y-6">
+          {/* Global settings */}
+          <div className="card p-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h3 className="text-sm font-semibold text-slate-300">Judge Configuration</h3>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Model:</label>
+                <select value={model} onChange={e => updateModel(e.target.value)} className="px-3 py-1.5 rounded-lg text-xs">
+                  <option value="gpt-4o-mini">gpt-4o-mini (fast, cheap)</option>
+                  <option value="gpt-4o">gpt-4o (better, slower)</option>
+                  <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                </select>
+              </div>
+              <span className="text-xs text-slate-500">{criteria.length} criteria ({criteria.filter(c => c.enabled).length} enabled)</span>
+            </div>
+            <button onClick={() => setShowAdd(!showAdd)}
+              className={`${showAdd ? 'btn-secondary' : 'btn-primary'} px-4 py-2 rounded-xl text-sm font-medium transition-all`}>
+              {showAdd ? 'Cancel' : '+ New Criterion'}
+            </button>
+          </div>
+
+          {/* Add form */}
+          {showAdd && <CriterionForm form={addForm} setForm={setAddForm} onSave={addCriterion} onCancel={() => setShowAdd(false)} saveLabel="Create" />}
+
+          {/* Criteria by category */}
+          {Object.entries(categoryGroups).map(([cat, items]) => (
+            <div key={cat} className="space-y-3">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${cat === 'quality' ? 'bg-sky-500' : cat === 'accuracy' ? 'bg-green-500' : cat === 'format' ? 'bg-amber-500' : 'bg-purple-500'}`} />
+                {cat} ({items.length})
+              </h3>
+              {items.map(c => (
+                <div key={c.id} className={`card card-hover p-4 transition-all ${!c.enabled ? 'opacity-50' : ''}`}>
+                  {editingId === c.id ? (
+                    <CriterionForm form={editForm} setForm={setEditForm} onSave={saveEdit} onCancel={cancelEdit} saveLabel="Save" />
+                  ) : (
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <button onClick={() => toggle(c.id)} className={`w-9 h-5 rounded-full transition-all relative ${c.enabled ? 'bg-sky-500' : 'bg-slate-700'}`}>
+                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${c.enabled ? 'left-4' : 'left-0.5'}`} />
+                          </button>
+                          <span className="text-sm font-semibold text-slate-200">{c.name}</span>
+                          <span className="font-mono text-[10px] text-slate-500">{c.id}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-2">{c.description}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.appliesWhen.segments.includes('*')
+                            ? <span className="badge-neutral px-1.5 py-0.5 rounded text-[10px] border">All segments</span>
+                            : c.appliesWhen.segments.map(s => <span key={s} className={`px-1.5 py-0.5 rounded text-[10px] border ${segmentClass(s)}`}>{s}</span>)
+                          }
+                          {c.appliesWhen.intents.includes('*')
+                            ? <span className="badge-neutral px-1.5 py-0.5 rounded text-[10px] border">All intents</span>
+                            : c.appliesWhen.intents.slice(0, 3).map(i => <span key={i} className="badge-warn px-1.5 py-0.5 rounded text-[10px] border">{i.replace('INTENT_', '')}</span>)
+                          }
+                          {c.appliesWhen.minTurn > 1 && <span className="badge-neutral px-1.5 py-0.5 rounded text-[10px] border">Turn {c.appliesWhen.minTurn}+</span>}
+                          {c.preCheck && <span className="badge-pass px-1.5 py-0.5 rounded text-[10px] border">Pre-check</span>}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4 shrink-0">
+                        <button onClick={() => startEdit(c)} className="btn-secondary px-3 py-1.5 rounded-lg text-xs">Edit</button>
+                        <button onClick={() => { if (confirm(`Delete criterion "${c.name}"?`)) deleteCriterion(c.id); }}
+                          className="btn-danger px-3 py-1.5 rounded-lg text-xs">Delete</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     // ── App ─────────────────────────────────────────────────────────────────────
     function App() {
       const [tab, setTab] = useState('overview');
       const [report, setReport] = useState(null);
       const [running, setRunning] = useState(false);
       const [toast, setToast] = useState(null);
+      const [caseFilter, setCaseFilter] = useState(null);
 
-      const showToast = useCallback((message, type = 'info') => {
-        setToast({ message, type, key: Date.now() });
+      const showToast = useCallback((message, type = 'info', action = null) => {
+        setToast({ message, type, action, key: Date.now() });
       }, []);
 
       useEffect(() => {
@@ -929,17 +2147,24 @@
         setRunning(false);
       };
 
+      const handleFilterCases = (segment, intent) => {
+        setCaseFilter({ segment, intent });
+        setTab('cases');
+      };
+
       const tabs = [
-        { id: 'overview', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        { id: 'cases', label: 'Test Cases', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6' },
-        { id: 'traces', label: 'Traces', icon: 'M15 15l5 5M10 17a7 7 0 110-14 7 7 0 010 14z' },
+        { id: 'overview', label: 'Overview' },
+        { id: 'cases', label: 'Test Cases' },
+        { id: 'coverage', label: 'Coverage Map' },
+        { id: 'criteria', label: 'Judge Criteria' },
+        { id: 'traces', label: 'Traces' },
         { id: 'failures', label: 'Failures', badge: report?.failedCases },
-        { id: 'reports', label: 'Reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+        { id: 'reports', label: 'Reports' },
       ];
 
       return (
         <div className="min-h-screen">
-          {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          {toast && <Toast key={toast.key} message={toast.message} type={toast.type} action={toast.action} onClose={() => setToast(null)} />}
 
           <header className="border-b border-slate-700/50 bg-slate-900/30 backdrop-blur-xl sticky top-0 z-40">
             <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
@@ -973,6 +2198,8 @@
           <main className="max-w-7xl mx-auto px-6 py-6">
             {tab === 'overview' && <OverviewView report={report} onRunEvals={runEvals} running={running} />}
             {tab === 'cases' && <TestCaseView showToast={showToast} report={report} />}
+            {tab === 'coverage' && <CoverageMapView showToast={showToast} onFilterCases={handleFilterCases} />}
+            {tab === 'criteria' && <CriteriaView showToast={showToast} />}
             {tab === 'traces' && <TraceView showToast={showToast} report={report} />}
             {tab === 'failures' && <FailureView report={report} />}
             {tab === 'reports' && <ReportsView showToast={showToast} />}

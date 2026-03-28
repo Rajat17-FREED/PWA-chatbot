@@ -31,7 +31,12 @@ export async function sendChatMessage(
   const chatHistory = history
     .filter(m => m.role === 'user' || m.role === 'assistant')
     .slice(-20)
-    .map(m => ({ role: m.role, content: m.content }));
+    .map(m => ({
+      role: m.role,
+      content: m.content,
+      ...(m.role === 'user' && m.intentTag ? { intentTag: m.intentTag } : {}),
+      ...(m.role === 'assistant' && m.followUps && m.followUps.length > 0 ? { followUps: m.followUps } : {}),
+    }));
 
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',

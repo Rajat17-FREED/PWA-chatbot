@@ -17,6 +17,21 @@ export interface CreditPullSummary {
   securedAccountsTotalOutstanding: number | null;
 }
 
+export interface AccountHighlight {
+  id: string;
+  lenderName: string;
+  debtType: string | null;
+  accountType: string | null;
+  outstandingAmount: number | null;
+  overdueAmount: number | null;
+  interestRate: number | null;
+  isDelinquent: boolean;
+  maxDPD: number | null;
+  status: string | null;
+  category: 'secured' | 'unsecured' | 'credit_card' | 'other';
+  isSettlementEligible: boolean;
+}
+
 export interface User {
   leadRefId: string;
   firstName: string;
@@ -27,6 +42,7 @@ export interface User {
   monthlyObligation: number | null;
   foirPercentage: number | null;
   creditPull: CreditPullSummary | null;
+  accountHighlights?: AccountHighlight[];
 }
 
 export interface ConversationStarter {
@@ -60,16 +76,26 @@ export interface MessageTooltips {
   unsecured?: TooltipGroup;
 }
 
+/** Inline widget variants rendered within chat responses */
+export type InlineWidget =
+  | { type: 'goalTracker'; currentScore: number; targetScore: number; delta: number; steps: string[] }
+  | { type: 'drpSavings'; totalDebt: number; settlementAmount: number; savings: number; debtFreeMonths: number }
+  | { type: 'dcpSavings'; currentTotalEMI: number; consolidatedEMI: number; emiSavings: number; tenureMonths: number }
+  | { type: 'carousel'; items: Array<{ title: string; description: string }> }
+  | { type: 'youtubeEmbed'; videoId: string; title?: string };
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  intentTag?: string;
   redirectUrl?: string;
   redirectLabel?: string;
   followUps?: string[];
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
+  inlineWidgets?: InlineWidget[];
   retryText?: string;
   retryIntentTag?: string;
 }
@@ -109,6 +135,7 @@ export interface ChatResponse {
   followUps?: string[];
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
+  inlineWidgets?: InlineWidget[];
 }
 
 export type ChatPhase =

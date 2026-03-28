@@ -86,6 +86,8 @@ export interface UsersData {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  intentTag?: string;
+  followUps?: string[];
 }
 
 export interface IdentifyRequest {
@@ -324,6 +326,7 @@ export interface AdvisorContext {
   activeAccountCount: number;
   closedAccountCount: number;
   delinquentAccountCount: number;
+  delinquentDetailAvailable: boolean; // false when count comes from creditPull but per-account DPD data is missing
   totalOutstanding: number;
   unsecuredOutstanding: number;
   securedOutstanding: number;
@@ -359,6 +362,16 @@ export interface AdvisorContext {
   serviceableTotalOutstanding: number;       // outstanding across serviceable accounts
   nonServiceableTotalOutstanding: number;    // outstanding across non-serviceable accounts
   highPressureLenders: string[];             // lender names with pressureScore >= 7
+  // Pre-computed DRP settlement estimate (for DRP_Eligible users)
+  drpSettlementEstimate: DRPSettlementEstimate | null;
+}
+
+/** Pre-computed DRP settlement savings so the LLM does not have to do arithmetic */
+export interface DRPSettlementEstimate {
+  enrolledDebt: number;         // serviceableTotalOutstanding (₹)
+  estimatedSettlement: number;  // ~45% of enrolled debt (₹) — what user pays
+  estimatedSavings: number;     // ~55% of enrolled debt (₹) — what user saves
+  note: string;                 // disclaimer about estimates + service fees
 }
 
 /** Consolidation projection from EMI calculator */
@@ -373,6 +386,7 @@ export interface ConsolidationProjection {
   totalInterestAfter: number;       // interest on consolidated loan (₹)
   interestSaved: number;            // total interest saved (₹)
   accountCount: number;             // number of accounts consolidated
+  hasMeaningfulSavings: boolean;    // true when monthlySavings >= ₹500
 }
 
 export interface RenderedTurn {
@@ -399,6 +413,14 @@ export interface LenderSelector {
   allowOther: boolean;
 }
 
+/** Inline widget variants rendered within chat responses */
+export type InlineWidget =
+  | { type: 'goalTracker'; currentScore: number; targetScore: number; delta: number; steps: string[] }
+  | { type: 'drpSavings'; totalDebt: number; settlementAmount: number; savings: number; debtFreeMonths: number }
+  | { type: 'dcpSavings'; currentTotalEMI: number; consolidatedEMI: number; emiSavings: number; tenureMonths: number }
+  | { type: 'carousel'; items: Array<{ title: string; description: string }> }
+  | { type: 'youtubeEmbed'; videoId: string; title?: string };
+
 export interface ChatResponse {
   reply: string;
   redirectUrl?: string;
@@ -406,4 +428,5 @@ export interface ChatResponse {
   followUps?: string[];
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
+  inlineWidgets?: InlineWidget[];
 }

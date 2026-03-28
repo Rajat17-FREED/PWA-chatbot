@@ -19,6 +19,7 @@ import {
   buildStructuredTurnRepairPrompt,
   buildStructuredTurnSystemPrompt,
 } from '../prompts/structured';
+import { getCurrentUserTurnCount, getLastUserIntentTag } from './conversationContext';
 
 let client: OpenAI | null = null;
 const MAX_FOLLOW_UPS = 3;
@@ -45,6 +46,10 @@ const FORMAT_KEYWORDS = {
   analysis: /\b(score|overall|improve|eligib|approval|interest rate|loan rate|emi burden|monthly burden|compare|all accounts|full profile|consolidat|reduce debt|plan|portfolio|summary)\b/i,
   guided: /\b(card|credit card|utilization|limit|emi|payment|overdue|dpd|missed|lender|loan|account|balance|amount|delay|score points)\b/i,
 };
+const EMPATHY_OPENING_PATTERN = /\b(stressful|overwhelming|difficult|challenging|not alone|here to help|let's address this together|i understand|can be incredibly stressful)\b/i;
+const PROFILE_SNAPSHOT_PATTERN = /\b(credit score|active accounts?|total outstanding|monthly debt|foir|accounts with missed payments|you have \d+\s+(?:active\s+)?accounts?)\b/i;
+const HARASSMENT_OVERVIEW_PATTERN = /\b(you are not alone in this|when it crosses the line|non-stop calls|threatening language|family members|neighbors|colleagues|workplace without warning|assets will be seized)\b/i;
+const SHIELD_PATTERN = /\bfreed shield\b/i;
 
 interface StructuredChatRequest {
   history: ChatMessage[];
@@ -72,10 +77,27 @@ interface StructuredModelPayload {
   intent_tag?: string;
   recent_history: Array<{ role: 'user' | 'assistant'; content: string }>;
   topics_already_covered: string[];
+  prior_section_headings: string[];
+  prior_follow_ups: string[];
+  conversation_state: ConversationState;
   advisor_context: AdvisorContext | null;
   grounding_context: ResponseGroundingContext | null;
   knowledge_snippets: string;
   allowed_redirect_routes: string[];
+}
+
+interface ConversationState {
+  current_user_turn: number;
+  is_follow_up: boolean;
+  active_intent_tag: string | null;
+  last_user_intent_tag: string | null;
+  empathy_already_expressed: boolean;
+  profile_snapshot_already_given: boolean;
+  harassment_overview_already_given: boolean;
+  shield_already_introduced: boolean;
+  named_lenders_in_user_message: boolean;
+  last_assistant_focus: 'none' | 'profile_snapshot' | 'harassment_overview' | 'shield_actions' | 'solution_recommendation' | 'direct_answer';
+  continuation_directive: string;
 }
 
 function getClient(): OpenAI {
@@ -494,6 +516,7 @@ function applyGroundingCorrections(reply: string, grounding?: ResponseGroundingC
   corrected = enforceKnownCreditScore(corrected, grounding);
   corrected = stripUnknownLenderClaims(corrected, grounding);
   corrected = fixSettlementSameAmount(corrected);
+  corrected = fixSettlementSavings(corrected);
 
   return corrected;
 }
@@ -904,6 +927,13 @@ function countLenderAmountMismatches(text: string, grounding?: ResponseGrounding
  * Fix lines where a lender is mentioned with an incorrect INR amount
  * by replacing the wrong amount with the nearest known value for that lender.
  */
+/**
+ * Keywords that indicate a settlement/savings context where amount correction
+ * should NOT snap a computed value (like 45% of outstanding) back to the
+ * original outstanding amount.
+ */
+const SETTLEMENT_CONTEXT_KEYWORDS = /\b(settl|reduc|sav|resolv|negotiat|pay(?:ing|ment)?.*(?:around|approximately|estimated)|enrolled.*debt)\b/i;
+
 function correctLenderAmountMismatches(reply: string, grounding: ResponseGroundingContext): string {
   if (!grounding.lenderFacts) return reply;
   let corrected = reply;
@@ -920,6 +950,10 @@ function correctLenderAmountMismatches(reply: string, grounding: ResponseGroundi
     for (const alias of lenderAliases(lender)) {
       const nearContextPattern = new RegExp(`(\\b${escapeRegExp(alias)}\\b[^\\n.?!]{0,200})`, 'gi');
       corrected = corrected.replace(nearContextPattern, (segment: string) => {
+        // Skip correction in settlement contexts — the amount may be a
+        // legitimately computed settlement value (e.g. 45% of outstanding)
+        if (SETTLEMENT_CONTEXT_KEYWORDS.test(segment)) return segment;
+
         const amountTokens = segment.match(/₹\s?[\d,]+/g);
         if (!amountTokens || amountTokens.length === 0) return segment;
 
@@ -944,22 +978,80 @@ function correctLenderAmountMismatches(reply: string, grounding: ResponseGroundi
 }
 
 /**
- * Detect and fix settlement examples where the LLM outputs the same amount for
- * both original debt and settlement (e.g. "reduce ₹2,00,214 to ₹2,00,214").
- * Computes the correct 45% settlement amount.
+ * Detect and fix settlement amounts that are clearly wrong.
+ *
+ * Scans for patterns like:
+ *   "₹X could be settled for ₹Y"
+ *   "₹X to ₹Y"
+ *   "₹X ... settled ... for around ₹Y"
+ *
+ * If Y >= 60% of X (i.e., near-zero savings), recomputes Y as 45% of X.
+ * A correct settlement should be ~45% of the original debt.
  */
 function fixSettlementSameAmount(reply: string): string {
-  // Pattern: "₹X ... to ... ₹Y" in settlement context where X === Y
-  const settlementPattern = /(₹\s?[\d,]+)\s*(?:to\s+(?:an\s+)?(?:estimated\s+)?(?:around\s+)?)(₹\s?[\d,]+)/gi;
-  return reply.replace(settlementPattern, (match, origToken: string, settledToken: string) => {
+  // Match any two ₹ amounts within 150 chars. We then check the text between
+  // them for settlement-indicating words before applying corrections.
+  const amountPairPattern = /(₹\s?[\d,]+)([^₹]{0,150})(₹\s?[\d,]+)/gi;
+  const SETTLEMENT_MIDDLE_KEYWORDS = /\b(settl|reduc|resolv|negotiat|to\b|for\b)/i;
+  // Exclude EMI/consolidation contexts where a small reduction is legitimate
+  const EMI_CONTEXT_KEYWORDS = /\b(EMI|instalment|installment|payment|consolidat|monthly)\b/i;
+  return reply.replace(amountPairPattern, (match, origToken: string, middle: string, settledToken: string, offset: number) => {
+    // Only apply to settlement contexts, not EMI/consolidation contexts
+    if (!SETTLEMENT_MIDDLE_KEYWORDS.test(middle)) return match;
+    // Check broader context (100 chars before the match) for EMI keywords
+    const contextStart = Math.max(0, offset - 100);
+    const broadContext = reply.substring(contextStart, offset + match.length);
+    if (EMI_CONTEXT_KEYWORDS.test(broadContext)) return match;
+
     const origVal = parseINR(origToken);
     const settledVal = parseINR(settledToken);
     if (origVal === null || settledVal === null) return match;
-    // Only fix when both amounts are identical (the bug case)
-    if (origVal !== settledVal) return match;
-    // Compute 45% settlement
-    const correctSettlement = Math.round(origVal * 0.45);
-    return match.replace(settledToken, formatINR(correctSettlement));
+    if (origVal <= 0 || settledVal <= 0) return match;
+    // Only fix when the second amount is meant to be LESS than the first
+    // (i.e., original debt → settled amount). Skip if second > first.
+    if (settledVal > origVal) return match;
+
+    // Settlement amount should be roughly 40-50% of original.
+    // If settled >= 60% of original, the math is wrong — recompute.
+    const ratio = settledVal / origVal;
+    if (ratio >= 0.60) {
+      const correctSettlement = Math.round(origVal * 0.45);
+      const correctedToken = formatINR(correctSettlement);
+      // Replace the LAST occurrence of settledToken in the match
+      // (handles the case where origToken and settledToken are identical strings)
+      const lastIdx = match.lastIndexOf(settledToken);
+      if (lastIdx >= 0) {
+        return match.substring(0, lastIdx) + correctedToken + match.substring(lastIdx + settledToken.length);
+      }
+      return match;
+    }
+    return match;
+  });
+}
+
+/**
+ * Detect and fix savings amounts that are clearly wrong.
+ *
+ * Catches: "₹X ... saving you ₹Y" where Y < 30% of X.
+ * A correct savings should be ~55% of the original debt.
+ */
+function fixSettlementSavings(reply: string): string {
+  // Pattern: "₹X ... saving ... ₹Y" where Y should be ~55% of X
+  const savingsPattern = /(₹\s?[\d,]+)([^₹]{0,120}saving[s]?\s+(?:you\s+)?(?:approximately\s+)?(?:around\s+)?)(₹\s?[\d,]+)/gi;
+  return reply.replace(savingsPattern, (match, origToken: string, middle: string, savingsToken: string) => {
+    const origVal = parseINR(origToken);
+    const savingsVal = parseINR(savingsToken);
+    if (origVal === null || savingsVal === null) return match;
+    if (origVal <= 0) return match;
+
+    // Savings should be roughly 50-60% of the original amount.
+    // If savings < 30% of original, something is wrong — recompute.
+    const ratio = savingsVal / origVal;
+    if (ratio < 0.30) {
+      const correctSavings = Math.round(origVal * 0.55);
+      return match.replace(savingsToken, formatINR(correctSavings));
+    }
+    return match;
   });
 }
 
@@ -997,58 +1089,360 @@ function determineExpectedFormatMode(userMessage: string, history: ChatMessage[]
   return 'analysis';
 }
 
+function hasNamedLendersInMessage(message: string): boolean {
+  if (/\bi(?:'| a)?m facing harassment from\b/i.test(message)) return true;
+  return [...message.matchAll(LENDER_MENTION_PATTERN)].some(match => !isGenericNonLenderPhrase(match[1]));
+}
+
+function classifyLastAssistantFocus(content: string, activeIntentTag?: string | null): ConversationState['last_assistant_focus'] {
+  if (!content.trim()) return 'none';
+  if (activeIntentTag === 'INTENT_HARASSMENT' && HARASSMENT_OVERVIEW_PATTERN.test(content)) return 'harassment_overview';
+  if (SHIELD_PATTERN.test(content) && /\b(help|protect|report|escalat|rights)\b/i.test(content)) return 'shield_actions';
+  if (PROFILE_SNAPSHOT_PATTERN.test(content)) return 'profile_snapshot';
+  if (/\b(?:freed shield|goal tracker|credit insights|debt resolution|debt consolidation|debt elimination)\b/i.test(content)) {
+    return 'solution_recommendation';
+  }
+  return 'direct_answer';
+}
+
+function buildConversationState(input: StructuredChatRequest, currentUserTurn: number): ConversationState {
+  const assistantMessages = input.history
+    .filter(message => message.role === 'assistant')
+    .map(message => stripMarkdownLinks(stripEmDashes(message.content)));
+  const lastAssistant = assistantMessages[assistantMessages.length - 1] || '';
+  const activeIntentTag = input.intentTag ?? null;
+  const lastUserIntentTag = getLastUserIntentTag(input.history) ?? null;
+  const empathyAlreadyExpressed = assistantMessages.some(message => EMPATHY_OPENING_PATTERN.test(message.slice(0, 220)));
+  const profileSnapshotAlreadyGiven = assistantMessages.some(message => PROFILE_SNAPSHOT_PATTERN.test(message));
+  const harassmentOverviewAlreadyGiven = assistantMessages.some(message => HARASSMENT_OVERVIEW_PATTERN.test(message));
+  const shieldAlreadyIntroduced = assistantMessages.some(message => SHIELD_PATTERN.test(message));
+  const namedLendersInUserMessage = hasNamedLendersInMessage(input.userMessage);
+
+  let continuationDirective = 'Advance the conversation by adding new value. Do not re-introduce the topic or restate the same summary.';
+  if (currentUserTurn <= 1 || input.history.length === 0) {
+    continuationDirective = 'Treat this as the first substantive response in a fresh conversation.';
+  } else if (activeIntentTag === 'INTENT_HARASSMENT' && harassmentOverviewAlreadyGiven && namedLendersInUserMessage) {
+    continuationDirective = 'This is a harassment follow-up after the general overview has already been given. Do not repeat the empathy block, missed-payment snapshot, or generic harassment examples. Move straight to the named lenders, the immediate documentation or escalation steps, and how FREED Shield applies now.';
+  } else if (profileSnapshotAlreadyGiven) {
+    // Detect if the new question overlaps with what was already answered.
+    // Use the content digest to check if the user's new question topic was
+    // already covered by a prior response's strategies/headings.
+    const digest = extractContentDigest(input.history.slice(-6));
+    const msgLower = input.userMessage.toLowerCase();
+    const topicOverlap =
+      // Score improvement overlap
+      (digest.strategies_mentioned.some(s => /payment|avalanche|snowball|utilization|interest/i.test(s)) &&
+        /\b(improve|score|750|increase|boost|raise|better|path|cibil)\b/i.test(msgLower)) ||
+      // EMI/consolidation overlap
+      (digest.strategies_mentioned.some(s => /consolidat/i.test(s)) &&
+        /\b(emi|consolidat|combine|single|lower)\b/i.test(msgLower)) ||
+      // Harassment overlap
+      (digest.strategies_mentioned.some(s => /shield/i.test(s)) &&
+        /\b(harass|collection|recovery|call|threat)\b/i.test(msgLower)) ||
+      // General heading overlap — prior headings contain keywords matching new question
+      (digest.section_headings.some(h => {
+        const hWords = h.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        return hWords.some(w => msgLower.includes(w));
+      }));
+
+    if (topicOverlap) {
+      continuationDirective = 'CRITICAL: The user is asking about a topic you ALREADY covered in detail. Do NOT repeat the profile snapshot, the same improvement tips, or the same section structure. Instead: (1) Skip any overview/snapshot — reference it with "As we discussed..." (2) Go DEEPER with NEW angles: prioritised action sequence, point-by-point breakdown, timeline, trade-offs, specific account-level strategies not yet mentioned. (3) Use completely different section headings.';
+    } else {
+      continuationDirective = 'A profile snapshot was already given earlier in this conversation. Answer the current question directly and mention prior numbers only when they are essential for the next point.';
+    }
+  } else if (empathyAlreadyExpressed) {
+    continuationDirective = 'Empathy has already been established in this thread. Use at most one brief validating clause, then spend the response on new information.';
+  }
+
+  return {
+    current_user_turn: currentUserTurn,
+    is_follow_up: currentUserTurn > 1,
+    active_intent_tag: activeIntentTag,
+    last_user_intent_tag: lastUserIntentTag,
+    empathy_already_expressed: empathyAlreadyExpressed,
+    profile_snapshot_already_given: profileSnapshotAlreadyGiven,
+    harassment_overview_already_given: harassmentOverviewAlreadyGiven,
+    shield_already_introduced: shieldAlreadyIntroduced,
+    named_lenders_in_user_message: namedLendersInUserMessage,
+    last_assistant_focus: classifyLastAssistantFocus(lastAssistant, activeIntentTag),
+    continuation_directive: continuationDirective,
+  };
+}
+
 /**
- * Extract topics already covered in prior assistant messages to prevent repetition.
- * Scans assistant messages in history for common data-point patterns and returns
- * a concise list of what's been stated so the LLM knows not to repeat it.
+ * Extract section headings used in prior assistant responses so the model
+ * knows which structural headings have already been displayed to the user.
+ * Matches bold markdown headings (**HEADING**) and plain ALL-CAPS lines.
  */
-function extractTopicsCovered(history: ChatMessage[]): string[] {
+function extractPriorSectionHeadings(history: ChatMessage[]): string[] {
+  const headings: string[] = [];
+  for (const message of history) {
+    if (message.role !== 'assistant') continue;
+    // Match **BOLD HEADINGS** used in structured sections
+    const boldMatches = message.content.matchAll(/\*\*([A-Z][A-Z &\-/]+[A-Z])\*\*/g);
+    for (const m of boldMatches) {
+      const h = m[1].trim();
+      if (h.length >= 4 && h.length <= 60) headings.push(h);
+    }
+    // Match plain ALL-CAPS lines (at least 3 words)
+    const lines = message.content.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (/^[A-Z][A-Z &\-/]{6,50}$/.test(trimmed) && trimmed.split(/\s+/).length >= 2) {
+        if (!headings.includes(trimmed)) headings.push(trimmed);
+      }
+    }
+  }
+  return [...new Set(headings)];
+}
+
+/**
+ * Compress an assistant message to preserve its structural skeleton while
+ * removing verbose explanations. This lets the model see WHAT STRUCTURE it
+ * used (section headings, key data points, strategies) without consuming
+ * too many tokens. Used in native OpenAI turns for multi-turn context.
+ */
+function compressForHistory(content: string, maxLen: number): string {
+  const lines = content.split('\n');
+  const skeleton: string[] = [];
+  let charBudget = maxLen;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Always keep section headings (bold or ALL-CAPS)
+    const isHeading = /^\*\*[A-Z]/.test(trimmed) || /^[A-Z][A-Z &\-/]{4,}$/.test(trimmed);
+    // Always keep bullet points (they carry the specific advice)
+    const isBullet = /^[-•*]/.test(trimmed) || /^\d+\./.test(trimmed);
+    // Keep lines with specific data (₹ amounts, percentages, account counts)
+    const hasData = /[₹%]|\b\d{3,}\b|\bactive accounts?\b|\bcredit score\b/i.test(trimmed);
+
+    if (isHeading) {
+      // Headings are short — always include
+      skeleton.push(trimmed);
+      charBudget -= trimmed.length + 1;
+    } else if (isBullet || hasData) {
+      // Truncate long bullets to their first clause
+      const shortened = trimmed.length > 120 ? trimmed.slice(0, 117).trimEnd() + '...' : trimmed;
+      if (charBudget - shortened.length > 0) {
+        skeleton.push(shortened);
+        charBudget -= shortened.length + 1;
+      }
+    } else if (charBudget > maxLen * 0.3) {
+      // Include opening/closing prose only if we have plenty of budget
+      const shortened = trimmed.length > 80 ? trimmed.slice(0, 77).trimEnd() + '...' : trimmed;
+      skeleton.push(shortened);
+      charBudget -= shortened.length + 1;
+    }
+
+    if (charBudget <= 0) break;
+  }
+
+  return skeleton.join('\n');
+}
+
+/**
+ * Extract a structured content digest from prior assistant messages.
+ * This tells the model specifically what content was already surfaced from
+ * the advisor_context — accounts, strategies, data points — so it can
+ * generate genuinely new content even when given the same underlying data.
+ */
+interface ContentDigest {
+  section_headings: string[];
+  strategies_mentioned: string[];
+  lenders_cited: string[];
+  data_points_stated: string[];
+}
+
+function extractContentDigest(history: ChatMessage[]): ContentDigest {
+  const headings = extractPriorSectionHeadings(history);
+
+  const strategies: string[] = [];
+  const lenders = new Set<string>();
+  const dataPoints: string[] = [];
+
   const assistantMessages = history
     .filter(m => m.role === 'assistant')
     .map(m => m.content);
 
-  if (assistantMessages.length === 0) return [];
+  if (assistantMessages.length === 0) {
+    return { section_headings: [], strategies_mentioned: [], lenders_cited: [], data_points_stated: [] };
+  }
 
-  const topics: string[] = [];
   const combined = assistantMessages.join(' ');
 
-  // Detect profile snapshot patterns
-  if (/credit score\b.*\b\d{3}\b/i.test(combined)) topics.push('credit score value');
-  if (/\bactive accounts?\b.*\b\d+\b/i.test(combined) || /\b\d+\s*active accounts?\b/i.test(combined)) topics.push('active account count');
-  if (/\bfoir\b.*\b\d+%?/i.test(combined) || /\b\d+%?\s*(?:of (?:your )?income|foir)\b/i.test(combined)) topics.push('FOIR percentage');
-  if (/total outstanding\b.*₹/i.test(combined) || /₹[\d,]+.*outstanding/i.test(combined)) topics.push('total outstanding amount');
-  if (/utilization\b.*\b\d+%/i.test(combined) || /\b\d+%\s*utilization\b/i.test(combined)) topics.push('card utilization');
-  if (/on.?time.*\b\d+%/i.test(combined) || /payment.*history/i.test(combined)) topics.push('payment history');
-  if (/enquir(?:y|ies)\b.*\b\d+\b/i.test(combined)) topics.push('enquiry count');
-  if (/delinquen|overdue.*account/i.test(combined)) topics.push('overdue/delinquent accounts');
-  if (/\bgoal tracker\b/i.test(combined)) topics.push('Goal Tracker recommendation');
-  if (/\bcredit insights?\b/i.test(combined)) topics.push('Credit Insights recommendation');
-  if (/\bfreed shield\b/i.test(combined)) topics.push('FREED Shield recommendation');
-  if (/\b(?:dep|debt elimination)\b/i.test(combined)) topics.push('DEP program');
-  if (/\b(?:dcp|debt consolidation)\b/i.test(combined)) topics.push('DCP program');
-  if (/\b(?:drp|debt resolution)\b/i.test(combined)) topics.push('DRP program');
-  if (/consolidation.*(?:emi|save|₹)/i.test(combined)) topics.push('consolidation savings calculation');
+  // Strategies / advice patterns
+  if (/avalanche/i.test(combined)) strategies.push('avalanche method');
+  if (/snowball/i.test(combined)) strategies.push('snowball method');
+  if (/on.?time.*payment|payment.*history|consistent.*payment/i.test(combined)) strategies.push('on-time payment advice');
+  if (/highest interest/i.test(combined)) strategies.push('prioritise highest interest accounts');
+  if (/utilization|credit.?limit/i.test(combined)) strategies.push('credit utilization advice');
+  if (/\bnegotiat/i.test(combined)) strategies.push('negotiation/settlement');
+  if (/consolidat/i.test(combined)) strategies.push('debt consolidation');
+  if (/\bgoal tracker\b/i.test(combined)) strategies.push('Goal Tracker recommendation');
+  if (/\bcredit insights?\b/i.test(combined)) strategies.push('Credit Insights recommendation');
+  if (/\bfreed shield\b/i.test(combined)) strategies.push('FREED Shield recommendation');
+  if (/\b(?:dep|debt elimination)\b/i.test(combined)) strategies.push('DEP program');
+  if (/\b(?:dcp|debt consolidation)\b/i.test(combined)) strategies.push('DCP program');
+  if (/\b(?:drp|debt resolution)\b/i.test(combined)) strategies.push('DRP program');
+  if (/enquir/i.test(combined)) strategies.push('enquiry management');
+  if (/\bdispute\b/i.test(combined)) strategies.push('credit report dispute');
 
-  return topics;
+  // Lenders mentioned
+  const lenderMatches = combined.matchAll(LENDER_MENTION_PATTERN);
+  for (const m of lenderMatches) {
+    const name = m[1].trim();
+    if (!isGenericNonLenderPhrase(name) && name.length > 3) lenders.add(name);
+  }
+
+  // Data points
+  if (/credit score\b.*\b\d{3}\b/i.test(combined)) dataPoints.push('credit score value');
+  if (/\bactive accounts?\b.*\b\d+\b/i.test(combined) || /\b\d+\s*active accounts?\b/i.test(combined)) dataPoints.push('active account count');
+  if (/\bfoir\b.*\b\d+%?/i.test(combined) || /\b\d+%?\s*(?:of (?:your )?income|foir)\b/i.test(combined)) dataPoints.push('FOIR/EMI burden percentage');
+  if (/total outstanding\b.*₹/i.test(combined) || /₹[\d,]+.*outstanding/i.test(combined)) dataPoints.push('total outstanding amount');
+  if (/utilization\b.*\b\d+%/i.test(combined) || /\b\d+%\s*utilization\b/i.test(combined)) dataPoints.push('card utilization rate');
+  if (/on.?time.*\b\d+%/i.test(combined) || /\bpayment.*rate\b.*\b\d+%/i.test(combined)) dataPoints.push('on-time payment rate');
+  if (/enquir(?:y|ies)\b.*\b\d+\b/i.test(combined)) dataPoints.push('enquiry count');
+  if (/delinquen|overdue.*account/i.test(combined)) dataPoints.push('overdue/delinquent accounts');
+  if (EMPATHY_OPENING_PATTERN.test(combined)) dataPoints.push('empathy opening');
+  if (HARASSMENT_OVERVIEW_PATTERN.test(combined)) dataPoints.push('harassment overview');
+
+  return {
+    section_headings: headings,
+    strategies_mentioned: strategies,
+    lenders_cited: [...lenders],
+    data_points_stated: dataPoints,
+  };
+}
+
+/**
+ * Check if a new response is structurally repetitive of the prior response.
+ * Returns section indices that are duplicates (for removal or rewrite).
+ * This is the post-generation guard that catches what the prompt rules miss.
+ */
+function detectRepetitiveSections(
+  newTurn: StructuredAssistantTurn,
+  history: ChatMessage[]
+): { isDuplicate: boolean; duplicateSectionIndices: number[]; overlapRatio: number } {
+  const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
+  if (!lastAssistant) return { isDuplicate: false, duplicateSectionIndices: [], overlapRatio: 0 };
+
+  const priorContent = lastAssistant.content.toLowerCase();
+  const priorHeadings = extractPriorSectionHeadings([lastAssistant]);
+  const priorHeadingKeys = new Set(priorHeadings.map(h => h.toLowerCase().replace(/[^a-z ]/g, '').trim()));
+
+  const duplicateIndices: number[] = [];
+  let totalItems = 0;
+  let repeatedItems = 0;
+
+  for (let i = 0; i < newTurn.sections.length; i++) {
+    const section = newTurn.sections[i];
+    const titleKey = (section.title || '').toLowerCase().replace(/[^a-z ]/g, '').trim();
+
+    // Check heading reuse
+    const headingReused = priorHeadingKeys.has(titleKey) ||
+      [...priorHeadingKeys].some(ph => {
+        // Fuzzy: shared words > 60%
+        const phWords = new Set(ph.split(' ').filter(w => w.length > 2));
+        const titleWords = titleKey.split(' ').filter(w => w.length > 2);
+        if (phWords.size === 0 || titleWords.length === 0) return false;
+        const overlap = titleWords.filter(w => phWords.has(w)).length;
+        return overlap / Math.max(phWords.size, titleWords.length) > 0.6;
+      });
+
+    // Check item-level content overlap
+    let sectionRepeats = 0;
+    for (const item of section.items) {
+      totalItems++;
+      const itemKey = item.toLowerCase().replace(/[^a-z0-9₹% ]/g, '').trim();
+      // Check if a significant portion of this bullet appeared in prior response
+      const words = itemKey.split(' ').filter(w => w.length > 3);
+      if (words.length >= 3) {
+        const matchedWords = words.filter(w => priorContent.includes(w));
+        if (matchedWords.length / words.length > 0.7) {
+          sectionRepeats++;
+          repeatedItems++;
+        }
+      }
+    }
+
+    if (headingReused && sectionRepeats > 0) {
+      duplicateIndices.push(i);
+    }
+  }
+
+  const overlapRatio = totalItems > 0 ? repeatedItems / totalItems : 0;
+  return {
+    isDuplicate: overlapRatio > 0.5 || duplicateIndices.length >= 2,
+    duplicateSectionIndices: duplicateIndices,
+    overlapRatio,
+  };
+}
+
+/**
+ * Extract topics already covered in prior assistant messages to prevent repetition.
+ * Scans assistant messages in history for common data-point patterns and returns
+ * a concise list of what's been stated so the LLM knows not to repeat it.
+ * @deprecated Use extractContentDigest for richer content awareness.
+ */
+function extractTopicsCovered(history: ChatMessage[]): string[] {
+  const digest = extractContentDigest(history);
+  return [...digest.data_points_stated, ...digest.strategies_mentioned.map(s => `strategy: ${s}`)];
+}
+
+/**
+ * Extract follow-ups from prior assistant messages in the conversation history.
+ * These are used to prevent the model from generating the same follow-ups again.
+ */
+function extractPriorFollowUps(history: ChatMessage[]): string[] {
+  const priorFollowUps: string[] = [];
+  for (const message of history) {
+    if (message.role === 'assistant' && message.followUps && Array.isArray(message.followUps)) {
+      for (const fu of message.followUps) {
+        if (fu && typeof fu === 'string' && fu.trim()) {
+          priorFollowUps.push(fu.trim());
+        }
+      }
+    }
+  }
+  return priorFollowUps;
 }
 
 function buildStructuredPayload(input: StructuredChatRequest, expectedFormatMode: StructuredFormatMode): StructuredModelPayload {
-  const historyPreview = input.history.slice(-6).map(message => ({
-    role: message.role,
-    content: shortenText(stripNextStepsBlock(stripMarkdownLinks(stripEmDashes(message.content))), 280),
-  }));
+  const currentUserTurn = getCurrentUserTurnCount(input.history, input.messageCount);
+  const recentSlice = input.history.slice(-6);
 
-  const topicsCovered = extractTopicsCovered(input.history.slice(-6));
+  // Use structure-preserving compression for history in the payload too.
+  // Last assistant message gets the most room to aid anti-repetition.
+  const historyPreview = recentSlice.map((message, idx) => {
+    const cleaned = stripNextStepsBlock(stripMarkdownLinks(stripEmDashes(message.content)));
+    if (message.role === 'assistant') {
+      const isLastAssistant = idx === recentSlice.length - 1 ||
+        (idx === recentSlice.length - 2 && recentSlice[recentSlice.length - 1]?.role === 'user');
+      return { role: message.role as 'user' | 'assistant', content: compressForHistory(cleaned, isLastAssistant ? 900 : 500) };
+    }
+    return { role: message.role as 'user' | 'assistant', content: shortenText(cleaned, 280) };
+  });
+
+  // Full content digest: tells the model exactly what content, strategies,
+  // lenders, and data points it already surfaced from advisor_context.
+  const contentDigest = extractContentDigest(recentSlice);
+  const priorFollowUps = extractPriorFollowUps(recentSlice);
+  const conversationState = buildConversationState(input, currentUserTurn);
 
   return {
     user_message: input.userMessage,
     expected_format_mode: expectedFormatMode,
-    message_count: input.messageCount ?? input.history.length,
+    message_count: currentUserTurn,
     user_name: input.userName ?? input.advisorContext?.userName ?? null,
     segment: input.segment ?? input.advisorContext?.segment ?? null,
     intent_tag: input.intentTag,
     recent_history: historyPreview,
-    topics_already_covered: topicsCovered,
+    topics_already_covered: [...contentDigest.data_points_stated, ...contentDigest.strategies_mentioned.map(s => `strategy: ${s}`)],
+    prior_section_headings: contentDigest.section_headings,
+    prior_follow_ups: priorFollowUps,
+    conversation_state: conversationState,
     advisor_context: input.advisorContext ?? null,
     grounding_context: input.grounding ?? null,
     knowledge_snippets: (input.knowledgeBase || '').slice(0, 7000),
@@ -1122,13 +1516,23 @@ function buildConversationMessages(
   const recentHistory = input.history.slice(-8);
   for (const msg of recentHistory) {
     const cleaned = stripNextStepsBlock(stripMarkdownLinks(stripEmDashes(msg.content)));
-    // Keep assistant messages at 500 chars (enough to preserve key data points)
-    // Keep user messages at 300 chars (captures full intent)
-    const maxLen = msg.role === 'assistant' ? 500 : 300;
-    messages.push({
-      role: msg.role,
-      content: shortenText(cleaned, maxLen),
-    });
+    if (msg.role === 'assistant') {
+      // Use structure-preserving compression: keeps section headings, bullet
+      // points, and data values so the model can see what it already said.
+      // 900 chars preserves the full skeleton of a typical response.
+      messages.push({
+        role: 'assistant',
+        content: compressForHistory(cleaned, 900),
+      });
+    } else {
+      const historyContent = msg.intentTag
+        ? `[intent: ${msg.intentTag}] ${cleaned}`
+        : cleaned;
+      messages.push({
+        role: 'user',
+        content: shortenText(historyContent, 300),
+      });
+    }
   }
 
   // Final user message: the full payload with context (but without recent_history
@@ -1353,7 +1757,7 @@ function renderSection(section: StructuredSection, mode: StructuredFormatMode): 
   const lines: string[] = [];
 
   if (mode === 'analysis' && section.title) {
-    lines.push(section.title.toUpperCase());
+    lines.push(`**${section.title.toUpperCase()}**`);
   }
 
   if (section.style === 'paragraph' || mode === 'plain') {
@@ -1368,6 +1772,22 @@ function renderSection(section: StructuredSection, mode: StructuredFormatMode): 
 
   lines.push(...section.items.map(item => `- ${item}`));
   return lines.join('\n');
+}
+
+/**
+ * Deterministic jargon replacement — catches terms the LLM echoes from data
+ * field names despite glossary instructions. Case-insensitive, context-aware.
+ */
+function applyJargonReplacements(text: string): string {
+  // "utilization" / "Utilization" → "card usage" (preserve case of first char)
+  text = text.replace(/\b[Uu]tilization\b/g, (m) => m[0] === 'U' ? 'Card usage' : 'card usage');
+  // "FOIR" → "debt-to-income ratio" (only standalone, not inside a data field ref)
+  text = text.replace(/\bFOIR\b/g, 'debt-to-income ratio');
+  // "delinquent" / "delinquency" → "overdue"
+  text = text.replace(/\b[Dd]elinquen(t|cy)\b/g, (m) => m[0] === 'D' ? 'Overdue' : 'overdue');
+  // "DPD" → "days past due"
+  text = text.replace(/\bDPD\b/g, 'days past due');
+  return text;
 }
 
 function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
@@ -1390,11 +1810,17 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
 
   // Follow-ups are shown as interactive chips below the message -no need to duplicate them in the body
 
-  const reply = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+  let reply = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  // ── Deterministic jargon replacement ──
+  // LLMs echo technical field names despite glossary instructions.
+  // Replace common jargon terms with plain language as a safety net.
+  reply = applyJargonReplacements(reply);
+  const cleanedFollowUps = turn.followUps.slice(0, MAX_FOLLOW_UPS).map(applyJargonReplacements);
 
   return {
     reply,
-    followUps: turn.followUps.slice(0, MAX_FOLLOW_UPS),
+    followUps: cleanedFollowUps,
     redirectUrl: turn.redirect?.url,
     redirectLabel: turn.redirect?.label,
   };
@@ -1659,7 +2085,7 @@ function buildMinimalSafeTurn(input: StructuredChatRequest, expectedFormatMode: 
   const facts = ctx?.relevantFacts.slice(0, expectedFormatMode === 'analysis' ? 4 : 3) || [];
   const opportunities = ctx?.topOpportunities.slice(0, 2).map(item => item.detail) || [];
   const greetingLike = FORMAT_KEYWORDS.plain.test(normalizeSpace(input.userMessage));
-  const isFollowUp = (input.messageCount ?? 0) > 1 || (input.history?.length ?? 0) > 0;
+  const isFollowUp = getCurrentUserTurnCount(input.history, input.messageCount) > 1 || (input.history?.length ?? 0) > 0;
   // Build response body preview for contextual follow-ups
   const safeTurnBody = [...facts, ...opportunities].join(' ');
   const safeFollowUps = buildContextualFollowUps(ctx, input.userMessage, safeTurnBody);
@@ -1850,18 +2276,130 @@ async function finalizeStructuredTurn(
     }
   }
 
+  // ── Post-generation repetition guard ──
+  // Compare the new response against prior responses at the section level.
+  // If structural repetition is detected, strip duplicate sections and keep
+  // only genuinely new content. This is the code-side safety net that catches
+  // what prompt rules cannot guarantee.
+  const repetitionCheck = detectRepetitiveSections(turn, input.history);
+  if (repetitionCheck.isDuplicate && repetitionCheck.duplicateSectionIndices.length > 0) {
+    console.log(`[PIPELINE] Repetition guard: ${repetitionCheck.overlapRatio.toFixed(2)} overlap ratio, removing ${repetitionCheck.duplicateSectionIndices.length} duplicate section(s)`);
+    const filteredSections = turn.sections.filter((_s, idx) => !repetitionCheck.duplicateSectionIndices.includes(idx));
+    // Keep at least one section — if all are duplicates, keep the last one
+    // and modify the opening to acknowledge the prior answer
+    if (filteredSections.length === 0 && turn.sections.length > 0) {
+      const lastSection = turn.sections[turn.sections.length - 1];
+      filteredSections.push(lastSection);
+    }
+    // Adjust opening if we stripped sections — acknowledge continuity
+    const name = input.userName ?? input.advisorContext?.userName ?? '';
+    const adjustedOpening = filteredSections.length < turn.sections.length
+      ? `Building on what we discussed${name ? `, ${name.split(' ')[0]}` : ''}, let me go deeper.`
+      : turn.opening;
+    turn = { ...turn, sections: filteredSections, opening: adjustedOpening };
+  }
+
+  // ── Follow-up deduplication against prior conversation follow-ups ──
+  const priorFollowUps = extractPriorFollowUps(input.history.slice(-6));
+  if (priorFollowUps.length > 0 && turn.followUps.length > 0) {
+    const priorKeys = new Set(priorFollowUps.map(fu => fu.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()));
+    const dedupedFollowUps = turn.followUps.filter(fu => {
+      const key = fu.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      // Check exact match
+      if (priorKeys.has(key)) return false;
+      // Check high similarity (shared prefix of 30+ chars)
+      for (const priorKey of priorKeys) {
+        const minLen = Math.min(key.length, priorKey.length);
+        if (minLen >= 30) {
+          const prefixLen = Math.min(30, minLen);
+          if (key.slice(0, prefixLen) === priorKey.slice(0, prefixLen)) return false;
+        }
+      }
+      return true;
+    });
+
+    if (dedupedFollowUps.length < turn.followUps.length) {
+      console.log(`[PIPELINE] Follow-up dedup: removed ${turn.followUps.length - dedupedFollowUps.length} duplicate(s) from prior turns`);
+      // If we lost follow-ups to dedup, try to fill from contextual follow-ups
+      if (dedupedFollowUps.length < MAX_FOLLOW_UPS) {
+        const responseBody = renderBodyPreview(turn);
+        const contextFollowUps = buildContextualFollowUps(input.advisorContext, input.userMessage, responseBody);
+        for (const safe of contextFollowUps) {
+          if (dedupedFollowUps.length >= MAX_FOLLOW_UPS) break;
+          const safeKey = safe.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+          if (!priorKeys.has(safeKey) && !dedupedFollowUps.some(existing => existing.toLowerCase().slice(0, 40) === safe.toLowerCase().slice(0, 40))) {
+            dedupedFollowUps.push(safe);
+          }
+        }
+      }
+      turn = { ...turn, followUps: dedupedFollowUps.slice(0, MAX_FOLLOW_UPS) };
+    }
+  }
+
   // ── Follow-up decay: reduce follow-ups as conversation deepens ──
   // Early messages (1-4): full 3 follow-ups to guide exploration
   // Mid conversation (5-6): 2 follow-ups — user has context, fewer nudges needed
   // Deep conversation (7-8): 1 follow-up — by now the solution has been pitched
   // Very deep (9+): 0 follow-ups — only the redirect CTA remains
-  const depth = input.messageCount ?? input.history.length;
+  const depth = getCurrentUserTurnCount(input.history, input.messageCount);
   if (depth >= 9) {
     turn = { ...turn, followUps: [] };
   } else if (depth >= 7) {
     turn = { ...turn, followUps: turn.followUps.slice(0, 1) };
   } else if (depth >= 5) {
     turn = { ...turn, followUps: turn.followUps.slice(0, 2) };
+  }
+
+  // ── Delinquent count correction ──
+  // The LLM sometimes miscounts overdue accounts by counting from the account list
+  // instead of using the authoritative delinquentAccountCount from advisor_context.
+  // This deterministic post-processor fixes the number in the rendered output.
+  const ctx = input.advisorContext;
+  console.log(`[PIPELINE] Delinquent check: ctx=${!!ctx}, count=${ctx?.delinquentAccountCount}, detailAvail=${ctx?.delinquentDetailAvailable}`);
+  if (ctx && ctx.delinquentAccountCount > 0) {
+    const correctCount = ctx.delinquentAccountCount;
+    // Fix patterns like "X overdue accounts" or "**X overdue accounts**"
+    // Handles markdown bold (**) around numbers
+    const delinqCountPattern = /(\*{0,2})(\d+)(\*{0,2})\s*(overdue|delinquent)\s*(accounts?)/gi;
+    const fixDelinqCount = (text: string): string => {
+      return text.replace(delinqCountPattern, (match, preBold, num, postBold, adj, noun) => {
+        const mentioned = parseInt(num, 10);
+        if (mentioned !== correctCount && mentioned > 0) {
+          console.log(`[PIPELINE] Delinquent count correction: ${mentioned} → ${correctCount}`);
+          return `${preBold}${correctCount}${postBold} ${adj} ${noun}`;
+        }
+        return match;
+      });
+    };
+    for (const section of turn.sections) {
+      section.items = section.items.map(fixDelinqCount);
+    }
+    if (turn.opening) {
+      turn.opening = fixDelinqCount(turn.opening);
+    }
+  }
+
+  // ── Strip sections that will be replaced by inline widgets ──
+  if (input.intentTag === 'INTENT_SCORE_IMPROVEMENT' || input.intentTag === 'INTENT_CREDIT_SCORE_TARGET') {
+    turn.sections = turn.sections.filter(s => !/tracking.*progress/i.test(s.title || ''));
+  }
+  if (input.intentTag === 'INTENT_HARASSMENT') {
+    // Force analysis mode for all harassment responses so section titles render as bold headings
+    turn = { ...turn, formatMode: 'analysis' };
+    // First harassment response: carousel replaces "crosses the line" section
+    turn.sections = turn.sections.filter(s => !/crosses.*line/i.test(s.title || ''));
+
+    // Post-lender-selection: strip "what you might be facing" (covered in first response)
+    const lenderSelectionRe = /selected.*lender|harassing.*lender|facing harassment from|PayU|WORTGAGE|ARKA|Krazybee/i;
+    const hasLenderSelection =
+      lenderSelectionRe.test(input.userMessage) ||
+      input.history.some((m: any) => m.role === 'user' && lenderSelectionRe.test(m.content));
+    if (hasLenderSelection) {
+      turn.sections = turn.sections.filter(s =>
+        !/what you might be facing/i.test(s.title || '') &&
+        !/what counts as harassment/i.test(s.title || '')
+      );
+    }
   }
 
   return renderStructuredTurn(turn);
@@ -1887,6 +2425,11 @@ export function debugStructuredTurnCandidate(input: {
   const sanitized = sanitizeStructuredTurn(input.candidate, input.context.grounding);
   const validation = validateStructuredTurn(sanitized, expectedFormatMode, input.context.advisorContext, input.context.grounding);
   return { expectedFormatMode, sanitized, validation };
+}
+
+export function debugStructuredPayload(input: StructuredChatRequest): StructuredModelPayload {
+  const expectedFormatMode = determineExpectedFormatMode(input.userMessage, input.history, input.advisorContext);
+  return buildStructuredPayload(input, expectedFormatMode);
 }
 
 export async function getChatResponse(input: StructuredChatRequest): Promise<ChatResponse> {

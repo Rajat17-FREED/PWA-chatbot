@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 
 export type TabId = 'home' | 'savings' | 'program' | 'shield';
+export type ViewId = 'dashboard' | 'paywall' | 'dcp-redirect' | 'drp-redirect';
 
 interface DashboardContextValue {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  currentView: ViewId;
+  setCurrentView: (view: ViewId) => void;
   scrollToSection: (sectionId: string) => void;
   registerSection: (id: string, ref: HTMLElement | null) => void;
 }
@@ -24,6 +27,7 @@ export const REDIRECT_MAP: Record<string, { tab: TabId; section?: string }> = {
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('home');
+  const [currentView, setCurrentView] = useState<ViewId>('dashboard');
   const sectionsRef = useRef<Map<string, HTMLElement>>(new Map());
 
   const registerSection = useCallback((id: string, ref: HTMLElement | null) => {
@@ -41,8 +45,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for view-switch events from chat widgets
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.view) {
+        setCurrentView(detail.view as ViewId);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('freed-open-view', handler);
+    return () => window.removeEventListener('freed-open-view', handler);
+  }, []);
+
   return (
-    <DashboardContext.Provider value={{ activeTab, setActiveTab, scrollToSection, registerSection }}>
+    <DashboardContext.Provider value={{ activeTab, setActiveTab, currentView, setCurrentView, scrollToSection, registerSection }}>
       {children}
     </DashboardContext.Provider>
   );

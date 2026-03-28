@@ -14,9 +14,10 @@ import { buildResponseGroundingContext } from '../services/groundingContext';
 import { buildAdvisorContext } from '../services/advisorContext';
 import { loadServiceableCreditors } from '../services/serviceableCreditorLookup';
 import { reconcileData, toEnrichedReport } from '../services/dataReconciliation';
+import { getCurrentUserTurnCount, resolveConversationIntentTag } from '../services/conversationContext';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
 import { generateDynamicStarters, prewarmStarters, buildWelcomeMessage, buildErrorResponse } from '../services/starterGenerator';
-import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext, LenderSelector, LenderSelectorOption } from '../types';
+import { AdvisorContext, IdentifyRequest, ChatRequest, Segment, CreditorAccount, EnrichedCreditReport, MessageTooltips, TooltipGroup, TooltipAccountDetail, ResponseGroundingContext, LenderSelector, LenderSelectorOption, InlineWidget } from '../types';
 
 /**
  * Build hover tooltip groups from creditor account data (Creditor.csv).
@@ -394,6 +395,10 @@ router.post('/chat', async (req: Request, res: Response) => {
   let advisorContext: AdvisorContext | undefined;
 
   try {
+    const chatHistory = Array.isArray(history) ? history.slice(-20) : [];
+    const currentUserTurnCount = getCurrentUserTurnCount(chatHistory, messageCount);
+    const effectiveIntentTag = resolveConversationIntentTag(message, chatHistory, intentTag);
+
     let responseGrounding: ResponseGroundingContext | undefined;
     let creditorAccounts: CreditorAccount[] = [];
     let selectedKnowledge = '';
@@ -418,11 +423,11 @@ router.post('/chat', async (req: Request, res: Response) => {
           console.log(`[Reconciliation] ${user.firstName} ${user.lastName}: ${reconciliation.reconciliationLog.length} changes`);
         }
 
-        const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
+        const totalMessages = currentUserTurnCount;
 
         // Fire RAG retrieval in parallel with context building, with 1500ms timeout
         const ragPromise = Promise.race([
-          retrieveKnowledge(message, user.segment, intentTag),
+          retrieveKnowledge(message, user.segment, effectiveIntentTag),
           new Promise<string>(resolve => setTimeout(() => resolve(''), 1500)),
         ]);
 
@@ -440,7 +445,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
         // If RAG timed out or returned empty, fall back to keyword-based selection
         if (!selectedKnowledge) {
-          selectedKnowledge = selectKnowledge(user.segment, intentTag, message, totalMessages);
+          selectedKnowledge = selectKnowledge(user.segment, effectiveIntentTag, message, totalMessages);
           console.log('[RAG] Timeout — fell back to keyword selection');
         }
 
@@ -460,18 +465,16 @@ router.post('/chat', async (req: Request, res: Response) => {
       });
     }
 
-    const chatHistory = Array.isArray(history) ? history.slice(-20) : [];
-    const totalMessages = typeof messageCount === 'number' ? messageCount : (Array.isArray(history) ? history.length : 0);
     const response = await getChatResponse({
       history: chatHistory,
       userMessage: message,
-      messageCount: totalMessages,
+      messageCount: currentUserTurnCount,
       knowledgeBase: selectedKnowledge,
       advisorContext,
       grounding: responseGrounding,
       userName,
       segment,
-      intentTag,
+      intentTag: effectiveIntentTag,
     });
 
     // Attach hover-tooltip data — prefer enriched report, fall back to Creditor.csv
@@ -488,13 +491,13 @@ router.post('/chat', async (req: Request, res: Response) => {
     // ── Inject interactive lender selector for harassment first-response ──
     let lenderSelector: LenderSelector | undefined;
     if (
-      intentTag === 'INTENT_HARASSMENT' &&
+      effectiveIntentTag === 'INTENT_HARASSMENT' &&
       (segment === 'DRP_Eligible' || segment === 'DRP_Ineligible') &&
       advisorContext
     ) {
       // Only on the first harassment message (no prior assistant messages about harassment)
       const priorHarassmentTurn = chatHistory.some(
-        (m: any) => m.role === 'assistant' && /which.*lender|lender.*harass|recovery.*call/i.test(m.content)
+        (m: any) => m.role === 'assistant' && /which.*lender|lender.*harass|recovery.*call|what counts as harassment|you are not alone in this|not alone in this/i.test(m.content)
       );
       if (!priorHarassmentTurn) {
         const delinquentAccounts = [
@@ -526,7 +529,114 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ ...response, tooltips, ...(lenderSelector ? { lenderSelector } : {}) });
+    // ── Inject inline widgets based on intent + data availability ──
+    const inlineWidgets: InlineWidget[] = [];
+
+    // DRP Savings widget: when settlement estimate exists and response redirects to /drp
+    // Triggers for: settlement follow-ups, delinquency stress, missed payment intents
+    if (advisorContext?.drpSettlementEstimate && (response.redirectUrl === '/drp' || effectiveIntentTag === 'INTENT_DELINQUENCY_STRESS')) {
+      const est = advisorContext.drpSettlementEstimate;
+      inlineWidgets.push({
+        type: 'drpSavings',
+        totalDebt: est.enrolledDebt,
+        settlementAmount: est.estimatedSettlement,
+        savings: est.estimatedSavings,
+        debtFreeMonths: 24, // placeholder — calculation logic TBD
+      });
+      // Widget replaces the static CTA image
+      response.redirectUrl = undefined;
+      response.redirectLabel = undefined;
+    }
+
+    // DCP Savings widget: when consolidation projection exists and response redirects to /dcp
+    if (advisorContext?.consolidationProjection && response.redirectUrl === '/dcp') {
+      const proj = advisorContext.consolidationProjection;
+      inlineWidgets.push({
+        type: 'dcpSavings',
+        currentTotalEMI: proj.currentTotalEMI,
+        consolidatedEMI: proj.consolidatedEMI,
+        emiSavings: proj.monthlySavings,
+        tenureMonths: proj.consolidatedTenureMonths,
+      });
+      // Widget replaces the static CTA image
+      response.redirectUrl = undefined;
+      response.redirectLabel = undefined;
+    }
+
+    // Goal Tracker widget: credit score improvement intent
+    // Only inject if no DRP/DCP widget was already added (mutual exclusion)
+    if (
+      inlineWidgets.length === 0 &&
+      (effectiveIntentTag === 'INTENT_SCORE_IMPROVEMENT' || effectiveIntentTag === 'INTENT_CREDIT_SCORE_TARGET') &&
+      advisorContext?.creditScore &&
+      advisorContext?.nextScoreTarget &&
+      advisorContext?.scoreGapToTarget != null
+    ) {
+      inlineWidgets.push({
+        type: 'goalTracker',
+        currentScore: advisorContext.creditScore,
+        targetScore: advisorContext.nextScoreTarget,
+        delta: advisorContext.scoreGapToTarget,
+        steps: (advisorContext.topOpportunities || []).slice(0, 4).map(o => o.detail),
+      });
+      // Widget replaces the static CTA image
+      response.redirectUrl = undefined;
+      response.redirectLabel = undefined;
+
+      // Filter out credit card follow-ups when user has no credit cards
+      if (advisorContext.creditCardCount === 0 && response.followUps) {
+        response.followUps = response.followUps.filter(
+          f => !/card usage|credit card|reduce.*card/i.test(f)
+        );
+      }
+    }
+
+    // Carousel widget: harassment first-response — rendered inside the message bubble
+    if (
+      effectiveIntentTag === 'INTENT_HARASSMENT' &&
+      lenderSelector // carousel only on first harassment response (same condition)
+    ) {
+      inlineWidgets.push({
+        type: 'carousel',
+        items: [
+          { title: 'Non-stop calls', description: 'Throughout the day, sometimes even on weekends or late at night.' },
+          { title: 'Threatening language', description: 'Intimidation, or being told you will be arrested.' },
+          { title: 'Contacting family', description: 'Recovery agents reaching out to your family, neighbors, or colleagues.' },
+          { title: 'Unauthorized visits', description: 'Agents visiting your home or workplace without warning.' },
+          { title: 'False claims', description: 'Being told your assets will be seized immediately.' },
+        ],
+      });
+    }
+
+    // YouTube embed: harassment post-lender-selection — embed video INSIDE the response text
+    // so it renders within the message bubble, not as a separate widget.
+    const lenderSelectionPattern = /facing harassment from|selected.*lender|harassing.*lender|PayU|WORTGAGE|ARKA|Krazybee/i;
+    if (
+      effectiveIntentTag === 'INTENT_HARASSMENT' &&
+      !lenderSelector &&
+      (lenderSelectionPattern.test(message) || chatHistory.some((m: any) => m.role === 'user' && lenderSelectionPattern.test(m.content)))
+    ) {
+      // Inject {{youtube:VIDEO_ID}} marker after the "HOW FREED" heading in the response text
+      // Heading may be wrapped in ** bold markers
+      const howFreedPattern = /(\*{0,2}HOW FREED[^\n]*\*{0,2}\n)/i;
+      if (howFreedPattern.test(response.reply)) {
+        response.reply = response.reply.replace(
+          howFreedPattern,
+          `$1\n{{youtube:vEONmNkFwuo}}\n\n`
+        );
+      } else {
+        // Fallback: append the video marker before the closing text
+        response.reply += `\n\n{{youtube:vEONmNkFwuo}}`;
+      }
+      // Keep the FREED Shield redirect CTA (don't clear redirectUrl)
+    }
+
+    res.json({
+      ...response,
+      tooltips,
+      ...(lenderSelector ? { lenderSelector } : {}),
+      ...(inlineWidgets.length > 0 ? { inlineWidgets } : {}),
+    });
   } catch (err: any) {
     console.error('Chat error:', err?.message || err);
 

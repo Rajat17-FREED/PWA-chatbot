@@ -32,6 +32,15 @@ export interface TestCase {
   segment: Segment;
   turns: TestCaseTurn[];
   expectedBehaviors: string[];
+  // Metadata fields (all optional for backward compat)
+  createdAt?: string;           // ISO timestamp
+  updatedAt?: string;           // ISO timestamp
+  tags?: string[];              // free-form tags like "regression", "edge-case", "harassment-flow"
+  notes?: string;               // reviewer notes
+  difficulty?: 'easy' | 'medium' | 'hard';  // how hard this case is for the chatbot
+  lastRunResult?: 'pass' | 'fail' | 'error' | null;  // cached result from last eval run
+  lastRunTimestamp?: string;    // when last run happened
+  source?: 'manual' | 'captured' | 'template';  // how this test case was created
 }
 
 export interface TurnResult {
@@ -71,6 +80,20 @@ export function saveGoldenDataset(dataset: TestCase[]): void {
   fs.writeFileSync(DATASET_PATH, JSON.stringify(dataset, null, 2) + '\n', 'utf-8');
 }
 
+// ── Last Run Result Updater ──────────────────────────────────────────────────
+
+export function updateLastRunResults(results: TestCaseResult[]): void {
+  const dataset = loadGoldenDataset();
+  for (const result of results) {
+    const tc = dataset.find(c => c.id === result.caseId);
+    if (tc) {
+      tc.lastRunResult = result.allPassed ? 'pass' : (result.turns.some(t => t.error) ? 'error' : 'fail');
+      tc.lastRunTimestamp = result.timestamp;
+    }
+  }
+  saveGoldenDataset(dataset);
+}
+
 // ── HTTP-Based Runner (calls live server) ────────────────────────────────────
 
 const DEFAULT_SERVER_URL = 'http://localhost:3001';
@@ -81,6 +104,8 @@ export async function runSingleCaseViaHttp(
 ): Promise<TestCaseResult> {
   const turnResults: TurnResult[] = [];
   const history: ChatMessage[] = [];
+  const collectedFollowUps: string[] = [];
+  const collectedResponses: string[] = [];
 
   for (let i = 0; i < testCase.turns.length; i++) {
     const turn = testCase.turns[i];
@@ -115,8 +140,7 @@ export async function runSingleCaseViaHttp(
 
       const response = await chatRes.json() as ChatResponse;
 
-      // We don't have direct access to advisorContext/grounding when using HTTP
-      // Run code evals with what we have
+      // Run code evals with prior turn data for dedup checks
       const evalInput: CodeEvalInput = {
         response,
         advisorContext: null,
@@ -126,6 +150,8 @@ export async function runSingleCaseViaHttp(
         userName: testCase.userName.split(' ')[0], // first name
         messageCount,
         intentTag: turn.intentTag,
+        priorFollowUps: [...collectedFollowUps],
+        priorResponses: [...collectedResponses],
       };
 
       const codeEvalResults = runCodeEvals(evalInput);
@@ -140,10 +166,23 @@ export async function runSingleCaseViaHttp(
         codeEvals: codeEvalResults,
       });
 
-      // Append to history for multi-turn
-      history.push({ role: 'user', content: turn.userMessage });
+      // Append to history for multi-turn (include followUps for dedup)
+      history.push({
+        role: 'user',
+        content: turn.userMessage,
+        ...(turn.intentTag ? { intentTag: turn.intentTag } : {}),
+      });
       if (response.reply) {
-        history.push({ role: 'assistant', content: response.reply });
+        history.push({
+          role: 'assistant',
+          content: response.reply,
+          ...(response.followUps && response.followUps.length > 0 ? { followUps: response.followUps } : {}),
+        });
+        collectedResponses.push(response.reply);
+      }
+      // Collect follow-ups for dedup eval on subsequent turns
+      if (response.followUps) {
+        collectedFollowUps.push(...response.followUps);
       }
     } catch (err) {
       turnResults.push({

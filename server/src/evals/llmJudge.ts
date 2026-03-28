@@ -1,10 +1,12 @@
 /**
- * LLM-as-Judge Evals — Uses an LLM to evaluate subjective quality.
+ * LLM-as-Judge Evals — Configurable criteria loaded from judge-criteria.json.
  *
- * Binary PASS/FAIL verdicts with one-line reasons.
- * Uses gpt-4o-mini for cost efficiency.
+ * Binary PASS/FAIL verdicts with evidence-backed reasons.
+ * Criteria are fully configurable: add, edit, enable/disable from dashboard.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import OpenAI from 'openai';
 import { AdvisorContext, ChatResponse, Segment } from '../types';
 
@@ -14,108 +16,172 @@ export interface JudgeResult {
   criterion: string;
   passed: boolean;
   reason: string;
+  source?: 'pre-check' | 'llm-judge';
 }
 
-export type JudgeCriterion =
-  | 'personalization'
-  | 'empathy'
-  | 'actionability'
-  | 'coherence'
-  | 'program_pitch';
+export interface CriterionConfig {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  category: string;        // quality | accuracy | format | custom
+  appliesWhen: {
+    segments: string[];    // ["*"] = all, or specific segment names
+    intents: string[];     // ["*"] = all, or specific intent tags
+    minTurn: number;       // minimum turn number (1 = first turn, 2 = multi-turn only)
+  };
+  prompt: string;          // system prompt for the LLM judge
+  preCheck: string | null; // pre-check function name, or null for LLM-only
+}
 
-// ── Judge Prompts ────────────────────────────────────────────────────────────
+export interface JudgeCriteriaConfig {
+  version: number;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  criteria: CriterionConfig[];
+}
 
-const JUDGE_PROMPTS: Record<JudgeCriterion, string> = {
-  personalization: `You are evaluating whether a financial chatbot response is personalized to the user's specific situation.
+// For backward compat — union of all known criterion IDs
+export type JudgeCriterion = string;
 
-CRITERIA:
-- The response references at least 2 specific data points from the user's profile (e.g., actual credit score, specific lender names, specific amounts, number of accounts, FOIR percentage)
-- The response feels tailored to THIS user, not a generic template that could apply to anyone
+// ── Config Loading ──────────────────────────────────────────────────────────
 
-Answer PASS if the response references specific user data and feels personalized.
-Answer FAIL if the response is generic or could apply to any user.`,
+const CONFIG_PATH = path.join(__dirname, 'judge-criteria.json');
 
-  empathy: `You are evaluating whether a financial chatbot response demonstrates appropriate empathy.
+let cachedConfig: JudgeCriteriaConfig | null = null;
+let configMtime: number = 0;
 
-CRITERIA:
-- For stress/harassment/delinquency intents: the response acknowledges the user's emotional state
-- The tone is warm and supportive without being patronizing or dismissive
-- The response does not jump straight into data/solutions without first acknowledging the human element
+export function loadCriteriaConfig(): JudgeCriteriaConfig {
+  const stat = fs.statSync(CONFIG_PATH);
+  if (cachedConfig && stat.mtimeMs === configMtime) return cachedConfig;
 
-Answer PASS if the response shows appropriate empathy for the user's situation.
-Answer FAIL if the response lacks emotional acknowledgment or feels cold/clinical.
-Note: For purely informational queries (score improvement, profile analysis), empathy expectations are lower — a professional, helpful tone is sufficient.`,
+  const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
+  cachedConfig = JSON.parse(raw) as JudgeCriteriaConfig;
+  configMtime = stat.mtimeMs;
+  return cachedConfig;
+}
 
-  actionability: `You are evaluating whether a financial chatbot response gives clear, actionable next steps.
+export function saveCriteriaConfig(config: JudgeCriteriaConfig): void {
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  cachedConfig = config;
+  configMtime = Date.now();
+}
 
-CRITERIA:
-- The response tells the user what they can DO, not just what their situation IS
-- There is at least one concrete next step the user can take
-- Follow-up suggestions (if present) are specific enough to move the conversation forward
-- The user should feel they know what to do after reading the response
-
-Answer PASS if the response provides clear, actionable guidance.
-Answer FAIL if the response only describes the situation without providing next steps.`,
-
-  coherence: `You are evaluating whether a multi-turn chatbot response maintains coherence with the conversation.
-
-CRITERIA:
-- The response does NOT repeat information that was already covered in prior turns
-- The response builds on what was discussed before
-- The response acknowledges or relates to the prior conversation context
-- There are no contradictions with earlier responses
-
-If this is the first message in the conversation, PASS by default (coherence is only meaningful in multi-turn).
-
-Answer PASS if the response maintains conversational coherence.
-Answer FAIL if the response repeats prior information or ignores conversation context.`,
-
-  program_pitch: `You are evaluating whether a financial chatbot introduces a FREED program appropriately.
-
-CRITERIA:
-- If a program (DRP, DCP, DEP) is mentioned, it is positioned as a solution to the user's stated problem
-- The program is introduced naturally within the conversation flow, not as a hard sell
-- The user's actual financial situation justifies the program recommendation
-- The pitch does not feel pushy or premature
-
-If no program is mentioned in the response, PASS by default.
-
-Answer PASS if the program introduction (if any) feels natural and justified.
-Answer FAIL if the program pitch feels forced, pushy, or unjustified.`,
-};
+export function getCriteriaList(): CriterionConfig[] {
+  return loadCriteriaConfig().criteria;
+}
 
 // ── Criteria Selection ───────────────────────────────────────────────────────
 
-/** Determine which judge criteria are relevant for this test case */
+/** Determine which criteria apply for a given test case context */
 export function selectCriteria(
   segment: Segment,
   intentTag?: string,
   turnCount?: number,
-): JudgeCriterion[] {
-  const criteria: JudgeCriterion[] = ['personalization', 'actionability'];
+): CriterionConfig[] {
+  const config = loadCriteriaConfig();
+  const turn = turnCount ?? 1;
 
-  // Empathy is most important for stress/harassment intents
-  const empathyIntents = [
-    'INTENT_DELINQUENCY_STRESS',
-    'INTENT_HARASSMENT',
-    'INTENT_EMI_STRESS',
-  ];
-  if (intentTag && empathyIntents.includes(intentTag)) {
-    criteria.push('empathy');
+  return config.criteria.filter(c => {
+    if (!c.enabled) return false;
+
+    // Check minTurn
+    if (turn < c.appliesWhen.minTurn) return false;
+
+    // Check segment match
+    const segMatch = c.appliesWhen.segments.includes('*') || c.appliesWhen.segments.includes(segment);
+    if (!segMatch) return false;
+
+    // Check intent match
+    if (!c.appliesWhen.intents.includes('*')) {
+      // Intent-specific criterion — only apply if intent matches
+      if (!intentTag || !c.appliesWhen.intents.includes(intentTag)) return false;
+    }
+
+    return true;
+  });
+}
+
+// ── Deterministic Pre-checks ─────────────────────────────────────────────────
+
+function preCheckPersonalization(response: ChatResponse, ctx: AdvisorContext | null): JudgeResult | null {
+  if (!ctx) return null;
+  const text = response.reply;
+  let signals = 0;
+
+  const amountMatches = text.match(/₹\s?[\d,]+/g);
+  if (amountMatches) signals += amountMatches.length;
+
+  const pctMatches = text.match(/\d+(\.\d+)?%/g);
+  if (pctMatches) signals += pctMatches.length;
+
+  const boldMatches = text.match(/\*\*[^*]+\*\*/g);
+  if (boldMatches) signals += Math.min(boldMatches.length, 3);
+
+  if (ctx.userName && text.toLowerCase().includes(ctx.userName.toLowerCase())) signals += 1;
+
+  if (signals >= 4) {
+    return { criterion: 'personalization', passed: true, reason: `Pre-check PASS: ${signals} specific data points detected (amounts, percentages, names)`, source: 'pre-check' };
   }
+  return null;
+}
 
-  // Coherence only matters for multi-turn
-  if (turnCount && turnCount > 1) {
-    criteria.push('coherence');
+function preCheckActionability(response: ChatResponse): JudgeResult | null {
+  const text = response.reply;
+  let signals = 0;
+
+  const actionVerbs = /\b(explore|check|visit|apply|start|begin|reach out|contact|call|sign up|try|consider|review|look into|take a look)\b/gi;
+  const verbMatches = text.match(actionVerbs);
+  if (verbMatches) signals += Math.min(verbMatches.length, 3);
+
+  const numberedItems = text.match(/^\s*\d+\.\s/gm);
+  if (numberedItems) signals += numberedItems.length;
+
+  const actionHeadings = /\*\*(next steps?|what you can do|action|how to|getting started|here'?s what)/i;
+  if (actionHeadings.test(text)) signals += 2;
+
+  if (response.redirectUrl) signals += 1;
+  if (response.followUps && response.followUps.length >= 2) signals += 1;
+
+  if (signals >= 4) {
+    return { criterion: 'actionability', passed: true, reason: `Pre-check PASS: ${signals} actionability signals (verbs, steps, CTAs)`, source: 'pre-check' };
   }
+  return null;
+}
 
-  // Program pitch for eligible segments
-  const programSegments: Segment[] = ['DRP_Eligible', 'DCP_Eligible', 'DEP'];
-  if (programSegments.includes(segment)) {
-    criteria.push('program_pitch');
+function preCheckEmpathy(response: ChatResponse): JudgeResult | null {
+  const text = response.reply;
+  const empathyKeywords = /\b(understand|tough|difficult|stress|challenging|overwhelming|worry|worries|concerned|sorry to hear|here for you|not alone|can be hard|natural to feel|completely understandable)\b/i;
+
+  const empathyMatch = text.match(empathyKeywords);
+  const amountMatch = text.match(/₹\s?[\d,]+/);
+
+  if (empathyMatch) {
+    const empathyPos = text.indexOf(empathyMatch[0]);
+    const amountPos = amountMatch ? text.indexOf(amountMatch[0]) : text.length;
+    if (empathyPos < amountPos && empathyPos < 200) {
+      return { criterion: 'empathy', passed: true, reason: `Pre-check PASS: empathy keyword "${empathyMatch[0]}" found early in response (pos ${empathyPos})`, source: 'pre-check' };
+    }
   }
+  return null;
+}
 
-  return criteria;
+const PRE_CHECK_MAP: Record<string, (response: ChatResponse, ctx: AdvisorContext | null) => JudgeResult | null> = {
+  personalization: preCheckPersonalization,
+  actionability: (r) => preCheckActionability(r),
+  empathy: (r) => preCheckEmpathy(r),
+};
+
+function runPreCheck(
+  criterion: CriterionConfig,
+  response: ChatResponse,
+  advisorContext: AdvisorContext | null,
+): JudgeResult | null {
+  if (!criterion.preCheck) return null;
+  const fn = PRE_CHECK_MAP[criterion.preCheck];
+  if (!fn) return null;
+  return fn(response, advisorContext);
 }
 
 // ── Judge Execution ──────────────────────────────────────────────────────────
@@ -153,7 +219,7 @@ function buildAdvisorSummary(ctx: AdvisorContext | null): string {
 }
 
 export async function judgeSingle(
-  criterion: JudgeCriterion,
+  criterion: CriterionConfig,
   userMessage: string,
   response: ChatResponse,
   segment: Segment,
@@ -161,7 +227,7 @@ export async function judgeSingle(
   intentTag?: string,
   priorHistory?: string,
 ): Promise<JudgeResult> {
-  const systemPrompt = JUDGE_PROMPTS[criterion];
+  const config = loadCriteriaConfig();
   const advisorSummary = buildAdvisorSummary(advisorContext);
 
   const userPrompt = [
@@ -174,30 +240,38 @@ export async function judgeSingle(
     response.followUps ? `FOLLOW-UPS: ${response.followUps.join(' | ')}` : null,
     response.redirectUrl ? `REDIRECT: ${response.redirectUrl}` : null,
     '',
-    'Answer exactly: PASS or FAIL followed by a brief reason (one line).',
+    'First, quote the specific text from the bot response that informs your verdict (1-2 short quotes).',
+    'Then answer exactly: PASS or FAIL followed by a brief reason (one line).',
   ].filter(Boolean).join('\n');
 
   try {
     const completion = await getClient().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: config.model,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: criterion.prompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0,
-      max_tokens: 150,
+      temperature: config.temperature,
+      max_tokens: config.maxTokens,
     });
 
     const text = completion.choices[0]?.message?.content?.trim() || '';
-    const passed = text.toUpperCase().startsWith('PASS');
-    const reason = text.replace(/^(PASS|FAIL)[:\s-]*/i, '').trim() || text;
 
-    return { criterion, passed, reason };
+    // The judge uses chain-of-thought: quotes evidence first, then verdict.
+    // Prefer "Verdict: PASS/FAIL" pattern, fall back to standalone PASS/FAIL.
+    const verdictLine = text.match(/Verdict:\s*(PASS|FAIL)/i);
+    const standalone = text.match(/^(PASS|FAIL)\b/im);
+    const verdict = verdictLine?.[1] || standalone?.[1];
+    const passed = verdict ? verdict.toUpperCase() === 'PASS' : false;
+    const reason = text;
+
+    return { criterion: criterion.id, passed, reason, source: 'llm-judge' };
   } catch (err) {
     return {
-      criterion,
+      criterion: criterion.id,
       passed: false,
       reason: `Judge error: ${err instanceof Error ? err.message : String(err)}`,
+      source: 'llm-judge',
     };
   }
 }
@@ -213,10 +287,26 @@ export async function judgeResponse(
 ): Promise<JudgeResult[]> {
   const criteria = selectCriteria(segment, intentTag, turnCount);
 
-  // Run all judges in parallel for speed
-  const results = await Promise.all(
-    criteria.map(c => judgeSingle(c, userMessage, response, segment, advisorContext, intentTag, priorHistory))
-  );
+  // Run deterministic pre-checks first, then LLM judge for remaining
+  const results: JudgeResult[] = [];
+  const needsLLM: CriterionConfig[] = [];
+
+  for (const c of criteria) {
+    const preResult = runPreCheck(c, response, advisorContext);
+    if (preResult) {
+      results.push(preResult);
+    } else {
+      needsLLM.push(c);
+    }
+  }
+
+  // Run remaining judges in parallel
+  if (needsLLM.length > 0) {
+    const llmResults = await Promise.all(
+      needsLLM.map(c => judgeSingle(c, userMessage, response, segment, advisorContext, intentTag, priorHistory))
+    );
+    results.push(...llmResults);
+  }
 
   return results;
 }

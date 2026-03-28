@@ -36,6 +36,13 @@ export interface AccountEMIEstimate {
   source: 'bureau' | 'calculated';  // where EMI came from
 }
 
+/**
+ * Minimum monthly savings (₹) for consolidation to be presented as beneficial.
+ * Below this threshold, the simplification benefit exists but the financial
+ * savings are negligible and should not be the selling point.
+ */
+const MIN_MEANINGFUL_MONTHLY_SAVINGS = 500;
+
 export interface ConsolidationProjection {
   currentTotalEMI: number;          // sum of all current EMIs (₹)
   consolidatedEMI: number;          // single EMI after consolidation (₹)
@@ -48,6 +55,8 @@ export interface ConsolidationProjection {
   interestSaved: number;            // totalInterestBefore - totalInterestAfter
   accountCount: number;             // number of accounts consolidated
   accountEstimates: AccountEMIEstimate[];  // per-account breakdown
+  /** true when monthlySavings >= MIN_MEANINGFUL_MONTHLY_SAVINGS — LLM should only pitch savings when this is true */
+  hasMeaningfulSavings: boolean;
 }
 
 // ── Default assumptions ─────────────────────────────────────────────────────
@@ -245,18 +254,22 @@ export function projectConsolidation(
   // Consolidated single loan
   const consolidated = calculateEMI(totalPrincipal, consolidatedRate, consolidatedTenure);
 
+  const monthlySavings = Math.max(0, currentTotalEMI - consolidated.emi);
+  const interestSaved = Math.max(0, totalInterestBefore - consolidated.totalInterest);
+
   return {
     currentTotalEMI,
     consolidatedEMI: consolidated.emi,
-    monthlySavings: Math.max(0, currentTotalEMI - consolidated.emi),
+    monthlySavings,
     totalPrincipal,
     consolidatedRate,
     consolidatedTenureMonths: consolidatedTenure,
     totalInterestBefore,
     totalInterestAfter: consolidated.totalInterest,
-    interestSaved: Math.max(0, totalInterestBefore - consolidated.totalInterest),
+    interestSaved,
     accountCount: estimates.length,
     accountEstimates: estimates,
+    hasMeaningfulSavings: monthlySavings >= MIN_MEANINGFUL_MONTHLY_SAVINGS,
   };
 }
 

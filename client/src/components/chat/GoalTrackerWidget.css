@@ -1,0 +1,214 @@
+.gt-widget {
+  width: 100%;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  margin-top: 2px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(27, 43, 101, 0.06);
+}
+
+/* ── Header ──────────────────────────────────── */
+.gt-widget__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 18px 0;
+}
+
+.gt-widget__title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #1b2b65;
+  line-height: 1.2;
+}
+
+.gt-widget__subtitle {
+  font-size: 11px;
+  color: #8b97aa;
+  margin-top: 2px;
+}
+
+.gt-widget__delta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(242, 141, 84, 0.12);
+  color: #f28d54;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gt-widget__delta-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Chart ────────────────────────────────────── */
+.gt-widget__chart {
+  padding: 8px 12px 0;
+  position: relative;
+}
+
+.gt-widget__chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Dashed grid lines at 900, 750, 600 */
+.gt-widget__chart-grid-line--dashed {
+  stroke: #e0e4ea;
+  stroke-width: 1;
+  stroke-dasharray: 8 5;
+}
+
+/* Solid grid line at 450 */
+.gt-widget__chart-grid-line--solid {
+  stroke: #d8dce8;
+  stroke-width: 1;
+}
+
+/* Orange trend line */
+.gt-widget__chart-line {
+  fill: none;
+  stroke: #f28d54;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Dots — default (first & mid): white fill, navy stroke */
+.gt-widget__chart-dot {
+  fill: #fff;
+  stroke: #1b2b65;
+  stroke-width: 2.5;
+}
+
+/* Target dot: orange fill, navy stroke */
+.gt-widget__chart-dot--target {
+  fill: #f28d54;
+  stroke: #1b2b65;
+}
+
+/* Score label pills — regular: white fill, dark border */
+.gt-widget__chart-label-bg {
+  fill: #fff;
+  stroke: #344255;
+  stroke-width: 1.5;
+}
+
+/* Score label pills — target: navy filled, no stroke */
+.gt-widget__chart-label-bg--target {
+  fill: #1b2b65;
+  stroke: none;
+}
+
+/* Score label text — regular: dark text */
+.gt-widget__chart-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #344255;
+}
+
+/* Score label text — target: white text */
+.gt-widget__chart-label--target {
+  fill: #fff;
+}
+
+/* Month axis labels */
+.gt-widget__chart-month {
+  font-size: 10px;
+  fill: #8b97aa;
+  text-anchor: middle;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Y-axis score labels */
+.gt-widget__chart-score-axis {
+  font-size: 9px;
+  fill: #bfc7d5;
+  text-anchor: end;
+  font-weight: 500;
+}
+
+/* ── Disclaimer ───────────────────────────────── */
+.gt-widget__disclaimer {
+  padding: 8px 18px;
+  font-size: 10px;
+  color: #8b97aa;
+  font-style: italic;
+}
+
+.gt-widget__disclaimer a {
+  color: #2462a9;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* ── Slide-to-action CTA ─────────────────────── */
+.gt-widget__swipe-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 8px 14px 14px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 3px solid #1b2b65;
+  background: #fff;
+  min-height: 54px;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.gt-widget__swipe-thumb {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: #f28d54;
+  color: #fff;
+  flex-shrink: 0;
+  cursor: grab;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gt-widget__swipe-thumb--dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.gt-widget__swipe-thumb svg {
+  animation: gt-chevron-pulse 1.4s ease-in-out infinite;
+}
+
+.gt-widget__swipe-thumb--dragging svg {
+  animation: none;
+}
+
+@keyframes gt-chevron-pulse {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(3px); opacity: 0.7; }
+}
+
+.gt-widget__swipe-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1b2b65;
+  z-index: 1;
+  pointer-events: none;
+}

@@ -9,11 +9,19 @@
   position: relative;
 }
 
+.dashboard--overlay {
+  background: var(--white);
+}
+
 .dashboard__content {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   animation: dashTabFade 0.25s ease-out;
+}
+
+.dashboard__content--overlay {
+  background: var(--white);
 }
 
 @keyframes dashTabFade {

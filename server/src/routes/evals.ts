@@ -4,9 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { loadGoldenDataset, saveGoldenDataset, runSingleCaseViaHttp, runAllCasesViaHttp, TestCase, TestCaseResult, listResultFiles, loadResults, saveResults } from '../evals/evalRunner';
+import { loadGoldenDataset, saveGoldenDataset, runSingleCaseViaHttp, runAllCasesViaHttp, TestCase, TestCaseResult, listResultFiles, loadResults, saveResults, updateLastRunResults } from '../evals/evalRunner';
 import { runCodeEvals, CodeEvalInput, summarizeResults } from '../evals/codeEvals';
-import { judgeResponse, JudgeResult } from '../evals/llmJudge';
+import { judgeResponse, JudgeResult, loadCriteriaConfig, saveCriteriaConfig, CriterionConfig, JudgeCriteriaConfig } from '../evals/llmJudge';
 import { generateReport, saveReport, loadLatestReport, loadReport, listReports, EvalReport } from '../evals/reportGenerator';
 import { formatTrace, formatAllTraces } from '../evals/traceViewer';
 import { getAllLeadRefIds, getUserByLeadRefId } from '../services/userLookup';
@@ -45,6 +45,14 @@ router.post('/dataset', (req: Request, res: Response) => {
       return;
     }
 
+    // Auto-fill metadata for new cases
+    if (!newCase.createdAt) {
+      newCase.createdAt = new Date().toISOString();
+    }
+    if (!newCase.source) {
+      newCase.source = 'manual';
+    }
+
     dataset.push(newCase);
     saveGoldenDataset(dataset);
     res.status(201).json({ message: 'Test case added', case: newCase });
@@ -65,6 +73,8 @@ router.put('/dataset/:id', (req: Request, res: Response) => {
     }
 
     const updated = { ...dataset[idx], ...req.body, id: req.params.id };
+    // Auto-fill updatedAt on update
+    updated.updatedAt = new Date().toISOString();
     dataset[idx] = updated;
     saveGoldenDataset(dataset);
     res.json({ message: 'Test case updated', case: updated });
@@ -150,6 +160,9 @@ router.post('/run', async (_req: Request, res: Response) => {
     const results = await runAllCasesViaHttp(SERVER_URL);
     const resultsPath = saveResults(results, 'full-eval');
 
+    // Update lastRunResult/lastRunTimestamp in golden dataset
+    updateLastRunResults(results);
+
     // Run LLM judge if not skipped
     const judgeMap = new Map<string, JudgeResult[]>();
     for (const result of results) {
@@ -192,6 +205,9 @@ router.post('/run/code', async (_req: Request, res: Response) => {
   try {
     const results = await runAllCasesViaHttp(SERVER_URL);
     const resultsPath = saveResults(results, 'code-eval');
+
+    // Update lastRunResult/lastRunTimestamp in golden dataset
+    updateLastRunResults(results);
 
     const previousReport = loadLatestReport();
     const report = generateReport(results, undefined, previousReport ?? undefined);
@@ -323,6 +339,9 @@ router.post('/capture', (req: Request, res: Response) => {
       segment,
       turns,
       expectedBehaviors: ['(add expected behaviors in dashboard)'],
+      source: 'captured',
+      createdAt: new Date().toISOString(),
+      tags: [segment],
     };
 
     const dataset = loadGoldenDataset();
@@ -332,6 +351,138 @@ router.post('/capture', (req: Request, res: Response) => {
     res.status(201).json({ message: 'Conversation captured as test case', case: newCase });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to capture' });
+  }
+});
+
+// ── Judge Criteria CRUD ──────────────────────────────────────────────────────
+
+// GET /api/evals/criteria — list all criteria
+router.get('/criteria', (_req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    res.json({ criteria: config.criteria, model: config.model, version: config.version });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to load criteria' });
+  }
+});
+
+// GET /api/evals/criteria/:id — get single criterion
+router.get('/criteria/:id', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const criterion = config.criteria.find(c => c.id === req.params.id);
+    if (!criterion) {
+      res.status(404).json({ error: `Criterion "${req.params.id}" not found` });
+      return;
+    }
+    res.json({ criterion });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to load criterion' });
+  }
+});
+
+// POST /api/evals/criteria — add a new criterion
+router.post('/criteria', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const newCriterion = req.body as CriterionConfig;
+
+    if (!newCriterion.id || !newCriterion.name || !newCriterion.prompt) {
+      res.status(400).json({ error: 'Missing required fields: id, name, prompt' });
+      return;
+    }
+
+    if (config.criteria.some(c => c.id === newCriterion.id)) {
+      res.status(409).json({ error: `Criterion "${newCriterion.id}" already exists` });
+      return;
+    }
+
+    // Ensure defaults
+    newCriterion.enabled = newCriterion.enabled ?? true;
+    newCriterion.category = newCriterion.category || 'custom';
+    newCriterion.preCheck = newCriterion.preCheck || null;
+    newCriterion.appliesWhen = newCriterion.appliesWhen || { segments: ['*'], intents: ['*'], minTurn: 1 };
+
+    config.criteria.push(newCriterion);
+    saveCriteriaConfig(config);
+    res.status(201).json({ message: 'Criterion added', criterion: newCriterion });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to add criterion' });
+  }
+});
+
+// PUT /api/evals/criteria/:id — update a criterion
+router.put('/criteria/:id', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const idx = config.criteria.findIndex(c => c.id === req.params.id);
+
+    if (idx === -1) {
+      res.status(404).json({ error: `Criterion "${req.params.id}" not found` });
+      return;
+    }
+
+    const updated = { ...config.criteria[idx], ...req.body, id: req.params.id };
+    config.criteria[idx] = updated;
+    saveCriteriaConfig(config);
+    res.json({ message: 'Criterion updated', criterion: updated });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to update criterion' });
+  }
+});
+
+// DELETE /api/evals/criteria/:id — remove a criterion
+router.delete('/criteria/:id', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const idx = config.criteria.findIndex(c => c.id === req.params.id);
+
+    if (idx === -1) {
+      res.status(404).json({ error: `Criterion "${req.params.id}" not found` });
+      return;
+    }
+
+    const removed = config.criteria.splice(idx, 1)[0];
+    saveCriteriaConfig(config);
+    res.json({ message: 'Criterion removed', criterion: removed });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to delete criterion' });
+  }
+});
+
+// PATCH /api/evals/criteria/:id/toggle — enable/disable a criterion
+router.patch('/criteria/:id/toggle', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const criterion = config.criteria.find(c => c.id === req.params.id);
+
+    if (!criterion) {
+      res.status(404).json({ error: `Criterion "${req.params.id}" not found` });
+      return;
+    }
+
+    criterion.enabled = !criterion.enabled;
+    saveCriteriaConfig(config);
+    res.json({ message: `Criterion "${req.params.id}" ${criterion.enabled ? 'enabled' : 'disabled'}`, criterion });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to toggle criterion' });
+  }
+});
+
+// PUT /api/evals/criteria-config — update global judge settings (model, temperature, etc.)
+router.put('/criteria-config', (req: Request, res: Response) => {
+  try {
+    const config = loadCriteriaConfig();
+    const { model, temperature, maxTokens } = req.body;
+
+    if (model) config.model = model;
+    if (temperature !== undefined) config.temperature = temperature;
+    if (maxTokens !== undefined) config.maxTokens = maxTokens;
+
+    saveCriteriaConfig(config);
+    res.json({ message: 'Judge config updated', model: config.model, temperature: config.temperature, maxTokens: config.maxTokens });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to update config' });
   }
 });
 

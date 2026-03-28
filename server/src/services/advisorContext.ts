@@ -98,6 +98,44 @@ function buildSignals(account: AdvisorAccountContext): string[] {
   return signals;
 }
 
+/**
+ * Pick the freshest credit score across all available sources.
+ * Compares report date vs creditPull date to determine which is newer.
+ */
+function pickFreshestScore(report: EnrichedCreditReport | null, user: User | null): number | null {
+  const reportScore = report?.creditScore ?? null;
+  const pullScore = user?.creditPull?.creditScore ?? null;
+  const userScore = user?.creditScore ?? null;
+
+  // If only one source has a score, use it
+  if (reportScore === null && pullScore === null) return userScore;
+  if (reportScore !== null && pullScore === null) return reportScore;
+  if (reportScore === null && pullScore !== null) return pullScore;
+
+  // Both sources have scores — compare dates to pick fresher one
+  const reportDate = report?.reportDate ? new Date(report.reportDate) : null;
+  const pullDate = user?.creditPull?.pulledDate ? new Date(user.creditPull.pulledDate) : null;
+
+  if (reportDate && pullDate && !isNaN(reportDate.getTime()) && !isNaN(pullDate.getTime())) {
+    if (pullDate.getTime() > reportDate.getTime()) {
+      if (pullScore !== reportScore) {
+        console.warn(
+          `[ScoreFreshness] CreditPull score (${pullScore}, ${user?.creditPull?.pulledDate}) is newer than report score (${reportScore}, ${report?.reportDate}). Using CreditPull.`
+        );
+      }
+      return pullScore;
+    }
+    return reportScore;
+  }
+
+  // Can't compare dates — prefer higher score as conservative choice (fresher data tends to be more accurate)
+  if (reportScore !== null && pullScore !== null) {
+    return pullScore > reportScore ? pullScore : reportScore;
+  }
+
+  return reportScore ?? pullScore ?? userScore;
+}
+
 function computeAccountAge(openDate: string | null | undefined): number | null {
   if (!openDate) return null;
   const opened = new Date(openDate);
@@ -565,9 +603,10 @@ function buildCreditPullOpportunityInsights(user: User): AdvisorInsight[] {
   }
 
   if ((cp.unsecuredDRPServicableAccountsTotalOutstanding ?? 0) > 0 && user.segment === 'DEP') {
+    const total = cp.accountsTotalOutstanding ?? cp.unsecuredDRPServicableAccountsTotalOutstanding ?? 0;
     insights.push({
       label: 'Debt optimization potential',
-      detail: `You have ${formatINR(cp.unsecuredDRPServicableAccountsTotalOutstanding)} in unsecured debt that could potentially be optimized through interest reduction or faster repayment strategies.`,
+      detail: `Of your total ₹${total.toLocaleString('en-IN')} outstanding, approximately ${formatINR(cp.unsecuredDRPServicableAccountsTotalOutstanding)} is in accounts where accelerated repayment could help you save on interest and pay off debt faster.`,
       amount: cp.unsecuredDRPServicableAccountsTotalOutstanding,
     });
   }
@@ -583,6 +622,7 @@ function buildRelevantFacts(input: {
   scoreGapToTarget: number | null;
   totalOutstanding: number;
   relevantAccounts: AdvisorAccountContext[];
+  allActiveAccounts?: AdvisorAccountContext[];
   topRisks: AdvisorInsight[];
   topOpportunities: AdvisorInsight[];
   overallOnTimeRate?: number | null;
@@ -654,6 +694,18 @@ function buildRelevantFacts(input: {
     facts.push(`You have ${input.enquiryCount} recent credit enquir${input.enquiryCount === 1 ? 'y' : 'ies'} on your report.`);
   }
 
+  // Over-limit cards: scan ALL active accounts (not just relevant ones) so none are missed
+  const allActive = input.allActiveAccounts ?? input.relevantAccounts;
+  const overLimitCards = allActive
+    .filter(a => (a.creditLimit ?? 0) > 0 && (a.utilizationPercentage ?? 0) >= 90)
+    .sort((a, b) => (b.utilizationPercentage ?? 0) - (a.utilizationPercentage ?? 0));
+  if (overLimitCards.length > 0) {
+    const cardList = overLimitCards
+      .map(a => `${a.lenderName} (${a.utilizationPercentage}% of ${formatINR(a.creditLimit)})`)
+      .join(', ');
+    uniquePush(facts, `IMPORTANT — Cards at or near limit: ${cardList}. Reducing these below 30% will significantly improve your credit score.`);
+  }
+
   // Interest rate facts
   const accountsWithROI = input.relevantAccounts.filter(a => (a.interestRate ?? 0) > 0 && (a.outstandingAmount ?? 0) > 0);
   if (accountsWithROI.length > 0) {
@@ -723,7 +775,7 @@ function buildRelevantFacts(input: {
     uniquePush(facts, opportunity.detail);
   }
 
-  return facts.slice(0, 12);
+  return facts.slice(0, 15);
 }
 
 /**
@@ -789,6 +841,31 @@ function verifyDataConsistency(
         );
       }
     }
+
+    // Cross-check active account count
+    if (cp.accountsActiveCount !== null && cp.accountsActiveCount !== undefined) {
+      const activeCountDiff = Math.abs(computedActive - cp.accountsActiveCount);
+      if (activeCountDiff > 0) {
+        console.warn(
+          `[DataVerify] Active count mismatch: CreditPull=${cp.accountsActiveCount}, accounts=${computedActive} (diff=${activeCountDiff}).`
+        );
+      }
+    }
+
+    // Cross-check delinquent count — critical for payment history claims
+    if (cp.accountsDelinquentCount !== null && cp.accountsDelinquentCount !== undefined) {
+      const cpDelinquent = cp.accountsDelinquentCount;
+      if (cpDelinquent > computedDelinquent) {
+        // CreditPull reports MORE delinquent accounts than account-level data shows.
+        // CreditPull is the fresher/authoritative source — override to avoid under-reporting.
+        console.warn(
+          `[DataVerify] CRITICAL: CreditPull reports ${cpDelinquent} delinquent accounts but account-level data shows ${computedDelinquent}. ` +
+          `CreditPull may be fresher. Overriding delinquentAccountCount.`
+        );
+        ctx.delinquentAccountCount = cpDelinquent;
+        ctx.delinquentDetailAvailable = computedDelinquent > 0; // partial detail when some accounts have DPD data
+      }
+    }
   }
 }
 
@@ -840,7 +917,9 @@ export function buildAdvisorContext(input: {
     ? activeAccounts.filter(account => (account.outstandingAmount ?? 0) > 0 && ((account.maxDPD ?? 0) > 0 || (account.overdueAmount ?? 0) > 0)).length
     : (cp?.accountsDelinquentCount ?? 0);
 
-  const creditScore = report?.creditScore ?? user?.creditScore ?? null;
+  // ── Credit score: pick the FRESHEST available score ──────────────────────
+  // users.json creditPull may have a newer score than credit-reports.json
+  const creditScore = pickFreshestScore(report, user);
   const scoreGapTo750 = creditScore === null ? null : Math.max(0, 750 - creditScore);
 
   // Dynamic score target: intermediate milestones based on current score
@@ -941,6 +1020,60 @@ export function buildAdvisorContext(input: {
     .sort((a, b) => (b.pressureScore ?? 0) - (a.pressureScore ?? 0))
     .map(a => a.lenderName);
 
+  // ── DRP settlement pre-computation (for DRP_Eligible users) ───────────
+  const isDRPEligible = user?.segment === 'DRP_Eligible';
+  const drpSettlementEstimate = isDRPEligible && serviceableTotalOutstanding > 0
+    ? {
+        enrolledDebt: serviceableTotalOutstanding,
+        estimatedSettlement: Math.round(serviceableTotalOutstanding * 0.45),
+        estimatedSavings: Math.round(serviceableTotalOutstanding * 0.55),
+        note: 'Estimated based on typical outcomes. Actual settlement depends on lender negotiations. Service fees apply on top of the settlement amount.',
+      }
+    : null;
+
+  // ── Data confidence warnings ─────────────────────────────────────────────
+  // Surface warnings about stale data, missing validation, or cross-source conflicts
+  const dataWarnings: string[] = [];
+
+  // Warn if credit report score differs significantly from creditPull score
+  const reportScore = report?.creditScore ?? null;
+  const pullScore = user?.creditPull?.creditScore ?? null;
+  if (reportScore !== null && pullScore !== null && Math.abs(reportScore - pullScore) >= 20) {
+    dataWarnings.push(
+      `Note: Your credit score may have changed recently. Bureau report shows ${reportScore} but a newer pull shows ${pullScore}. Using the fresher value of ${creditScore}.`
+    );
+  }
+
+  // Warn if no CSV data is available for cross-validation
+  if (source === 'report' && creditorAccounts.length === 0 && hasAccountData) {
+    dataWarnings.push(
+      `Note: Account data is based solely on your credit report (${report?.reportDate || 'unknown date'}). Outstanding amounts may have changed since this date.`
+    );
+  }
+
+  // Warn if CreditPull shows delinquent accounts but account data doesn't
+  if (cp && (cp.accountsDelinquentCount ?? 0) > 0 && hasAccountData) {
+    const computedDelinquentFromAccounts = activeAccounts.filter(
+      a => (a.outstandingAmount ?? 0) > 0 && ((a.maxDPD ?? 0) > 0 || (a.overdueAmount ?? 0) > 0)
+    ).length;
+    if (computedDelinquentFromAccounts === 0) {
+      dataWarnings.push(
+        `Note: Recent records indicate ${cp.accountsDelinquentCount} account${(cp.accountsDelinquentCount ?? 0) > 1 ? 's' : ''} with missed payments, though your detailed credit report may not reflect this yet.`
+      );
+    }
+  }
+
+  // Warn about report staleness (> 60 days old)
+  if (report?.reportDate) {
+    const reportDateObj = new Date(report.reportDate);
+    const daysSinceReport = Math.floor((Date.now() - reportDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceReport > 60) {
+      dataWarnings.push(
+        `Note: Your credit report data is ${daysSinceReport} days old (from ${report.reportDate}). Actual balances and scores may have changed.`
+      );
+    }
+  }
+
   const relevantFacts = buildRelevantFacts({
     user,
     creditScore,
@@ -949,6 +1082,7 @@ export function buildAdvisorContext(input: {
     scoreGapToTarget,
     totalOutstanding,
     relevantAccounts,
+    allActiveAccounts: activeAccounts,
     topRisks,
     topOpportunities,
     overallOnTimeRate,
@@ -958,6 +1092,11 @@ export function buildAdvisorContext(input: {
     oldestAccountAgeMonths,
     repaymentHighlights,
   });
+
+  // Prepend data warnings to relevantFacts so the LLM sees them first
+  if (dataWarnings.length > 0) {
+    relevantFacts.unshift(...dataWarnings);
+  }
 
   const result: AdvisorContext = {
     source,
@@ -974,6 +1113,7 @@ export function buildAdvisorContext(input: {
     activeAccountCount,
     closedAccountCount,
     delinquentAccountCount,
+    delinquentDetailAvailable: delinquentAccountCount > 0 && hasAccountData && activeAccounts.some(a => (a.maxDPD ?? 0) > 0 || (a.overdueAmount ?? 0) > 0),
     totalOutstanding,
     unsecuredOutstanding,
     securedOutstanding,
@@ -1007,6 +1147,7 @@ export function buildAdvisorContext(input: {
     serviceableTotalOutstanding,
     nonServiceableTotalOutstanding,
     highPressureLenders,
+    drpSettlementEstimate,
   };
 
   // ── Data consistency verification ──────────────────────────────────────

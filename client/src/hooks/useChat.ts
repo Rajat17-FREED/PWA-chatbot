@@ -191,13 +191,17 @@ export function useChat() {
     currentIntentRef.current = intentTag;
 
     dispatch({ type: 'CLEAR_STARTERS' });
-    dispatch({ type: 'ADD_MESSAGE', message: createMessage('user', text) });
+    dispatch({
+      type: 'ADD_MESSAGE',
+      message: createMessage('user', text, { intentTag: currentIntentRef.current }),
+    });
     dispatch({ type: 'SET_LOADING', isLoading: true });
 
     try {
       const leadRefId = state.user?.leadRefId || '';
-      // Count only user messages for messageCount (assistant messages don't count)
-      const userMessageCount = state.messages.filter(m => m.role === 'user').length;
+      // Count the current user turn, not just prior turns, so the server can
+      // reliably distinguish first-turn vs follow-up behavior.
+      const userMessageCount = state.messages.filter(m => m.role === 'user').length + 1;
       const result = await api.sendChatMessage(text, leadRefId, state.messages, userMessageCount, currentIntentRef.current);
 
       dispatch({
@@ -208,6 +212,7 @@ export function useChat() {
           followUps: result.followUps,
           tooltips: result.tooltips,
           lenderSelector: result.lenderSelector,
+          inlineWidgets: result.inlineWidgets,
         }),
       });
     } catch {

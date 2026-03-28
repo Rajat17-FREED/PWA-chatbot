@@ -10,4 +10,5 @@ dataset/
 .devsquad/
 config.json
 server/src/evals/results/
-
+new CI design resources/
+Response:Redirection widgets/
