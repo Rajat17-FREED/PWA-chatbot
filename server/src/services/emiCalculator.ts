@@ -189,17 +189,25 @@ export function estimateAccountEMI(account: AdvisorAccountContext): AccountEMIEs
   if (outstanding < MIN_OUTSTANDING_FOR_EMI) return null;
   if (account.status !== 'ACTIVE') return null;
 
-  // If bureau already has EMI, use it directly
-  if ((account.estimatedEMI ?? 0) > 0) {
+  // If bureau already has EMI, validate it's reasonable before trusting it.
+  // Bureau data sometimes has Scheduled_Monthly_Payment_Amount = outstanding amount,
+  // which is clearly wrong (EMI should be a small fraction of outstanding).
+  // Sanity check: EMI should be at most ~20% of outstanding for typical loans (very short tenure),
+  // and at least a small fraction. If EMI >= 50% of outstanding, it's almost certainly corrupted data.
+  const bureauEMI = account.estimatedEMI ?? 0;
+  if (bureauEMI > 0 && bureauEMI < outstanding * 0.25) {
     return {
       lenderName: account.lenderName,
       debtType: account.debtType,
       outstanding,
       interestRate: account.interestRate ?? estimateInterestRate(account),
       tenureMonths: estimateRemainingTenure(account),
-      estimatedEMI: account.estimatedEMI!,
+      estimatedEMI: bureauEMI,
       source: 'bureau',
     };
+  }
+  if (bureauEMI > 0 && bureauEMI >= outstanding * 0.25) {
+    console.log(`[EMI] Bureau EMI rejected for ${account.lenderName}: EMI ₹${bureauEMI} ≈ outstanding ₹${outstanding} — recalculating`);
   }
 
   // Calculate EMI from available data
@@ -232,6 +240,7 @@ export function projectConsolidation(
   accounts: AdvisorAccountContext[],
   consolidatedRate: number = DEFAULT_CONSOLIDATED_RATE,
   consolidatedTenure: number = DEFAULT_CONSOLIDATED_TENURE_MONTHS,
+  monthlyObligation?: number,
 ): ConsolidationProjection | null {
   // Estimate EMI for each qualifying account
   const estimates: AccountEMIEstimate[] = [];
@@ -243,7 +252,10 @@ export function projectConsolidation(
   if (estimates.length === 0) return null;
 
   const totalPrincipal = estimates.reduce((sum, e) => sum + e.outstanding, 0);
-  const currentTotalEMI = estimates.reduce((sum, e) => sum + e.estimatedEMI, 0);
+  const calculatedTotalEMI = estimates.reduce((sum, e) => sum + e.estimatedEMI, 0);
+  // Use the HIGHER of calculated EMIs and user's actual monthlyObligation as the baseline.
+  // Our EMI estimates use assumed rates/tenures and may underestimate actual payments.
+  const currentTotalEMI = Math.max(calculatedTotalEMI, monthlyObligation ?? 0);
 
   // Total interest remaining on current loans (sum of per-loan interest)
   const totalInterestBefore = estimates.reduce((sum, e) => {
@@ -273,6 +285,48 @@ export function projectConsolidation(
   };
 }
 
+/**
+ * Fallback consolidation projection using CreditPull summary data.
+ * Used when no account-level data is available but we have total outstanding
+ * and monthly obligation from CreditPull/user data.
+ */
+export function projectConsolidationFromSummary(
+  totalOutstanding: number,
+  currentMonthlyEMI: number,
+  activeAccountCount: number,
+  consolidatedRate: number = DEFAULT_CONSOLIDATED_RATE,
+  consolidatedTenure: number = DEFAULT_CONSOLIDATED_TENURE_MONTHS,
+): ConsolidationProjection | null {
+  if (totalOutstanding <= 0 || currentMonthlyEMI <= 0) return null;
+
+  // Estimate total interest on current loans using a blended rate assumption (18% avg for unsecured)
+  const assumedCurrentRate = 18;
+  const assumedRemainingTenure = Math.min(
+    60,
+    Math.max(12, Math.round(totalOutstanding / currentMonthlyEMI * 1.15)),
+  );
+  const currentInterest = calculateEMI(totalOutstanding, assumedCurrentRate, assumedRemainingTenure);
+
+  const consolidated = calculateEMI(totalOutstanding, consolidatedRate, consolidatedTenure);
+  const monthlySavings = Math.max(0, currentMonthlyEMI - consolidated.emi);
+  const interestSaved = Math.max(0, currentInterest.totalInterest - consolidated.totalInterest);
+
+  return {
+    currentTotalEMI: currentMonthlyEMI,
+    consolidatedEMI: consolidated.emi,
+    monthlySavings,
+    totalPrincipal: totalOutstanding,
+    consolidatedRate,
+    consolidatedTenureMonths: consolidatedTenure,
+    totalInterestBefore: currentInterest.totalInterest,
+    totalInterestAfter: consolidated.totalInterest,
+    interestSaved,
+    accountCount: activeAccountCount,
+    accountEstimates: [],
+    hasMeaningfulSavings: monthlySavings >= MIN_MEANINGFUL_MONTHLY_SAVINGS,
+  };
+}
+
 // ── Enrichment helper (called from advisorContext) ──────────────────────────
 
 /**
@@ -288,16 +342,21 @@ export function enrichAccountsWithEMI(accounts: AdvisorAccountContext[]): number
     if (account.status !== 'ACTIVE') continue;
     if ((account.outstandingAmount ?? 0) < MIN_OUTSTANDING_FOR_EMI) continue;
 
-    if ((account.estimatedEMI ?? 0) <= 0) {
-      // Calculate and fill in the missing EMI
+    const existingEMI = account.estimatedEMI ?? 0;
+    const outstanding = account.outstandingAmount ?? 0;
+    // Recalculate if EMI is missing OR if bureau EMI is corrupted (EMI >= 25% of outstanding)
+    const needsRecalculation = existingEMI <= 0 || (outstanding > 0 && existingEMI >= outstanding * 0.25);
+    if (needsRecalculation) {
       const rate = account.interestRate ?? estimateInterestRate(account);
       const tenure = estimateRemainingTenure(account);
-      const result = calculateEMI(account.outstandingAmount!, rate, tenure);
+      const result = calculateEMI(outstanding, rate, tenure);
+      console.log(`[EMI] ${existingEMI > 0 ? 'Corrected' : 'Calculated'} EMI for ${account.lenderName}: ₹${result.emi}/month (was ${existingEMI > 0 ? '₹' + existingEMI : 'null'}, outstanding ₹${outstanding}, rate ${rate}%, tenure ${tenure}mo)`);
       account.estimatedEMI = result.emi;
 
-      // Also fill in interestRate if it was missing (so LLM can reference it)
+      // Mark rate as estimated (do NOT backfill into interestRate — that would
+      // make a fabricated rate indistinguishable from real bureau data)
       if (account.interestRate === null) {
-        account.interestRate = rate;
+        account.isEstimatedRate = true;
       }
     }
 

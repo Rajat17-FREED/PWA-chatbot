@@ -213,6 +213,7 @@ export function useChat() {
           tooltips: result.tooltips,
           lenderSelector: result.lenderSelector,
           inlineWidgets: result.inlineWidgets,
+          repaymentMethods: result.repaymentMethods,
         }),
       });
     } catch {

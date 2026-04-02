@@ -82,10 +82,6 @@ async function run(): Promise<void> {
         ],
       },
     ],
-    closingQuestion: {
-      text: 'Would you rather reduce card usage or compare it with your older delay history?',
-      options: ['reduce card usage', 'compare it with your older delay history'],
-    },
     followUps: [
       'How do I reduce card usage?',
       'How does the older delay history compare?',
@@ -130,14 +126,6 @@ async function run(): Promise<void> {
         ],
       },
     ],
-    closingQuestion: {
-      text: 'What matters more right now: getting a loan approved, securing a better interest rate, or improving your score overall?',
-      options: [
-        'getting a loan approved',
-        'securing a better interest rate',
-        'improving your score overall',
-      ],
-    },
     followUps: [
       'How do I improve approval chances?',
       'How can I target a better interest rate?',
@@ -173,10 +161,6 @@ async function run(): Promise<void> {
         ],
       },
     ],
-    closingQuestion: {
-      text: 'Would you rather reduce card usage or understand the delay history?',
-      options: ['reduce card usage', 'understand the delay history'],
-    },
     followUps: [
       'Yes, I would like that',
       'Show me my data',

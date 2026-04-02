@@ -4,7 +4,8 @@ import AccountTooltip from './AccountTooltip';
 import LenderSelector from './LenderSelector';
 import RedirectionWidget from './RedirectionWidget';
 import InlineWidgetRenderer from './InlineWidgetRenderer';
-import type { MessageTooltips, TooltipGroup, LenderSelector as LenderSelectorType, InlineWidget } from '../../types';
+import RepaymentMethodPopup from './RepaymentMethodPopup';
+import type { MessageTooltips, TooltipGroup, LenderSelector as LenderSelectorType, InlineWidget, RepaymentMethodData } from '../../types';
 import './MessageBubble.css';
 
 // ── Contexts ──────────────────────────────────────────────────────────────────
@@ -15,6 +16,9 @@ const ParagraphTextContext = createContext<string>('');
 // TooltipsContext: the tooltip groups for this message.
 // Defined once per MessageBubble, consumed by the <strong> renderer.
 const TooltipsContext = createContext<MessageTooltips | undefined>(undefined);
+
+// RepaymentMethodsContext: snowball/avalanche data for popup triggers.
+const RepaymentMethodsContext = createContext<RepaymentMethodData | undefined>(undefined);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -154,7 +158,19 @@ const StrongComponent = ({ children }: any) => {
   const rawText = extractText(children);
   const paraText = useContext(ParagraphTextContext);
   const tooltips = useContext(TooltipsContext);
+  const repaymentMethods = useContext(RepaymentMethodsContext);
   const trimmed = rawText.trim();
+
+  // ── Case 0: Repayment method trigger (snowball/avalanche) ──────────
+  if (repaymentMethods) {
+    const lower = trimmed.toLowerCase();
+    if (/snowball\s*method/i.test(lower)) {
+      return <RepaymentMethodPopup data={repaymentMethods} triggerText={trimmed} method="snowball" />;
+    }
+    if (/avalanche\s*method/i.test(lower)) {
+      return <RepaymentMethodPopup data={repaymentMethods} triggerText={trimmed} method="avalanche" />;
+    }
+  }
 
   // ── Case 1: Pure integer e.g. **6**, **20** ────────────────────────────
   // Use the paragraph text for clause-level context matching.
@@ -225,6 +241,7 @@ interface MessageBubbleProps {
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelectorType;
   inlineWidgets?: InlineWidget[];
+  repaymentMethods?: RepaymentMethodData;
   isLatest?: boolean;
   onFollowUpClick?: (text: string) => void;
 }
@@ -239,6 +256,7 @@ export default function MessageBubble({
   tooltips,
   lenderSelector,
   inlineWidgets,
+  repaymentMethods,
   isLatest,
   onFollowUpClick,
 }: MessageBubbleProps) {
@@ -264,9 +282,11 @@ export default function MessageBubble({
         {role === 'assistant' ? (
           // Provide both contexts so the static components above can read them
           <TooltipsContext.Provider value={tooltips}>
-            <ReactMarkdown components={MARKDOWN_COMPONENTS}>
-              {normalizedContent}
-            </ReactMarkdown>
+            <RepaymentMethodsContext.Provider value={repaymentMethods}>
+              <ReactMarkdown components={MARKDOWN_COMPONENTS}>
+                {normalizedContent}
+              </ReactMarkdown>
+            </RepaymentMethodsContext.Provider>
           </TooltipsContext.Provider>
         ) : (
           <p className="freed-message__text">{normalizedContent}</p>

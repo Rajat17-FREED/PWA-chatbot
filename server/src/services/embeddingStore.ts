@@ -80,13 +80,47 @@ const INTENT_BOOST_MAP: Record<string, string[]> = {
   INTENT_LOAN_ELIGIBILITY:    ['customer_segments', 'general_loan_eligibility', 'general_interest_rates'],
   INTENT_DELINQUENCY_STRESS:  ['program_drp', 'product_shield', 'general_delinquency'],
   INTENT_EMI_OPTIMISATION:    ['program_dcp', 'program_dep', 'general_emi_repayment'],
-  INTENT_INTEREST_OPTIMISATION: ['program_dep', 'program_dcp', 'general_interest_rates'],
-  INTENT_GOAL_BASED_LOAN:     ['program_dep', 'customer_segments', 'product_credit_insights', 'general_loan_eligibility'],
+  INTENT_INTEREST_OPTIMISATION: ['program_dep', 'program_dcp', 'general_interest_rates', 'general_loan_eligibility'],
+  INTENT_GOAL_BASED_LOAN:     ['program_dep', 'customer_segments', 'general_loan_eligibility', 'general_interest_rates', 'general_secured_loans'],
   INTENT_CREDIT_SCORE_TARGET: ['product_credit_insights', 'product_goal_tracker', 'general_credit_score'],
   INTENT_PROFILE_ANALYSIS:    ['program_dep', 'product_credit_insights', 'customer_segments', 'general_loan_eligibility'],
   INTENT_EMI_STRESS:          ['program_dcp', 'program_dep', 'general_emi_repayment', 'general_credit_card_debt'],
   INTENT_GOAL_BASED_PATH:     ['program_dcp', 'program_dep', 'product_credit_insights', 'general_interest_rates'],
 };
+
+// ── Segment exclusivity map ──────────────────────────────────────────────────
+//
+// Program-specific sectionHints are exclusive to their segment(s).
+// Chunks tagged with these hints get a heavy score penalty when retrieved
+// for a user in a DIFFERENT segment. This prevents DRP content from bleeding
+// into DCP responses and vice versa.
+//
+// General hints (general_*, product_credit_insights, product_goal_tracker,
+// customer_segments) are NOT penalized — they're useful across segments.
+
+const HINT_SEGMENT_AFFINITY: Record<string, string[]> = {
+  'program_drp':      ['DRP_Eligible', 'DRP_Ineligible'],
+  'program_dcp':      ['DCP_Eligible', 'DCP_Ineligible'],
+  'program_dep':      ['DEP'],
+  'product_shield':   ['DRP_Eligible', 'DRP_Ineligible'],
+};
+
+// Penalty multiplier applied to the cosine score of cross-segment chunks.
+// 0.3 means a DRP chunk scoring 0.5 becomes 0.15 for a DCP user — still
+// retrievable if nothing better exists, but won't beat on-segment content.
+const CROSS_SEGMENT_PENALTY = 0.3;
+
+/**
+ * Check if a chunk's sectionHint is segment-exclusive and the user is in
+ * a different segment. Returns the penalty multiplier (1.0 = no penalty).
+ */
+function getSegmentPenalty(hint: string | undefined, userSegment: string | null | undefined): number {
+  if (!hint || !userSegment) return 1.0;
+  const allowedSegments = HINT_SEGMENT_AFFINITY[hint];
+  if (!allowedSegments) return 1.0; // Not segment-exclusive → no penalty
+  if (allowedSegments.includes(userSegment)) return 1.0; // User is in the right segment
+  return CROSS_SEGMENT_PENALTY;
+}
 
 // ── Math utilities ────────────────────────────────────────────────────────────
 
@@ -203,12 +237,13 @@ export async function retrieveKnowledge(
     cacheSet(cacheKey, queryEmbedding);
   }
 
-  // Score all chunks
-  type ScoredChunk = { score: number; chunk: EmbeddingChunk };
-  const scored: ScoredChunk[] = store.map(chunk => ({
-    score: cosineSim(queryEmbedding, chunk.embedding),
-    chunk,
-  }));
+  // Score all chunks, applying segment-exclusivity penalties
+  type ScoredChunk = { score: number; rawScore: number; chunk: EmbeddingChunk };
+  const scored: ScoredChunk[] = store.map(chunk => {
+    const rawScore = cosineSim(queryEmbedding, chunk.embedding);
+    const penalty = getSegmentPenalty(chunk.sectionHint, segment);
+    return { score: rawScore * penalty, rawScore, chunk };
+  });
   scored.sort((a, b) => b.score - a.score);
 
   // Determine which sectionHints need to be boosted
@@ -264,8 +299,12 @@ export async function retrieveKnowledge(
   // Re-sort by similarity for coherent ordering in the prompt
   selected.sort((a, b) => b.score - a.score);
 
+  // Log cross-segment penalties applied
+  const penalized = selected.filter(s => s.rawScore !== s.score);
   const elapsed = Date.now() - queryStart;
-  console.log(`[RAG] Retrieved ${selected.length} chunks (${totalChars} chars) in ${elapsed}ms`);
+  console.log(`[RAG] Retrieved ${selected.length} chunks (${totalChars} chars) in ${elapsed}ms` +
+    (penalized.length > 0 ? ` [${penalized.length} cross-segment penalized]` : '') +
+    (segment ? ` segment=${segment}` : ''));
 
   return selected.map(item => item.chunk.text).join('\n\n---\n\n');
 }

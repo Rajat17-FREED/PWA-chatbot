@@ -22,7 +22,7 @@ function parseStr(val: string): string {
 export function loadCreditInsights(validLeadRefIds: Set<string>): void {
   if (insightsIndex) return;
 
-  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'credit-insights-key-factors.csv');
+  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'credit-insights-trimmed.csv');
 
   if (!fs.existsSync(csvPath)) {
     console.warn('credit-insights-key-factors.csv not found at', csvPath);

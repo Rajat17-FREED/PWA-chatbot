@@ -49,7 +49,7 @@ function parseAmount(val: string): number | null {
 export function loadCreditorData(validLeadRefIds: Set<string>): void {
   if (creditorIndex) return;
 
-  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'Creditor.csv');
+  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'Creditor-trimmed.csv');
 
   if (!fs.existsSync(csvPath)) {
     console.warn('Creditor.csv not found at', csvPath);

@@ -268,7 +268,6 @@ export interface StructuredAssistantTurn {
   formatMode: StructuredFormatMode;
   opening: string;
   sections: StructuredSection[];
-  closingQuestion?: ClosingQuestionContract;
   followUps: string[];
   redirect?: StructuredRedirect;
   redirectNudge?: string;
@@ -299,6 +298,7 @@ export interface AdvisorAccountContext {
   creditorCategory: string | null;          // Bank, NBFC, Fintech, Others
   pressureScore: number | null;             // collection pressure 1-9 (9 = most aggressive)
   isDebarred: boolean;                      // creditor is debarred from settlement
+  isEstimatedRate: boolean;                 // true when interestRate is null and EMI was calculated with a heuristic rate
 }
 
 export interface AdvisorInsight {
@@ -362,6 +362,9 @@ export interface AdvisorContext {
   serviceableTotalOutstanding: number;       // outstanding across serviceable accounts
   nonServiceableTotalOutstanding: number;    // outstanding across non-serviceable accounts
   highPressureLenders: string[];             // lender names with pressureScore >= 7
+  // Pre-computed repayment priority orders (deterministic, avoids LLM re-sorting)
+  avalancheOrder: string[] | null;   // accounts sorted by highest interest rate first (lender names)
+  snowballOrder: string[] | null;    // accounts sorted by lowest outstanding first (lender names)
   // Pre-computed DRP settlement estimate (for DRP_Eligible users)
   drpSettlementEstimate: DRPSettlementEstimate | null;
 }
@@ -418,8 +421,27 @@ export type InlineWidget =
   | { type: 'goalTracker'; currentScore: number; targetScore: number; delta: number; steps: string[] }
   | { type: 'drpSavings'; totalDebt: number; settlementAmount: number; savings: number; debtFreeMonths: number }
   | { type: 'dcpSavings'; currentTotalEMI: number; consolidatedEMI: number; emiSavings: number; tenureMonths: number }
+  | { type: 'depSavings'; interestWithout: number; interestWith: number; interestSaved: number; debtFreeMonths: number }
   | { type: 'carousel'; items: Array<{ title: string; description: string }> }
   | { type: 'youtubeEmbed'; videoId: string; title?: string };
+
+/** Account entry for snowball/avalanche repayment order popup */
+export interface RepaymentOrderAccount {
+  lenderName: string;
+  outstandingAmount: number;
+  interestRate: number | null;
+  isEstimatedRate?: boolean;
+  overdueAmount: number | null;
+  debtType: string;
+  step: number;
+}
+
+/** Data for the repayment method popup (snowball/avalanche tabs) */
+export interface RepaymentMethodData {
+  recommended: 'snowball' | 'avalanche';
+  snowball: RepaymentOrderAccount[];
+  avalanche: RepaymentOrderAccount[];
+}
 
 export interface ChatResponse {
   reply: string;
@@ -429,4 +451,5 @@ export interface ChatResponse {
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
   inlineWidgets?: InlineWidget[];
+  repaymentMethods?: RepaymentMethodData;
 }

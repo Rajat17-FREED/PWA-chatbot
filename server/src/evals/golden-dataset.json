@@ -23,8 +23,8 @@
     "difficulty": "easy",
     "notes": "",
     "updatedAt": "2026-03-26T08:57:10.319Z",
-    "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:08:30.694Z"
+    "lastRunResult": "fail",
+    "lastRunTimestamp": "2026-03-31T11:48:48.827Z"
   },
   {
     "id": "drp-elig-score-001",
@@ -51,7 +51,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:08:35.118Z"
+    "lastRunTimestamp": "2026-03-31T11:49:00.374Z"
   },
   {
     "id": "drp-elig-delinquency-001",
@@ -77,8 +77,8 @@
       "DRP_Eligible",
       "stress-flow"
     ],
-    "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:08:41.462Z"
+    "lastRunResult": "fail",
+    "lastRunTimestamp": "2026-03-31T11:49:21.523Z"
   },
   {
     "id": "drp-elig-harassment-001",
@@ -109,7 +109,7 @@
     "notes": "",
     "updatedAt": "2026-03-26T08:56:22.882Z",
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:08:46.712Z"
+    "lastRunTimestamp": "2026-03-31T11:49:35.039Z"
   },
   {
     "id": "drp-elig-score-target-001",
@@ -135,7 +135,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:08:50.563Z"
+    "lastRunTimestamp": "2026-03-31T11:49:53.962Z"
   },
   {
     "id": "drp-elig-loan-001",
@@ -163,7 +163,7 @@
       "goal-related"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:08:56.755Z"
+    "lastRunTimestamp": "2026-03-31T11:50:15.025Z"
   },
   {
     "id": "drp-elig-multiturn-001",
@@ -194,7 +194,7 @@
       "score-related"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:09:12.326Z"
+    "lastRunTimestamp": "2026-03-31T11:50:31.747Z"
   },
   {
     "id": "drp-elig-low-score-001",
@@ -219,8 +219,8 @@
       "DRP_Eligible",
       "score-related"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:09:18.052Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:50:38.438Z"
   },
   {
     "id": "drp-elig-low-score-loan-001",
@@ -247,7 +247,7 @@
       "goal-related"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:09:30.552Z"
+    "lastRunTimestamp": "2026-03-31T11:50:45.371Z"
   },
   {
     "id": "drp-inelig-score-001",
@@ -274,7 +274,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:09:36.969Z"
+    "lastRunTimestamp": "2026-03-31T11:50:52.028Z"
   },
   {
     "id": "drp-inelig-delinquency-001",
@@ -301,7 +301,7 @@
       "stress-flow"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:09:44.856Z"
+    "lastRunTimestamp": "2026-03-31T11:50:59.334Z"
   },
   {
     "id": "drp-inelig-harassment-001",
@@ -332,7 +332,7 @@
     "notes": "",
     "updatedAt": "2026-03-26T08:50:27.152Z",
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:09:48.976Z"
+    "lastRunTimestamp": "2026-03-31T11:51:01.968Z"
   },
   {
     "id": "drp-inelig-score-target-001",
@@ -358,7 +358,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:09:57.750Z"
+    "lastRunTimestamp": "2026-03-31T11:51:07.240Z"
   },
   {
     "id": "drp-inelig-debt-options-001",
@@ -385,7 +385,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:03.038Z"
+    "lastRunTimestamp": "2026-03-31T11:51:11.249Z"
   },
   {
     "id": "dcp-elig-greeting-001",
@@ -409,7 +409,7 @@
       "DCP_Eligible"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:10.551Z"
+    "lastRunTimestamp": "2026-03-31T11:51:15.869Z"
   },
   {
     "id": "dcp-elig-score-001",
@@ -435,7 +435,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:16.388Z"
+    "lastRunTimestamp": "2026-03-31T11:51:26.466Z"
   },
   {
     "id": "dcp-elig-emi-001",
@@ -462,7 +462,7 @@
       "emi-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:23.121Z"
+    "lastRunTimestamp": "2026-03-31T11:51:33.236Z"
   },
   {
     "id": "dcp-elig-stress-001",
@@ -489,7 +489,7 @@
       "emi-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:29.463Z"
+    "lastRunTimestamp": "2026-03-31T11:51:38.444Z"
   },
   {
     "id": "dcp-elig-goal-001",
@@ -515,7 +515,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:34.517Z"
+    "lastRunTimestamp": "2026-03-31T11:51:42.671Z"
   },
   {
     "id": "dcp-elig-multiturn-001",
@@ -546,7 +546,7 @@
       "emi-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:42.790Z"
+    "lastRunTimestamp": "2026-03-31T11:51:51.648Z"
   },
   {
     "id": "dcp-inelig-score-001",
@@ -572,7 +572,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:48.543Z"
+    "lastRunTimestamp": "2026-03-31T11:51:56.092Z"
   },
   {
     "id": "dcp-inelig-emi-001",
@@ -597,8 +597,8 @@
       "DCP_Ineligible",
       "emi-related"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:10:54.499Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:52:03.152Z"
   },
   {
     "id": "dcp-inelig-stress-001",
@@ -625,7 +625,7 @@
       "emi-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:10:59.287Z"
+    "lastRunTimestamp": "2026-03-31T11:52:06.972Z"
   },
   {
     "id": "dcp-inelig-rejection-001",
@@ -651,7 +651,7 @@
       "loan-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:06.009Z"
+    "lastRunTimestamp": "2026-03-31T11:52:12.889Z"
   },
   {
     "id": "dcp-inelig-goal-001",
@@ -677,7 +677,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:11.373Z"
+    "lastRunTimestamp": "2026-03-31T11:52:16.936Z"
   },
   {
     "id": "dep-greeting-001",
@@ -701,7 +701,7 @@
       "DEP"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:22.257Z"
+    "lastRunTimestamp": "2026-03-31T11:52:20.590Z"
   },
   {
     "id": "dep-score-001",
@@ -727,7 +727,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:28.983Z"
+    "lastRunTimestamp": "2026-03-31T11:52:26.605Z"
   },
   {
     "id": "dep-interest-001",
@@ -752,7 +752,7 @@
       "DEP"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:35.540Z"
+    "lastRunTimestamp": "2026-03-31T11:52:31.676Z"
   },
   {
     "id": "dep-loan-001",
@@ -778,7 +778,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:41.786Z"
+    "lastRunTimestamp": "2026-03-31T11:52:35.421Z"
   },
   {
     "id": "dep-profile-001",
@@ -804,7 +804,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:47.143Z"
+    "lastRunTimestamp": "2026-03-31T11:52:41.421Z"
   },
   {
     "id": "dep-score-target-001",
@@ -830,7 +830,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:53.770Z"
+    "lastRunTimestamp": "2026-03-31T11:52:46.901Z"
   },
   {
     "id": "ntc-greeting-001",
@@ -854,7 +854,7 @@
       "NTC"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:11:56.848Z"
+    "lastRunTimestamp": "2026-03-31T11:52:49.666Z"
   },
   {
     "id": "ntc-what-is-credit-001",
@@ -880,7 +880,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:07.171Z"
+    "lastRunTimestamp": "2026-03-31T11:52:54.760Z"
   },
   {
     "id": "ntc-build-credit-001",
@@ -906,7 +906,7 @@
       "score-related"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:12:11.872Z"
+    "lastRunTimestamp": "2026-03-31T11:52:58.911Z"
   },
   {
     "id": "ntc-loan-001",
@@ -932,7 +932,7 @@
       "loan-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:16.077Z"
+    "lastRunTimestamp": "2026-03-31T11:53:02.420Z"
   },
   {
     "id": "ntc-freed-help-001",
@@ -957,7 +957,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:22.954Z"
+    "lastRunTimestamp": "2026-03-31T11:53:06.101Z"
   },
   {
     "id": "ntc-low-score-001",
@@ -983,7 +983,7 @@
       "score-related"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:12:28.686Z"
+    "lastRunTimestamp": "2026-03-31T11:53:10.702Z"
   },
   {
     "id": "others-score-001",
@@ -1009,7 +1009,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:34.333Z"
+    "lastRunTimestamp": "2026-03-31T11:53:14.810Z"
   },
   {
     "id": "others-goal-tracking-001",
@@ -1035,7 +1035,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:43.246Z"
+    "lastRunTimestamp": "2026-03-31T11:53:19.320Z"
   },
   {
     "id": "others-diagnosis-001",
@@ -1061,7 +1061,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:51.009Z"
+    "lastRunTimestamp": "2026-03-31T11:53:23.546Z"
   },
   {
     "id": "others-behaviour-001",
@@ -1086,7 +1086,7 @@
       "Others"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:12:58.430Z"
+    "lastRunTimestamp": "2026-03-31T11:53:26.875Z"
   },
   {
     "id": "others-low-score-001",
@@ -1112,7 +1112,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:13:08.494Z"
+    "lastRunTimestamp": "2026-03-31T11:53:32.560Z"
   },
   {
     "id": "edge-offtopic-001",
@@ -1136,8 +1136,8 @@
       "DRP_Eligible",
       "edge-case"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:13:24.314Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:53:39.054Z"
   },
   {
     "id": "edge-no-jargon-001",
@@ -1164,7 +1164,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:13:37.919Z"
+    "lastRunTimestamp": "2026-03-31T11:53:48.687Z"
   },
   {
     "id": "drp-elig-profile-001",
@@ -1191,7 +1191,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:13:43.650Z"
+    "lastRunTimestamp": "2026-03-31T11:53:55.045Z"
   },
   {
     "id": "drp-elig-settlement-calc-001",
@@ -1220,7 +1220,7 @@
       "calculation"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:13:50.509Z"
+    "lastRunTimestamp": "2026-03-31T11:54:00.578Z"
   },
   {
     "id": "drp-elig-multiturn-drp-002",
@@ -1256,7 +1256,7 @@
       "stress-flow"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:09.632Z"
+    "lastRunTimestamp": "2026-03-31T11:54:23.094Z"
   },
   {
     "id": "drp-inelig-stress-001",
@@ -1284,7 +1284,7 @@
       "emi-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:14.156Z"
+    "lastRunTimestamp": "2026-03-31T11:54:27.389Z"
   },
   {
     "id": "drp-inelig-profile-001",
@@ -1311,7 +1311,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:19.897Z"
+    "lastRunTimestamp": "2026-03-31T11:54:34.310Z"
   },
   {
     "id": "dcp-elig-score-target-001",
@@ -1338,7 +1338,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:26.476Z"
+    "lastRunTimestamp": "2026-03-31T11:54:39.652Z"
   },
   {
     "id": "dcp-elig-profile-001",
@@ -1365,7 +1365,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:37.949Z"
+    "lastRunTimestamp": "2026-03-31T11:54:45.323Z"
   },
   {
     "id": "dcp-elig-consolidation-calc-001",
@@ -1398,7 +1398,7 @@
       "calculation"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:14:51.811Z"
+    "lastRunTimestamp": "2026-03-31T11:55:00.285Z"
   },
   {
     "id": "dcp-inelig-score-target-001",
@@ -1423,8 +1423,8 @@
       "DCP_Ineligible",
       "score-related"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:14:57.159Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:55:06.505Z"
   },
   {
     "id": "dcp-inelig-profile-001",
@@ -1451,7 +1451,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:15:02.000Z"
+    "lastRunTimestamp": "2026-03-31T11:55:11.912Z"
   },
   {
     "id": "dep-goal-path-001",
@@ -1477,7 +1477,7 @@
       "goal-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:15:10.989Z"
+    "lastRunTimestamp": "2026-03-31T11:55:17.473Z"
   },
   {
     "id": "dep-multiturn-interest-001",
@@ -1508,7 +1508,7 @@
       "multi-turn"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:15:22.874Z"
+    "lastRunTimestamp": "2026-03-31T11:55:29.171Z"
   },
   {
     "id": "ntc-score-target-001",
@@ -1534,7 +1534,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:15:32.983Z"
+    "lastRunTimestamp": "2026-03-31T11:55:36.018Z"
   },
   {
     "id": "ntc-multiturn-credit-001",
@@ -1565,7 +1565,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:16:02.580Z"
+    "lastRunTimestamp": "2026-03-31T11:55:47.273Z"
   },
   {
     "id": "others-profile-001",
@@ -1591,7 +1591,7 @@
       "profile-analysis"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:16:21.668Z"
+    "lastRunTimestamp": "2026-03-31T11:55:52.429Z"
   },
   {
     "id": "others-score-target-001",
@@ -1617,7 +1617,7 @@
       "score-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:16:40.695Z"
+    "lastRunTimestamp": "2026-03-31T11:56:00.351Z"
   },
   {
     "id": "others-loan-elig-001",
@@ -1643,7 +1643,7 @@
       "loan-related"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:16:47.458Z"
+    "lastRunTimestamp": "2026-03-31T11:56:05.716Z"
   },
   {
     "id": "edge-greeting-long-001",
@@ -1670,7 +1670,7 @@
       "format"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:16:51.335Z"
+    "lastRunTimestamp": "2026-03-31T11:56:10.402Z"
   },
   {
     "id": "edge-repeat-question-001",
@@ -1701,8 +1701,8 @@
       "multi-turn",
       "edge-case"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:17:10.762Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:56:19.054Z"
   },
   {
     "id": "edge-talk-to-human-001",
@@ -1727,7 +1727,7 @@
       "edge-case"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:17:19.714Z"
+    "lastRunTimestamp": "2026-03-31T11:56:23.891Z"
   },
   {
     "id": "edge-hinglish-001",
@@ -1754,8 +1754,8 @@
       "edge-case",
       "score-related"
     ],
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:17:25.957Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:56:30.180Z"
   },
   {
     "id": "drp-inelig-eligibility-001",
@@ -1782,7 +1782,7 @@
       "eligibility-secrecy"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:17:31.490Z"
+    "lastRunTimestamp": "2026-03-31T11:56:35.312Z"
   },
   {
     "id": "dcp-inelig-eligibility-001",
@@ -1808,7 +1808,7 @@
       "eligibility-secrecy"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:17:36.986Z"
+    "lastRunTimestamp": "2026-03-31T11:56:40.664Z"
   },
   {
     "id": "drp-elig-greeting-suppress-001",
@@ -1844,7 +1844,7 @@
       "greeting-suppression"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:18:02.722Z"
+    "lastRunTimestamp": "2026-03-31T11:56:56.250Z"
   },
   {
     "id": "drp-elig-no-shame-001",
@@ -1871,8 +1871,8 @@
       "stress-flow",
       "anti-shame"
     ],
-    "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:09.493Z"
+    "lastRunResult": "fail",
+    "lastRunTimestamp": "2026-03-31T11:57:03.824Z"
   },
   {
     "id": "edge-legal-advice-001",
@@ -1899,7 +1899,7 @@
       "professional-limits"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:14.746Z"
+    "lastRunTimestamp": "2026-03-31T11:57:08.198Z"
   },
   {
     "id": "edge-competitor-001",
@@ -1925,7 +1925,7 @@
       "brand-safety"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:23.161Z"
+    "lastRunTimestamp": "2026-03-31T11:57:15.407Z"
   },
   {
     "id": "edge-bankruptcy-001",
@@ -1951,7 +1951,7 @@
       "off-topic"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:29.793Z"
+    "lastRunTimestamp": "2026-03-31T11:57:21.108Z"
   },
   {
     "id": "dcp-elig-savings-pivot-001",
@@ -1979,7 +1979,7 @@
       "conditional-logic"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:36.715Z"
+    "lastRunTimestamp": "2026-03-31T11:57:27.096Z"
   },
   {
     "id": "dep-prepayment-001",
@@ -2006,7 +2006,7 @@
       "disclosure"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:18:44.921Z"
+    "lastRunTimestamp": "2026-03-31T11:57:33.451Z"
   },
   {
     "id": "ntc-secured-card-001",
@@ -2034,7 +2034,7 @@
       "credit-building"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:18:51.908Z"
+    "lastRunTimestamp": "2026-03-31T11:57:39.157Z"
   },
   {
     "id": "drp-elig-harassment-family-001",
@@ -2062,7 +2062,7 @@
       "empathy"
     ],
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:18:56.817Z"
+    "lastRunTimestamp": "2026-03-31T11:57:42.332Z"
   },
   {
     "id": "drp-elig-delinquency-multiturn-followup-dedup",
@@ -2101,7 +2101,7 @@
     "difficulty": "hard",
     "notes": "Tests follow-up deduplication across 3 turns and data richness in turn 2",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:19:14.606Z"
+    "lastRunTimestamp": "2026-03-31T11:57:59.492Z"
   },
   {
     "id": "drp-elig-loan-lender-pov",
@@ -2133,7 +2133,7 @@
     "difficulty": "medium",
     "notes": "Ensures response includes subtle lender perspective for loan intent",
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:19:21.648Z"
+    "lastRunTimestamp": "2026-03-31T11:58:05.899Z"
   },
   {
     "id": "drp-elig-settlement-data-richness",
@@ -2167,8 +2167,8 @@
     ],
     "difficulty": "medium",
     "notes": "Ensures DRP responses include numerical data when listing serviceable accounts",
-    "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:19:31.811Z"
+    "lastRunResult": "fail",
+    "lastRunTimestamp": "2026-03-31T11:58:15.797Z"
   },
   {
     "id": "drp-inelig-score-multiturn-no-repeat",
@@ -2210,8 +2210,8 @@
     ],
     "difficulty": "hard",
     "notes": "Tests that 3 related score questions produce distinct responses and follow-ups each time",
-    "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:19:52.025Z"
+    "lastRunResult": "pass",
+    "lastRunTimestamp": "2026-03-31T11:58:31.406Z"
   },
   {
     "id": "drp-inelig-harassment-multiturn-followups",
@@ -2248,7 +2248,7 @@
     "difficulty": "medium",
     "notes": "Tests that specific lender harassment follow-up doesn't rehash the generic overview",
     "lastRunResult": "fail",
-    "lastRunTimestamp": "2026-03-27T11:20:06.129Z"
+    "lastRunTimestamp": "2026-03-31T11:58:36.736Z"
   },
   {
     "id": "drp-inelig-repayment-multiturn-followups",
@@ -2284,7 +2284,7 @@
     "difficulty": "medium",
     "notes": "Tests that different questions in same conversation get genuinely different responses",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:28.391Z"
+    "lastRunTimestamp": "2026-03-31T11:58:47.846Z"
   },
   {
     "id": "dcp-elig-emi-no-ask",
@@ -2312,7 +2312,7 @@
       "no-stopping-question"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:33.116Z"
+    "lastRunTimestamp": "2026-03-31T11:58:55.068Z"
   },
   {
     "id": "dcp-elig-stress-single-date",
@@ -2340,7 +2340,7 @@
       "single-due-date"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:38.886Z"
+    "lastRunTimestamp": "2026-03-31T11:59:01.224Z"
   },
   {
     "id": "dcp-elig-score-dcp-impact-followup",
@@ -2367,7 +2367,7 @@
       "dcp-followup"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:44.382Z"
+    "lastRunTimestamp": "2026-03-31T11:59:06.821Z"
   },
   {
     "id": "dcp-elig-score-target-journey",
@@ -2395,7 +2395,7 @@
       "response-depth"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:49.605Z"
+    "lastRunTimestamp": "2026-03-31T11:59:15.660Z"
   },
   {
     "id": "dcp-inelig-overdue-accuracy",
@@ -2423,7 +2423,7 @@
       "lender-perspective"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:54.651Z"
+    "lastRunTimestamp": "2026-03-31T11:59:22.208Z"
   },
   {
     "id": "dcp-inelig-followup-phrasing",
@@ -2451,7 +2451,7 @@
       "naturalness"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:20:59.373Z"
+    "lastRunTimestamp": "2026-03-31T11:59:29.249Z"
   },
   {
     "id": "dcp-inelig-goal-response-variety",
@@ -2485,7 +2485,7 @@
       "data-accuracy"
     ],
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:10.993Z"
+    "lastRunTimestamp": "2026-03-31T11:59:41.660Z"
   },
   {
     "id": "dep-interest-no-hallucinated-rates",
@@ -2513,7 +2513,7 @@
     "difficulty": "medium",
     "source": "manual",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:22.654Z"
+    "lastRunTimestamp": "2026-03-31T11:59:47.906Z"
   },
   {
     "id": "dep-interest-followup-specific",
@@ -2545,7 +2545,7 @@
     "difficulty": "hard",
     "source": "manual",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:36.737Z"
+    "lastRunTimestamp": "2026-03-31T11:59:58.460Z"
   },
   {
     "id": "dep-loan-no-market-rates",
@@ -2577,7 +2577,7 @@
     "difficulty": "hard",
     "source": "manual",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:46.363Z"
+    "lastRunTimestamp": "2026-03-31T12:00:10.642Z"
   },
   {
     "id": "dep-score-target-amount-context",
@@ -2604,7 +2604,7 @@
     "difficulty": "medium",
     "source": "manual",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:51.454Z"
+    "lastRunTimestamp": "2026-03-31T12:00:24.538Z"
   },
   {
     "id": "dep-profile-relevant-followups",
@@ -2632,6 +2632,6 @@
     "difficulty": "medium",
     "source": "manual",
     "lastRunResult": "pass",
-    "lastRunTimestamp": "2026-03-27T11:21:56.494Z"
+    "lastRunTimestamp": "2026-03-31T12:00:35.017Z"
   }
 ]

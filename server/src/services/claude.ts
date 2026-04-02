@@ -3,7 +3,6 @@ import {
   AdvisorContext,
   ChatMessage,
   ChatResponse,
-  ClosingQuestionContract,
   ResponseGroundingContext,
   StructuredAssistantTurn,
   StructuredFormatMode,
@@ -79,6 +78,7 @@ interface StructuredModelPayload {
   topics_already_covered: string[];
   prior_section_headings: string[];
   prior_follow_ups: string[];
+  topics_not_yet_explored: string[];
   conversation_state: ConversationState;
   advisor_context: AdvisorContext | null;
   grounding_context: ResponseGroundingContext | null;
@@ -658,28 +658,6 @@ function normalizeSectionStyle(style: string | undefined, mode: StructuredFormat
   return 'bullet_list';
 }
 
-function normalizeClosingQuestion(question: ClosingQuestionContract | undefined, grounding?: ResponseGroundingContext): ClosingQuestionContract | undefined {
-  if (!question) return undefined;
-
-  let text = normalizeTextValue(question.text || '', grounding);
-  const providedOptions = (question.options || []).map(option => cleanOption(normalizeTextValue(option, grounding))).filter(Boolean);
-  const options: string[] = [];
-  for (const option of providedOptions) uniquePush(options, option);
-  if (options.length < 2) {
-    for (const option of extractQuestionOptions(text)) {
-      uniquePush(options, option);
-    }
-  }
-
-  if (!text || options.length < 2) return undefined;
-  if (!text.endsWith('?')) text = `${text}?`;
-
-  return {
-    text,
-    options: options.slice(0, 3),
-  };
-}
-
 function sanitizeStructuredTurn(turn: StructuredAssistantTurn, grounding?: ResponseGroundingContext): StructuredAssistantTurn {
   const formatMode: StructuredFormatMode = turn.formatMode === 'plain' || turn.formatMode === 'guided' || turn.formatMode === 'analysis'
     ? turn.formatMode
@@ -697,7 +675,6 @@ function sanitizeStructuredTurn(turn: StructuredAssistantTurn, grounding?: Respo
     })
     .filter(section => section.items.length > 0);
 
-  const closingQuestion = normalizeClosingQuestion(turn.closingQuestion, grounding);
   const followUps: string[] = [];
   for (const followUp of turn.followUps || []) {
     const normalized = normalizeFollowUp(followUp, grounding);
@@ -726,7 +703,6 @@ function sanitizeStructuredTurn(turn: StructuredAssistantTurn, grounding?: Respo
     formatMode,
     opening,
     sections,
-    closingQuestion,
     followUps,
     redirect,
     redirectNudge,
@@ -1317,6 +1293,74 @@ function extractContentDigest(history: ChatMessage[]): ContentDigest {
 }
 
 /**
+ * Compute topics from the user's profile that haven't been discussed yet.
+ * This helps the LLM diversify follow-ups by suggesting unexplored angles.
+ */
+function computeUnexploredTopics(
+  digest: ContentDigest,
+  ctx?: AdvisorContext | null,
+): string[] {
+  if (!ctx) return [];
+
+  const covered = new Set([
+    ...digest.data_points_stated.map(d => d.toLowerCase()),
+    ...digest.strategies_mentioned.map(s => s.toLowerCase()),
+  ]);
+  const combined = [...digest.data_points_stated, ...digest.strategies_mentioned].join(' ').toLowerCase();
+
+  const unexplored: string[] = [];
+
+  // Credit score improvement — if score wasn't discussed yet
+  if (ctx.creditScore && !covered.has('credit score value') && !/score/i.test(combined)) {
+    unexplored.push(`Credit score analysis (currently ${ctx.creditScore})`);
+  }
+
+  // Card utilization — if not discussed and utilization is high
+  if ((ctx.overallCardUtilization ?? 0) > 30 && !covered.has('card utilization rate') && !/utilization/i.test(combined)) {
+    unexplored.push(`Card usage optimization (currently ${ctx.overallCardUtilization}%)`);
+  }
+
+  // Interest rates — if not discussed and accounts have high rates
+  if (ctx.avalancheOrder && ctx.avalancheOrder.length > 0 && !/interest/i.test(combined)) {
+    unexplored.push(`Interest cost reduction (highest: ${ctx.avalancheOrder[0]})`);
+  }
+
+  // Overdue accounts — if not discussed and there are delinquent accounts
+  if (ctx.delinquentAccountCount > 0 && !covered.has('overdue/delinquent accounts') && !/overdue|delinquen/i.test(combined)) {
+    unexplored.push(`Overdue account clearance (${ctx.delinquentAccountCount} accounts)`);
+  }
+
+  // Loan eligibility — if not discussed
+  if (!/loan.*eligib|eligib.*loan/i.test(combined)) {
+    unexplored.push('New loan eligibility assessment');
+  }
+
+  // EMI burden — if not discussed
+  if ((ctx.foirPercentage ?? 0) > 20 && !/emi.*burden|foir|obligation/i.test(combined)) {
+    unexplored.push(`EMI burden management (${ctx.foirPercentage}% of income)`);
+  }
+
+  // FREED programs — if the relevant program wasn't discussed
+  const segment = ctx.segment;
+  if (segment === 'DEP' && !/dep|debt elimination/i.test(combined)) {
+    unexplored.push("FREED's Debt Elimination Program");
+  }
+  if (segment === 'DCP_Eligible' && !/dcp|consolidation/i.test(combined)) {
+    unexplored.push("FREED's Debt Consolidation Program");
+  }
+  if (segment === 'DRP_Eligible' && !/drp|settlement/i.test(combined)) {
+    unexplored.push("FREED's Debt Resolution Program");
+  }
+
+  // Payment history / track record — if not discussed
+  if ((ctx.overallOnTimeRate ?? 0) > 0 && !/on.?time|payment.*rate/i.test(combined)) {
+    unexplored.push(`Payment track record (${ctx.overallOnTimeRate}% on-time)`);
+  }
+
+  return unexplored.slice(0, 5); // Cap at 5 suggestions
+}
+
+/**
  * Check if a new response is structurally repetitive of the prior response.
  * Returns section indices that are duplicates (for removal or rewrite).
  * This is the post-generation guard that catches what the prompt rules miss.
@@ -1442,6 +1486,7 @@ function buildStructuredPayload(input: StructuredChatRequest, expectedFormatMode
     topics_already_covered: [...contentDigest.data_points_stated, ...contentDigest.strategies_mentioned.map(s => `strategy: ${s}`)],
     prior_section_headings: contentDigest.section_headings,
     prior_follow_ups: priorFollowUps,
+    topics_not_yet_explored: computeUnexploredTopics(contentDigest, input.advisorContext),
     conversation_state: conversationState,
     advisor_context: input.advisorContext ?? null,
     grounding_context: input.grounding ?? null,
@@ -1552,7 +1597,7 @@ async function requestStructuredTurn(input: StructuredChatRequest, expectedForma
   const messages = buildConversationMessages(input, expectedFormatMode);
   const response = await getClient().chat.completions.create({
     model: 'gpt-4o',
-    temperature: 0.2,
+    temperature: 0.05,
     max_tokens: 1100,
     response_format: {
       type: 'json_schema',
@@ -1597,7 +1642,6 @@ async function repairFollowUps(
   const payload = {
     ...buildStructuredPayload(input, expectedFormatMode),
     validation_issues: issues,
-    closing_question: turn.closingQuestion ?? null,
     reply_body: bodyPreview,
     current_followups: turn.followUps,
   };
@@ -1621,7 +1665,6 @@ function renderBodyPreview(turn: StructuredAssistantTurn): string {
     if (section.title) parts.push(section.title);
     parts.push(...section.items);
   }
-  if (turn.closingQuestion?.text) parts.push(turn.closingQuestion.text);
   if (turn.redirectNudge) parts.push(turn.redirectNudge);
   return parts.join('\n');
 }
@@ -1655,19 +1698,6 @@ function validateFollowUps(turn: StructuredAssistantTurn, advisorContext?: Advis
     issues.push('followUps are not grounded in the reply body');
   }
 
-  if (turn.closingQuestion) {
-    const options = turn.closingQuestion.options;
-    const coverage = optionCoverage(followUps, options);
-    if (options.length === 2) {
-      if (coverage.covered < 2) {
-        issues.push('followUps do not map to both question options');
-      }
-    } else if (options.length >= 3) {
-      if (coverage.covered < Math.min(MAX_FOLLOW_UPS, options.length)) {
-        issues.push('followUps do not map to each closing question option');
-      }
-    }
-  }
   // Removed overly strict "distinct anchors" check -it triggered repair too often
   // for follow-ups that were contextually appropriate but didn't token-match advisor facts
 
@@ -1790,6 +1820,81 @@ function applyJargonReplacements(text: string): string {
   return text;
 }
 
+/**
+ * Post-processing EMI sanitizer.
+ * Catches the common LLM hallucination where EMI = outstanding amount.
+ * EMI is a monthly payment (typically 2-10% of outstanding), so if the LLM
+ * writes an EMI figure that equals or nearly equals the outstanding, it's wrong.
+ *
+ * Strategy: find lines containing both "EMI" and an amount, extract all ₹ amounts,
+ * and if the EMI amount matches any other amount on the same line (likely the
+ * outstanding), remove the EMI mention from that line.
+ */
+function sanitizeEMIInResponse(text: string): string {
+  const lines = text.split('\n');
+  const sanitized: string[] = [];
+
+  for (const line of lines) {
+    // Only process lines that mention EMI and contain ₹ amounts
+    if (!/EMI/i.test(line) || !/₹/.test(line)) {
+      sanitized.push(line);
+      continue;
+    }
+
+    // Extract all ₹ amounts from the line (e.g., "₹4,78,247" or "**₹4,78,247**" → 478247)
+    const amountMatches = [...line.matchAll(/\*{0,2}₹([\d,]+)\*{0,2}/g)];
+    if (amountMatches.length < 2) {
+      sanitized.push(line);
+      continue;
+    }
+
+    const amounts = amountMatches.map(m => ({
+      raw: m[0],
+      value: parseInt(m[1].replace(/,/g, ''), 10),
+    }));
+
+    // Check if any two amounts are the same or very close (within 5%)
+    let hasDuplicate = false;
+    for (let i = 0; i < amounts.length; i++) {
+      for (let j = i + 1; j < amounts.length; j++) {
+        const ratio = Math.min(amounts[i].value, amounts[j].value) / Math.max(amounts[i].value, amounts[j].value);
+        if (ratio > 0.95) {
+          hasDuplicate = true;
+          break;
+        }
+      }
+      if (hasDuplicate) break;
+    }
+
+    if (!hasDuplicate) {
+      sanitized.push(line);
+      continue;
+    }
+
+    // Remove EMI mention patterns from the line (handles bold ** markers)
+    let cleaned = line;
+    // Pattern: "EMI of **₹X,XX,XXX**" or "EMI of ₹X,XX,XXX" or "EMI: ₹X"
+    cleaned = cleaned.replace(/[:,]?\s*EMI\s*(?:of\s*)?\*{0,2}₹[\d,]+\*{0,2}/gi, '');
+    // Pattern: "**₹X,XX,XXX** EMI" or "₹X EMI"
+    cleaned = cleaned.replace(/\*{0,2}₹[\d,]+\*{0,2}\s*EMI\b/gi, '');
+    // Pattern: "estimated EMI: **₹X**" or "estimated EMI of ₹X"
+    cleaned = cleaned.replace(/[:,]?\s*estimated\s*EMI\s*(?:of\s*)?\*{0,2}₹[\d,]+\*{0,2}/gi, '');
+    // Clean up leftover artifacts
+    cleaned = cleaned.replace(/,\s*,/g, ',');
+    cleaned = cleaned.replace(/,\s*\./g, '.');
+    cleaned = cleaned.replace(/\(\s*,/g, '(');
+    cleaned = cleaned.replace(/,\s*\)/g, ')');
+    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+    if (cleaned.trim() !== line.trim()) {
+      console.log(`[EMI-SANITIZE] Fixed: "${line.trim().substring(0, 80)}..." → "${cleaned.trim().substring(0, 80)}..."`);
+    }
+    sanitized.push(cleaned);
+  }
+
+  return sanitized.join('\n');
+}
+
 function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
   const parts: string[] = [];
   if (turn.opening) parts.push(turn.opening);
@@ -1797,10 +1902,6 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
   for (const section of turn.sections) {
     const rendered = renderSection(section, turn.formatMode);
     if (rendered) parts.push(rendered);
-  }
-
-  if (turn.closingQuestion?.text) {
-    parts.push(turn.closingQuestion.text);
   }
 
   // Natural product nudge -ties the redirect to the user's specific situation
@@ -1816,6 +1917,10 @@ function renderStructuredTurn(turn: StructuredAssistantTurn): ChatResponse {
   // LLMs echo technical field names despite glossary instructions.
   // Replace common jargon terms with plain language as a safety net.
   reply = applyJargonReplacements(reply);
+
+  // ── EMI sanitizer: catch LLM hallucination where EMI = outstanding ──
+  reply = sanitizeEMIInResponse(reply);
+
   const cleanedFollowUps = turn.followUps.slice(0, MAX_FOLLOW_UPS).map(applyJargonReplacements);
 
   return {
@@ -2265,11 +2370,10 @@ async function finalizeStructuredTurn(
       }
       if (merged.length > 0) {
         console.log(`[PIPELINE] Follow-up validation: kept ${goodFollowUps.length} LLM + ${merged.length - goodFollowUps.length} contextual`);
-        turn = { ...turn, closingQuestion: undefined, followUps: merged.slice(0, MAX_FOLLOW_UPS) };
+        turn = { ...turn, followUps: merged.slice(0, MAX_FOLLOW_UPS) };
       } else {
         turn = sanitizeStructuredTurn({
           ...turn,
-          closingQuestion: undefined,
           followUps: [],
         }, input.grounding);
       }

@@ -13,6 +13,7 @@ import { parsePdf } from '../services/knowledgeChunker';
 import { buildResponseGroundingContext } from '../services/groundingContext';
 import { buildAdvisorContext } from '../services/advisorContext';
 import { loadServiceableCreditors } from '../services/serviceableCreditorLookup';
+import { detectEdgeCase } from '../services/edgeCaseHandler';
 import { reconcileData, toEnrichedReport } from '../services/dataReconciliation';
 import { getCurrentUserTurnCount, resolveConversationIntentTag } from '../services/conversationContext';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
@@ -227,18 +228,6 @@ export function initCreditorData(): void {
  * Called once at server startup (async, ~3–6s).
  */
 export async function initKnowledgeBase(): Promise<void> {
-  // Load legacy text for indexKnowledgeBase (sectionHint pattern reference)
-  try {
-    const kbText = fs.readFileSync(
-      path.join(__dirname, '..', 'data', 'knowledge-base.txt'),
-      'utf-8'
-    );
-    indexKnowledgeBase(kbText);
-    console.log(`[KB] Legacy text indexed (${kbText.length} chars) for sectionHint patterns`);
-  } catch (err) {
-    console.warn('[KB] Could not load knowledge-base.txt (continuing without it):', err);
-  }
-
   // Parse both PDFs
   // __dirname is server/src/routes — go up to server/, then up to project root
   const datasetDir = path.resolve(__dirname, '..', '..', '..', 'dataset');
@@ -247,7 +236,7 @@ export async function initKnowledgeBase(): Promise<void> {
   let generalText = '';
 
   try {
-    companyText = await parsePdf(path.join(datasetDir, 'FREED - Company Knowledge base.pdf'));
+    companyText = await parsePdf(path.join(datasetDir, 'FREED — Company Overview.pdf'));
     console.log(`[KB] Company PDF parsed: ${companyText.length} chars`);
   } catch (err) {
     console.error('[KB] Failed to parse Company PDF:', err);
@@ -263,6 +252,13 @@ export async function initKnowledgeBase(): Promise<void> {
   if (!companyText && !generalText) {
     console.warn('[KB] No PDF content available — RAG store will be empty.');
     return;
+  }
+
+  // Index combined PDF text for keyword-based fallback selection (used when RAG times out)
+  const combinedKBText = [companyText, generalText].filter(Boolean).join('\n\n');
+  if (combinedKBText) {
+    indexKnowledgeBase(combinedKBText);
+    console.log(`[KB] Indexed ${combinedKBText.length} chars from PDFs for keyword fallback`);
   }
 
   await buildEmbeddingStore(companyText, generalText);
@@ -399,6 +395,21 @@ router.post('/chat', async (req: Request, res: Response) => {
     const currentUserTurnCount = getCurrentUserTurnCount(chatHistory, messageCount);
     const effectiveIntentTag = resolveConversationIntentTag(message, chatHistory, intentTag);
 
+    // Quick user lookup for edge case detection (cheap — no credit report parsing)
+    const userForEdgeCase = leadRefId ? getUserByLeadRefId(leadRefId) : null;
+    userName = userForEdgeCase?.firstName ?? null;
+
+    // ── Edge case interception: greetings, abuse, off-topic, etc. ──
+    // Catches non-financial messages BEFORE expensive RAG/LLM processing.
+    const edgeCaseResult = await detectEdgeCase(message, userName);
+    if (edgeCaseResult) {
+      res.json({
+        reply: edgeCaseResult.reply,
+        followUps: edgeCaseResult.followUps,
+      });
+      return;
+    }
+
     let responseGrounding: ResponseGroundingContext | undefined;
     let creditorAccounts: CreditorAccount[] = [];
     let selectedKnowledge = '';
@@ -409,7 +420,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const rawReport = leadRefId ? getCreditReport(leadRefId) : null;
 
     if (leadRefId) {
-      const user = getUserByLeadRefId(leadRefId);
+      const user = userForEdgeCase;
       if (user) {
         creditorAccounts = getCreditorAccounts(leadRefId);
 
@@ -421,6 +432,9 @@ router.post('/chat', async (req: Request, res: Response) => {
         enrichedReport = toEnrichedReport(reconciliation);
         if (reconciliation.reconciliationLog.length > 0) {
           console.log(`[Reconciliation] ${user.firstName} ${user.lastName}: ${reconciliation.reconciliationLog.length} changes`);
+          for (const msg of reconciliation.reconciliationLog) {
+            if (/skip|CLOSED|credit report only|CSV only/i.test(msg)) console.log(`  → ${msg}`);
+          }
         }
 
         const totalMessages = currentUserTurnCount;
@@ -548,9 +562,18 @@ router.post('/chat', async (req: Request, res: Response) => {
       response.redirectLabel = undefined;
     }
 
-    // DCP Savings widget: when consolidation projection exists and response redirects to /dcp
-    if (advisorContext?.consolidationProjection && response.redirectUrl === '/dcp') {
-      const proj = advisorContext.consolidationProjection;
+    // DCP Savings widget: when consolidation projection exists with meaningful savings
+    // Triggers when: (a) response redirects to /dcp, OR (b) segment is DCP_Eligible and intent is DCP-relevant
+    // Score-focused intents should show Goal Tracker, not DCP widget
+    const dcpRelevantIntents = [
+      'INTENT_EMI_OPTIMISATION', 'INTENT_EMI_STRESS', 'INTENT_GOAL_BASED_PATH',
+    ];
+    const isDcpWidgetEligible = advisorContext?.consolidationProjection?.hasMeaningfulSavings && (
+      response.redirectUrl === '/dcp' ||
+      (segment === 'DCP_Eligible' && dcpRelevantIntents.includes(effectiveIntentTag || ''))
+    );
+    if (isDcpWidgetEligible) {
+      const proj = advisorContext!.consolidationProjection!;
       inlineWidgets.push({
         type: 'dcpSavings',
         currentTotalEMI: proj.currentTotalEMI,
@@ -563,8 +586,33 @@ router.post('/chat', async (req: Request, res: Response) => {
       response.redirectLabel = undefined;
     }
 
+    // DEP Savings widget: when consolidation projection exists and segment is DEP
+    // DEP uses the same projection data but presents it as interest savings via accelerated repayment
+    const depRelevantIntents = [
+      'INTENT_INTEREST_OPTIMISATION', 'INTENT_SCORE_IMPROVEMENT', 'INTENT_CREDIT_SCORE_TARGET',
+      'INTENT_PROFILE_ANALYSIS', 'INTENT_GOAL_BASED_LOAN',
+    ];
+    if (
+      inlineWidgets.length === 0 &&
+      segment === 'DEP' &&
+      advisorContext?.consolidationProjection &&
+      advisorContext.consolidationProjection.interestSaved > 0 &&
+      (response.redirectUrl === '/dep' || depRelevantIntents.includes(effectiveIntentTag || ''))
+    ) {
+      const proj = advisorContext.consolidationProjection;
+      inlineWidgets.push({
+        type: 'depSavings',
+        interestWithout: proj.totalInterestBefore,
+        interestWith: proj.totalInterestAfter,
+        interestSaved: proj.interestSaved,
+        debtFreeMonths: proj.consolidatedTenureMonths,
+      });
+      response.redirectUrl = undefined;
+      response.redirectLabel = undefined;
+    }
+
     // Goal Tracker widget: credit score improvement intent
-    // Only inject if no DRP/DCP widget was already added (mutual exclusion)
+    // Only inject if no DRP/DCP/DEP widget was already added (mutual exclusion)
     if (
       inlineWidgets.length === 0 &&
       (effectiveIntentTag === 'INTENT_SCORE_IMPROVEMENT' || effectiveIntentTag === 'INTENT_CREDIT_SCORE_TARGET') &&
@@ -609,26 +657,76 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // YouTube embed: harassment post-lender-selection — embed video INSIDE the response text
-    // so it renders within the message bubble, not as a separate widget.
-    const lenderSelectionPattern = /facing harassment from|selected.*lender|harassing.*lender|PayU|WORTGAGE|ARKA|Krazybee/i;
+    // Only embed when the LLM response contains the "HOW FREED" heading, indicating
+    // this is the FREED Shield explainer response. Don't embed on every follow-up.
     if (
       effectiveIntentTag === 'INTENT_HARASSMENT' &&
-      !lenderSelector &&
-      (lenderSelectionPattern.test(message) || chatHistory.some((m: any) => m.role === 'user' && lenderSelectionPattern.test(m.content)))
+      !lenderSelector
     ) {
-      // Inject {{youtube:VIDEO_ID}} marker after the "HOW FREED" heading in the response text
-      // Heading may be wrapped in ** bold markers
       const howFreedPattern = /(\*{0,2}HOW FREED[^\n]*\*{0,2}\n)/i;
       if (howFreedPattern.test(response.reply)) {
         response.reply = response.reply.replace(
           howFreedPattern,
           `$1\n{{youtube:vEONmNkFwuo}}\n\n`
         );
-      } else {
-        // Fallback: append the video marker before the closing text
-        response.reply += `\n\n{{youtube:vEONmNkFwuo}}`;
       }
-      // Keep the FREED Shield redirect CTA (don't clear redirectUrl)
+      // No fallback — if the heading isn't present, this is a follow-up response
+      // that doesn't need the video embed
+    }
+
+    // ── Inject repayment method data when response mentions snowball/avalanche ──
+    let repaymentMethods: import('../types').RepaymentMethodData | undefined;
+    if (advisorContext && /snowball|avalanche/i.test(response.reply)) {
+      const allAccounts = [
+        ...(advisorContext.dominantAccounts || []),
+        ...(advisorContext.relevantAccounts || []),
+      ];
+      // Deduplicate by lender name, keep highest outstanding. STRICT: only ACTIVE accounts.
+      const deduped = new Map<string, typeof allAccounts[0]>();
+      for (const a of allAccounts) {
+        if ((a.outstandingAmount ?? 0) <= 0) continue;
+        if (a.status?.toUpperCase() !== 'ACTIVE') continue;
+        const existing = deduped.get(a.lenderName);
+        if (!existing || (a.outstandingAmount ?? 0) > (existing.outstandingAmount ?? 0)) {
+          deduped.set(a.lenderName, a);
+        }
+      }
+      const accounts = [...deduped.values()];
+
+      if (accounts.length >= 2) {
+        // Snowball: lowest balance first
+        const snowball = [...accounts]
+          .sort((a, b) => (a.outstandingAmount ?? 0) - (b.outstandingAmount ?? 0))
+          .map((a, i) => ({
+            lenderName: a.lenderName,
+            outstandingAmount: Math.round(a.outstandingAmount ?? 0),
+            interestRate: a.interestRate ?? null,
+            isEstimatedRate: a.isEstimatedRate || false,
+            overdueAmount: a.overdueAmount ? Math.round(a.overdueAmount) : null,
+            debtType: a.debtType || 'Loan',
+            step: i + 1,
+          }));
+
+        // Avalanche: highest REAL interest first (only accounts with actual ROI data)
+        const avalanche = [...accounts]
+          .filter(a => (a.interestRate ?? 0) > 0 && !a.isEstimatedRate)
+          .sort((a, b) => (b.interestRate ?? 0) - (a.interestRate ?? 0) || (b.outstandingAmount ?? 0) - (a.outstandingAmount ?? 0))
+          .map((a, i) => ({
+            lenderName: a.lenderName,
+            outstandingAmount: Math.round(a.outstandingAmount ?? 0),
+            interestRate: a.interestRate ?? null,
+            isEstimatedRate: false,
+            overdueAmount: a.overdueAmount ? Math.round(a.overdueAmount) : null,
+            debtType: a.debtType || 'Loan',
+            step: i + 1,
+          }));
+
+        // Recommend avalanche if high-interest spread, snowball if many small balances
+        const hasHighInterestSpread = accounts.some(a => (a.interestRate ?? 0) > 20) && accounts.some(a => (a.interestRate ?? 0) < 15);
+        const recommended: 'snowball' | 'avalanche' = hasHighInterestSpread ? 'avalanche' : 'snowball';
+
+        repaymentMethods = { recommended, snowball, avalanche };
+      }
     }
 
     res.json({
@@ -636,6 +734,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       tooltips,
       ...(lenderSelector ? { lenderSelector } : {}),
       ...(inlineWidgets.length > 0 ? { inlineWidgets } : {}),
+      ...(repaymentMethods ? { repaymentMethods } : {}),
     });
   } catch (err: any) {
     console.error('Chat error:', err?.message || err);

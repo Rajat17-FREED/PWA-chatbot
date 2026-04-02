@@ -34,20 +34,22 @@ const COMPANY_HINT_PATTERNS: Array<{ pattern: RegExp; hint: string }> = [
 
 // ── Section hint detection for general KB ────────────────────────────────────
 const GENERAL_HINT_PATTERNS: Array<{ pattern: RegExp; hint: string }> = [
-  { pattern: /interest\s*rate.*range|flat\s*rate|reducing\s*balance|APR|annual\s*percentage|lending\s*rate|rate.*loan\s*type/i, hint: 'general_interest_rates' },
-  { pattern: /FOIR|fixed\s*obligation.*income|lender.*evaluat|borrower.*evaluat|loan\s*approval|eligibility\s*criteria/i, hint: 'general_loan_eligibility' },
-  { pattern: /credit\s*bureau|TransUnion|Experian|Equifax|CRIF|CIBIL.*score|score\s*range|bureau.*comparison/i, hint: 'general_credit_bureaus' },
-  { pattern: /credit\s*score.*affect|score.*factor|payment\s*history|credit\s*utiliz|enquir|score.*change|score.*impact/i, hint: 'general_credit_score' },
-  { pattern: /home\s*loan|auto\s*loan|vehicle\s*loan|gold\s*loan|education\s*loan|loan\s*against\s*property|LAP\b|loan\s*against\s*FD/i, hint: 'general_secured_loans' },
-  { pattern: /personal\s*loan|credit\s*card|BNPL|buy\s*now\s*pay\s*later|unsecured\s*loan|app.*loan|instant\s*loan/i, hint: 'general_unsecured_loans' },
-  { pattern: /\bEMI\b|equated\s*monthly|principal\s*component|interest\s*component|prepay|foreclos/i, hint: 'general_emi_repayment' },
-  { pattern: /minimum\s*due|credit\s*card\s*interest|revolving|billing\s*cycle|interest.*free\s*period/i, hint: 'general_credit_card_debt' },
-  { pattern: /delinquen|DPD|days\s*past\s*due|NPA|non.*performing|SMA|default|missed.*payment|overdue/i, hint: 'general_delinquency' },
-  { pattern: /\bNBFC|non.*banking|Bajaj\s*Finance|Muthoot|Shriram|Tata\s*Capital/i, hint: 'general_nbfc' },
-  { pattern: /digital\s*(lending|platform)|KreditBee|MoneyView|Fibe|Navi\b|app.*based.*loan/i, hint: 'general_digital_lending' },
-  { pattern: /\bbank\b.*lend|\bSBI\b|\bHDFC\b.*bank|\bICICI\b.*bank|top.*bank|bank.*India/i, hint: 'general_banks' },
-  { pattern: /secured\s*vs\s*unsecured|secured.*unsecured.*comparison|collateral.*required/i, hint: 'general_loan_comparison' },
-  { pattern: /fixed\s*vs\s*floating|fixed.*interest.*floating|EBLR|repo\s*rate|benchmark\s*rate/i, hint: 'general_rate_types' },
+  { pattern: /interest\s*rate.*range|flat\s*rate|reducing\s*balance|APR|annual\s*percentage|lending\s*rate|rate.*loan\s*type|interest.*p\.a\./i, hint: 'general_interest_rates' },
+  { pattern: /FOIR|fixed\s*obligation.*income|lender.*evaluat|borrower.*evaluat|loan\s*approval|eligibility\s*criteria|loan.*approv|risk.*assess/i, hint: 'general_loan_eligibility' },
+  { pattern: /credit\s*bureau|TransUnion|Experian|Equifax|CRIF|CIBIL.*score|score\s*range|bureau.*comparison|credit\s*report\s*(contain|vs\b)|report.*bureau/i, hint: 'general_credit_bureaus' },
+  { pattern: /credit\s*score.*affect|score.*factor|payment\s*history|credit\s*utiliz|enquir|score.*change|score.*impact|weightage|credit\s*age|credit\s*mix/i, hint: 'general_credit_score' },
+  { pattern: /home\s*loan|auto\s*loan|vehicle\s*loan|gold\s*loan|education\s*loan|loan\s*against\s*property|LAP\b|loan\s*against\s*FD|secured\s*loan|collateral/i, hint: 'general_secured_loans' },
+  { pattern: /personal\s*loan|credit\s*card|BNPL|buy\s*now\s*pay\s*later|unsecured\s*loan|app.*loan|instant\s*loan|consumer\s*durable/i, hint: 'general_unsecured_loans' },
+  { pattern: /\bEMI\b|equated\s*monthly|principal\s*component|interest\s*component|prepay|foreclos|amortiz|loan\s*tenure/i, hint: 'general_emi_repayment' },
+  { pattern: /minimum\s*due|credit\s*card\s*interest|revolving|billing\s*cycle|interest.*free\s*period|credit\s*card\s*debt|statement\s*date/i, hint: 'general_credit_card_debt' },
+  { pattern: /delinquen|DPD|days\s*past\s*due|NPA|non.*performing|SMA|default|missed.*payment|overdue|SARFAESI|recovery\s*process|collection/i, hint: 'general_delinquency' },
+  { pattern: /\bNBFC|non.*banking|Bajaj\s*Finance|Muthoot|Shriram|Tata\s*Capital|HDB\s*Financial|Mahindra\s*Finance/i, hint: 'general_nbfc' },
+  { pattern: /digital\s*(lending|platform)|KreditBee|MoneyView|Fibe|Navi\b|app.*based.*loan|PhonePe.*lend|CASHe|PaySense|fintech/i, hint: 'general_digital_lending' },
+  { pattern: /\bbank\b.*lend|\bSBI\b|\bHDFC\b.*bank|\bICICI\b.*bank|top.*bank|bank.*India|Axis\s*Bank|Bank\s*of\s*Baroda|Canara\s*Bank|PNB\b|Kotak/i, hint: 'general_banks' },
+  { pattern: /secured\s*vs\s*unsecured|secured.*unsecured.*comparison|collateral.*required|bank.*vs.*NBFC|banks.*NBFCs.*digital/i, hint: 'general_loan_comparison' },
+  { pattern: /fixed\s*vs\s*floating|fixed.*interest.*floating|EBLR|repo\s*rate|benchmark\s*rate|rate\s*type/i, hint: 'general_rate_types' },
+  { pattern: /RBI.*guideline|fair\s*practices|ombudsman|consumer\s*right|borrower.*right|complain|grievance/i, hint: 'general_delinquency' },
+  { pattern: /snowball|avalanche|debt.*repay.*strateg|repayment\s*plan|debt.*free|pay.*off.*debt/i, hint: 'general_emi_repayment' },
 ];
 
 function detectSectionHint(text: string, source: 'company' | 'general'): string | undefined {
@@ -61,11 +63,12 @@ function detectSectionHint(text: string, source: 'company' | 'general'): string 
 // ── Table Detection ──────────────────────────────────────────────────────────
 
 /**
- * Detect whether a block of text lines contains tabular data from PDF extraction.
+ * Detect whether a line is part of tabular data from PDF extraction.
  *
- * PDF tables extracted by pdf-parse appear as lines where columns are separated
- * by 2+ consecutive spaces. We detect tables by checking if multiple consecutive
- * lines share this multi-space column pattern.
+ * pdf-parse outputs tables with irregular spacing — multi-space gaps between
+ * columns, and multi-line cells where content wraps. We use two heuristics:
+ * 1. Column gap detection (2+ spaces between content blocks)
+ * 2. Continuation line detection (starts with spaces, follows a table line)
  */
 function isTableLine(line: string): boolean {
   const trimmed = line.trim();
@@ -77,35 +80,220 @@ function isTableLine(line: string): boolean {
 }
 
 /**
+ * Detect if a line is a continuation of a multi-line table cell.
+ * pdf-parse wraps long cell content to the next line, often with leading spaces
+ * or indentation matching the column position.
+ */
+function isTableContinuation(line: string, prevWasTable: boolean): boolean {
+  if (!prevWasTable) return false;
+  const trimmed = line.trim();
+  if (trimmed.length < 5 || trimmed.length > 200) return false;
+  // Continuation lines often: start with spaces, don't start with bullets/numbers/headings
+  const startsWithSpace = line.length > 0 && /^\s{2,}/.test(line);
+  const looksLikeNewSection = /^(\d+\.\s|#{1,3}\s|Section\s|•\s|\*\s)/.test(trimmed);
+  if (looksLikeNewSection) return false;
+  // If the line starts with significant indentation and doesn't look like a new paragraph, it's continuation
+  if (startsWithSpace) return true;
+  // Also catch lines that are short and don't end with a period (truncated cell text)
+  if (trimmed.length < 80 && !trimmed.endsWith('.') && !trimmed.endsWith(':')) return true;
+  return false;
+}
+
+// ── Markdown table normalization ─────────────────────────────────────────────
+
+/**
+ * Known table patterns in the knowledge base PDFs.
+ * Each pattern matches a table header line and defines the expected columns.
+ * When matched, we parse subsequent lines into a clean markdown table.
+ */
+const TABLE_HEADER_PATTERNS: Array<{
+  pattern: RegExp;
+  columns: string[];
+}> = [
+  { pattern: /^Score Range\s+Category\s+What It Means$/i, columns: ['Score Range', 'Category', 'What It Means'] },
+  { pattern: /^Loan Type\s+Interest Rate Range$/i, columns: ['Loan Type', 'Interest Rate Range'] },
+  { pattern: /^Bureau\s+Score\s*Range\s+Primarily Used By\s+Strength$/i, columns: ['Bureau', 'Score Range', 'Primarily Used By', 'Strength'] },
+  { pattern: /^#\s+Bank\s+Type\s+Known For$/i, columns: ['#', 'Bank', 'Type', 'Known For'] },
+  { pattern: /^#\s+NBFC\s+Known For$/i, columns: ['#', 'NBFC', 'Known For'] },
+  { pattern: /^#\s+Platform\s+Known For$/i, columns: ['#', 'Platform', 'Known For'] },
+  { pattern: /^Parameter\s+(Details|Banks|New Vehicle)/i, columns: [] }, // variable columns
+  { pattern: /^Borrower Profile\s+Typical Outcome$/i, columns: ['Borrower Profile', 'Typical Outcome'] },
+  { pattern: /^Type\s+When It Happens\s+Impact on Score$/i, columns: ['Type', 'When It Happens', 'Impact on Score'] },
+  { pattern: /^Step\s+Deadline\s+What Happens$/i, columns: ['Step', 'Deadline', 'What Happens'] },
+  { pattern: /^\s*Credit Score\s+Credit Report$/i, columns: ['', 'Credit Score', 'Credit Report'] },
+];
+
+/**
+ * Normalize messy pdf-parse table output into clean markdown tables.
+ * Scans text for known table header patterns, collects rows (including
+ * multi-line wrapped cells), and emits clean `| col1 | col2 |` markdown.
+ */
+function normalizeTablesInText(text: string): string {
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    // Check if this line matches a known table header
+    let matched = false;
+    for (const { pattern } of TABLE_HEADER_PATTERNS) {
+      if (pattern.test(trimmed)) {
+        matched = true;
+        break;
+      }
+    }
+
+    if (matched) {
+      // Found a known table header — collect lines until a clear section break.
+      // For known tables, we use section-boundary detection instead of column-gap
+      // heuristics, since pdf-parse table output has irregular spacing.
+      const tableLines: string[] = [lines[i]];
+      i++;
+      let emptyLineCount = 0;
+
+      while (i < lines.length) {
+        const line = lines[i];
+        const lineTrimmed = line.trim();
+
+        // Clear section break indicators — stop collecting
+        const isSectionBreak = /^\d+\.\d+(\.\d+)?\s+[A-Z]/.test(lineTrimmed) // "3.1.3 Top 10..."
+          || /^Section\s+\d+/i.test(lineTrimmed)                             // "Section 4:..."
+          || /^#{1,3}\s/.test(lineTrimmed)                                    // markdown headings
+          || /^\(Rates?\s+are\s+indicative/i.test(lineTrimmed);               // disclaimer after rate table
+
+        // Check if this line starts a NEW known table header
+        let isNewTable = false;
+        for (const { pattern } of TABLE_HEADER_PATTERNS) {
+          if (pattern.test(lineTrimmed)) { isNewTable = true; break; }
+        }
+
+        if (isSectionBreak || isNewTable) break;
+
+        if (lineTrimmed.length === 0) {
+          emptyLineCount++;
+          // Two consecutive blank lines = definite table end
+          if (emptyLineCount >= 2) break;
+          // Single blank line — check if more table-like content follows
+          let hasMore = false;
+          for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+            const nextTrimmed = lines[j].trim();
+            if (nextTrimmed.length > 0) {
+              // If the next non-empty line looks like a section break, stop
+              if (/^\d+\.\d+/.test(nextTrimmed) || /^Section\s/i.test(nextTrimmed)) break;
+              hasMore = true;
+              break;
+            }
+          }
+          if (!hasMore) break;
+          i++;
+          continue;
+        }
+
+        emptyLineCount = 0;
+
+        // For known tables: if line has multi-space gaps, it's a table row
+        if (isTableLine(line)) {
+          tableLines.push(line);
+        } else {
+          // Short line without gaps: likely a wrapped cell continuation
+          // Append to previous line rather than starting a new line
+          if (tableLines.length > 0 && lineTrimmed.length < 120) {
+            tableLines[tableLines.length - 1] += ' ' + lineTrimmed;
+          } else {
+            // Long non-table line after table = table is over
+            break;
+          }
+        }
+        i++;
+      }
+
+      // Emit the table as a marked block
+      const cleanedTable = tableLines
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .join('\n');
+
+      if (cleanedTable.length > 50) {
+        result.push('[TABLE]\n' + cleanedTable);
+      } else {
+        result.push(cleanedTable);
+      }
+    } else {
+      result.push(lines[i]);
+      i++;
+    }
+  }
+
+  return result.join('\n');
+}
+
+/**
  * Pre-process text to identify and mark table blocks so they aren't split.
  *
- * Scans for consecutive lines that look like table rows (multi-space column
- * separators), groups them with their preceding header/title line, and wraps
- * them as atomic blocks. Also captures the line immediately before the first
- * table row as context (typically the table title).
+ * Now uses a two-pass approach:
+ * 1. normalizeTablesInText() detects known table headers and marks blocks
+ * 2. Fallback column-gap detection for tables not matched by known patterns
  *
  * Returns an array of text segments — some are regular paragraphs, some are
  * table blocks marked with a [TABLE] prefix for the chunker to handle.
  */
 function extractTableBlocks(text: string): string[] {
-  const lines = text.split('\n');
+  // Pass 1: normalize known table patterns
+  const normalized = normalizeTablesInText(text);
+  const lines = normalized.split('\n');
   const segments: string[] = [];
   let i = 0;
 
   while (i < lines.length) {
-    // Check if this line starts a table block
-    if (isTableLine(lines[i])) {
-      // Look back for a title/header line (non-table, non-empty)
+    const line = lines[i];
+
+    // Already-marked table blocks from normalization pass
+    if (line.trim() === '[TABLE]') {
+      // Collect all subsequent non-empty lines as the table content.
+      // The normalizeTablesInText pass already handled continuation merging,
+      // so these lines are clean table rows. Stop at blank lines or next marker.
       let tableBlock = '';
-      // Grab the preceding non-empty line as context if it's a title
-      if (segments.length > 0) {
+      i++; // skip the [TABLE] marker
+      while (i < lines.length) {
+        const tl = lines[i];
+        if (tl.trim() === '[TABLE]') break;
+        // A blank line ends the table block (normalization already filtered blanks within tables)
+        if (tl.trim().length === 0) break;
+        tableBlock += tl + '\n';
+        i++;
+      }
+
+      if (tableBlock.trim().length > 30) {
+        // Grab preceding title from last segment if available
+        let title = '';
+        if (segments.length > 0 && !segments[segments.length - 1].startsWith('[TABLE]')) {
+          const lastSeg = segments[segments.length - 1].trim();
+          const lastLines = lastSeg.split('\n');
+          const lastLine = lastLines[lastLines.length - 1].trim();
+          if (lastLine.length > 0 && lastLine.length < 200 && !isTableLine(lastLine)) {
+            if (lastLines.length > 1) {
+              segments[segments.length - 1] = lastLines.slice(0, -1).join('\n');
+            } else {
+              segments.pop();
+            }
+            title = lastLine + '\n';
+          }
+        }
+        segments.push('[TABLE]\n' + title + tableBlock.trim());
+      }
+      continue;
+    }
+
+    // Fallback: column-gap based table detection for unmarked tables
+    if (isTableLine(line)) {
+      let tableBlock = '';
+      if (segments.length > 0 && !segments[segments.length - 1].startsWith('[TABLE]')) {
         const lastSeg = segments[segments.length - 1].trim();
-        // If the previous segment ends with a short line (likely a table title),
-        // extract it and prepend to the table
         const lastLines = lastSeg.split('\n');
         const lastLine = lastLines[lastLines.length - 1].trim();
         if (lastLine.length > 0 && lastLine.length < 200 && !isTableLine(lastLine)) {
-          // Remove the title line from previous segment and prepend to table
           if (lastLines.length > 1) {
             segments[segments.length - 1] = lastLines.slice(0, -1).join('\n');
           } else {
@@ -115,11 +303,8 @@ function extractTableBlocks(text: string): string[] {
         }
       }
 
-      // Collect consecutive table lines
-      while (i < lines.length && (isTableLine(lines[i]) || lines[i].trim().length === 0)) {
-        // Allow blank lines within tables (row separators)
+      while (i < lines.length && (isTableLine(lines[i]) || isTableContinuation(lines[i], true) || lines[i].trim().length === 0)) {
         if (lines[i].trim().length === 0) {
-          // Only include blank line if there are more table lines after
           let hasMore = false;
           for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
             if (isTableLine(lines[j])) { hasMore = true; break; }
@@ -134,8 +319,6 @@ function extractTableBlocks(text: string): string[] {
         segments.push('[TABLE]\n' + tableBlock.trim());
       }
     } else {
-      // Regular line — accumulate into current segment
-      const line = lines[i];
       if (segments.length > 0 && !segments[segments.length - 1].startsWith('[TABLE]')) {
         segments[segments.length - 1] += '\n' + line;
       } else {

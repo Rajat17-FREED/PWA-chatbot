@@ -27,7 +27,7 @@ export default function MessageList({
   onStarterClick,
   onFollowUpClick,
 }: MessageListProps) {
-  const scrollRef = useAutoScroll([messages.length, isLoading, phase]);
+  const scrollRef = useAutoScroll([messages.length, isLoading, phase], isLoading);
 
   // Find the last assistant message index for showing follow-ups only on latest
   const lastAssistantIdx = messages.reduce(
@@ -49,6 +49,7 @@ export default function MessageList({
           tooltips={msg.tooltips}
           lenderSelector={msg.lenderSelector}
           inlineWidgets={msg.inlineWidgets}
+          repaymentMethods={msg.repaymentMethods}
           isLatest={idx === lastAssistantIdx && !isLoading && phase === 'chatting'}
           onFollowUpClick={onFollowUpClick}
         />

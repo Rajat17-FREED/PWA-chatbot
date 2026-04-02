@@ -83,14 +83,6 @@ function buildAnalysisCandidate(report: EnrichedCreditReport): StructuredAssista
         ],
       },
     ],
-    closingQuestion: {
-      text: 'What matters more right now: getting a loan approved, securing a better interest rate, or improving your score overall?',
-      options: [
-        'getting a loan approved',
-        'securing a better interest rate',
-        'improving your score overall',
-      ],
-    },
     followUps: [
       'How do I improve approval chances?',
       'How can I target a better interest rate?',
@@ -122,10 +114,6 @@ function buildGenericFollowUpCandidate(report: EnrichedCreditReport): Structured
         ],
       },
     ],
-    closingQuestion: {
-      text: 'Would you rather reduce card usage or understand the delay history?',
-      options: ['reduce card usage', 'understand the delay history'],
-    },
     followUps: [
       'Yes, I would like that',
       'Show me my data',

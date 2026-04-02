@@ -81,8 +81,27 @@ export type InlineWidget =
   | { type: 'goalTracker'; currentScore: number; targetScore: number; delta: number; steps: string[] }
   | { type: 'drpSavings'; totalDebt: number; settlementAmount: number; savings: number; debtFreeMonths: number }
   | { type: 'dcpSavings'; currentTotalEMI: number; consolidatedEMI: number; emiSavings: number; tenureMonths: number }
+  | { type: 'depSavings'; interestWithout: number; interestWith: number; interestSaved: number; debtFreeMonths: number }
   | { type: 'carousel'; items: Array<{ title: string; description: string }> }
   | { type: 'youtubeEmbed'; videoId: string; title?: string };
+
+/** Account entry for snowball/avalanche repayment order popup */
+export interface RepaymentOrderAccount {
+  lenderName: string;
+  outstandingAmount: number;
+  interestRate: number | null;
+  isEstimatedRate?: boolean;
+  overdueAmount: number | null;
+  debtType: string;
+  step: number;
+}
+
+/** Data for the repayment method popup (snowball/avalanche tabs) */
+export interface RepaymentMethodData {
+  recommended: 'snowball' | 'avalanche';
+  snowball: RepaymentOrderAccount[];
+  avalanche: RepaymentOrderAccount[];
+}
 
 export interface Message {
   id: string;
@@ -96,6 +115,7 @@ export interface Message {
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
   inlineWidgets?: InlineWidget[];
+  repaymentMethods?: RepaymentMethodData;
   retryText?: string;
   retryIntentTag?: string;
 }
@@ -136,6 +156,7 @@ export interface ChatResponse {
   tooltips?: MessageTooltips;
   lenderSelector?: LenderSelector;
   inlineWidgets?: InlineWidget[];
+  repaymentMethods?: RepaymentMethodData;
 }
 
 export type ChatPhase =

@@ -200,9 +200,12 @@ function findReportMatch(
 
   if (candidates.length === 0) return -1;
 
-  // Return the best match
+  // Return the best match, but only if score is positive.
+  // A negative score means the status mismatched (e.g. CSV CLOSED matched
+  // against report ACTIVE) which would consume the report slot and force
+  // the correctly-matching CSV account to become a duplicate CSV-only entry.
   candidates.sort((a, b) => b.score - a.score);
-  return candidates[0].index;
+  return candidates[0].score > 0 ? candidates[0].index : -1;
 }
 
 // ── Default DPD summary for accounts without credit report data ─────────────
@@ -333,14 +336,25 @@ export function reconcileData(
   }
 
   // Phase 2: Add unmatched credit report accounts (not in CSV)
+  // CRITICAL: The credit report is stale (older than CSV). If the CSV has a CLOSED
+  // entry for the same lender, the account is no longer active — do NOT add it.
   for (let i = 0; i < report.accounts.length; i++) {
     if (alreadyMatchedReport.has(i)) continue;
     const ra = report.accounts[i];
 
-    // Only add if it's an active account — stale closed accounts aren't useful
-    if (ra.status === 'ACTIVE') {
-      log.push(`${ra.lenderName}: found in credit report only (no CSV match) — included with stale flag`);
+    // Check if CSV has a CLOSED entry for this lender — if so, trust CSV (it's fresher)
+    const csvHasClosedEntry = creditors.some(
+      c => lenderMatch(c.lenderName, ra.lenderName) && c.accountStatus?.toUpperCase() === 'CLOSED'
+    );
+    if (csvHasClosedEntry && ra.status === 'ACTIVE') {
+      log.push(`${ra.lenderName}: credit report says ACTIVE but CSV has CLOSED entry — skipping (CSV is fresher)`);
+      continue;
     }
+
+    // Skip closed accounts from old report entirely — they add no value
+    if (ra.status !== 'ACTIVE') continue;
+
+    log.push(`${ra.lenderName}: found in credit report only (no CSV match) — included`);
     reconciled.push(accountFromReportOnly(ra));
   }
 
@@ -357,7 +371,14 @@ function mergeAccount(
   // Financial amounts: prefer fresher source
   const outstanding = csvIsFresher ? (creditor.outstandingAmount ?? ra.outstandingAmount) : (ra.outstandingAmount ?? creditor.outstandingAmount);
   const overdue = csvIsFresher ? (creditor.overdueAmount ?? ra.overdueAmount) : (ra.overdueAmount ?? creditor.overdueAmount);
-  const status = csvIsFresher ? (creditor.accountStatus.toUpperCase() || ra.status) : ra.status;
+  // Status: CLOSED always wins — an account that's been closed doesn't reopen.
+  // If EITHER source says CLOSED, the account is CLOSED. This handles stale credit reports
+  // that still show ACTIVE for accounts that the CSV (or vice versa) has as CLOSED.
+  const csvStatus = creditor.accountStatus?.toUpperCase().trim();
+  const reportStatus = ra.status?.toUpperCase().trim();
+  const status = (csvStatus === 'CLOSED' || reportStatus === 'CLOSED')
+    ? 'CLOSED'
+    : (csvIsFresher ? (csvStatus || reportStatus || 'CLOSED') : (reportStatus || csvStatus || 'CLOSED'));
   const roi = pickFresher(creditor.roi, ra.roi, csvIsFresher);
   const lastPayDate = csvIsFresher
     ? (formatDateISO(creditor.lastPaymentDate) || ra.lastPaymentDate)

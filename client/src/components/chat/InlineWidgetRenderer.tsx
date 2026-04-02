@@ -1,6 +1,7 @@
 import type { InlineWidget } from '../../types';
 import DRPSavingsWidget from './DRPSavingsWidget';
 import DCPSavingsWidget from './DCPSavingsWidget';
+import DEPSavingsWidget from './DEPSavingsWidget';
 import GoalTrackerWidget from './GoalTrackerWidget';
 import CarouselWidget from './CarouselWidget';
 import YouTubeEmbedWidget from './YouTubeEmbedWidget';
@@ -15,6 +16,8 @@ export default function InlineWidgetRenderer({ widget }: Props) {
       return <DRPSavingsWidget totalDebt={widget.totalDebt} settlementAmount={widget.settlementAmount} savings={widget.savings} debtFreeMonths={widget.debtFreeMonths} />;
     case 'dcpSavings':
       return <DCPSavingsWidget currentTotalEMI={widget.currentTotalEMI} consolidatedEMI={widget.consolidatedEMI} emiSavings={widget.emiSavings} tenureMonths={widget.tenureMonths} />;
+    case 'depSavings':
+      return <DEPSavingsWidget interestWithout={widget.interestWithout} interestWith={widget.interestWith} interestSaved={widget.interestSaved} debtFreeMonths={widget.debtFreeMonths} />;
     case 'goalTracker':
       return <GoalTrackerWidget currentScore={widget.currentScore} targetScore={widget.targetScore} delta={widget.delta} />;
     case 'carousel':

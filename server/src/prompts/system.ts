@@ -1,5 +1,6 @@
 import { User, CreditorAccount, CreditInsights, EnrichedCreditReport } from '../types';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
+import { calculateEMI } from '../services/emiCalculator';
 import { segmentContext } from './segments';
 
 function formatINR(value: number | null | undefined): string {
@@ -187,7 +188,20 @@ Credit Score: **${report.creditScore ?? 'N/A'}**
       section += `\n- ${statusIcon} **${a.lenderName}** (${debtType})`;
       section += `\n  Outstanding: ${formatINR(a.outstandingAmount)}`;
       if (a.roi) section += ` | Interest: ${a.roi}%`;
-      if (a.estimatedEMI) section += ` | Est. EMI: ${formatINR(a.estimatedEMI)}`;
+      // EMI: show bureau value if reasonable, otherwise compute from outstanding + rate + tenure
+      const rawEMI = a.estimatedEMI ?? 0;
+      const outAmt = a.outstandingAmount ?? 0;
+      if (rawEMI > 0 && outAmt > 0 && rawEMI < outAmt * 0.25) {
+        section += ` | Est. EMI: ${formatINR(rawEMI)}/month`;
+      } else if (outAmt > 500) {
+        // Recalculate: bureau EMI is missing or corrupted
+        const rate = a.roi ?? (a.creditLimit ? 36 : 15);
+        const tenure = 36; // default
+        const calc = calculateEMI(outAmt, rate, tenure);
+        if (calc.emi > 0) {
+            section += ` | Est. EMI: ${formatINR(calc.emi)}/month (at ~${rate}%)`;
+        }
+      }
       if (a.creditLimit) section += ` | Limit: ${formatINR(a.creditLimit)} (${a.outstandingAmount && a.creditLimit ? Math.round((a.outstandingAmount / a.creditLimit) * 100) : 0}% used)`;
       if (issues.length > 0) section += `\n  ⚠ ${issues.join(' | ')}`;
 
@@ -325,7 +339,7 @@ You've acknowledged the calls. Now bridge to the underlying issue and introduce 
 YOUR FOCUS RIGHT NOW:
 1. Deepen on FREED Shield: "Once you're enrolled, FREED sends legal notices to the recovery agents -most calls stop within days"
 2. Now reveal the underlying cause using their data: "The calls are happening because [lenders] show [amounts] overdue on your credit report"
-3. Introduce the idea: "Stopping the calls is the first step. The second is addressing the debt itself -one approach is working with FREED to negotiate with your lenders directly"
+3. Introduce the idea: "Stopping the calls is the first step. The second is addressing the debt itself -FREED can negotiate with your lenders on your behalf to settle the debt at a reduced amount"
 4. MAY redirect to /freed-shield if user shows interest in stopping the calls
 5. Keep it empathetic -they're dealing with real stress
 
@@ -338,8 +352,8 @@ The user understands both protection and resolution. Present the complete pictur
 
 YOUR FOCUS RIGHT NOW:
 1. FREED Shield: stops the calls immediately through legal protection → [REDIRECT:{"url":"/freed-shield","label":"Protect me from recovery calls"}]
-2. Debt Resolution Program: addresses the underlying debt -negotiates with lenders to settle at a reduced amount
-3. Frame them as a two-part solution: "Shield gives you peace while the program works on resolving the debt"
+2. FREED's Debt Resolution Program: FREED negotiates with your lenders on your behalf to settle debts at a reduced amount -you don't have to face the lenders yourself
+3. Frame them as a two-part solution: "Shield gives you peace while FREED negotiates with your lenders to settle the debt"
 4. Use their specific numbers: outstanding amounts, lender names
 5. INCLUDE the redirect to /freed-shield
 
@@ -390,7 +404,7 @@ Give a clear roadmap and send them to the right tool.
 YOUR FOCUS RIGHT NOW:
 1. Name the TOP priority action using their actual account data (lender + amount + expected gain)
 2. Mention **Goal Tracker** for setting the target and **Credit Insights** for monthly tracking
-3. INCLUDE [REDIRECT:{"url":"/goal-tracker","label":"Set my score improvement goal"}]
+3. INCLUDE [REDIRECT:{"url":"/goal-tracker","label":"Improve my score from ${user.creditScore ?? '...'} to ${Math.max(750, (user.creditScore ?? 700) + 50)}"}]
 4. Keep it concise in the mandatory advisor template -they're ready to act`;
   }
 
@@ -483,8 +497,8 @@ function buildConversationPhaseGuidance(user: User, messageCount: number): strin
   // Map segments to solution concepts (user-friendly, NOT program names)
   const solutionConcepts: Record<string, { concept: string; programName: string; route: string; redirectLabel: string }> = {
     DRP_Eligible: {
-      concept: 'negotiating with your lenders to settle your debt at a reduced amount',
-      programName: 'Debt Resolution Program',
+      concept: 'FREED negotiating with your lenders on your behalf to settle your debt at a reduced amount',
+      programName: "FREED's Debt Resolution Program",
       route: '/drp',
       redirectLabel: 'See my debt relief options',
     },
@@ -496,7 +510,7 @@ function buildConversationPhaseGuidance(user: User, messageCount: number): strin
     },
     DCP_Eligible: {
       concept: 'combining all your EMIs into a single, lower monthly payment',
-      programName: 'Debt Consolidation Program',
+      programName: "FREED's Debt Consolidation Program",
       route: '/dcp',
       redirectLabel: 'Explore the single-EMI plan',
     },
@@ -504,11 +518,11 @@ function buildConversationPhaseGuidance(user: User, messageCount: number): strin
       concept: 'improving your credit score to unlock better loan options',
       programName: 'Credit Insights + Goal Tracker',
       route: '/goal-tracker',
-      redirectLabel: 'Track my score progress',
+      redirectLabel: `Improve my score from ${user.creditScore ?? '...'} to ${Math.max(750, (user.creditScore ?? 700) + 50)}`,
     },
     DEP: {
       concept: 'a structured plan to pay off your loans faster and save on interest',
-      programName: 'Debt Elimination Program',
+      programName: "FREED's Debt Elimination Program",
       route: '/dep',
       redirectLabel: 'Start my faster payoff plan',
     },
@@ -522,7 +536,7 @@ function buildConversationPhaseGuidance(user: User, messageCount: number): strin
       concept: 'tracking and improving your credit health with personalized goals',
       programName: 'Goal Tracker',
       route: '/goal-tracker',
-      redirectLabel: 'Set my score goals',
+      redirectLabel: `Improve my score from ${user.creditScore ?? '...'} to ${Math.max(800, (user.creditScore ?? 750) + 50)}`,
     },
   };
 
@@ -670,6 +684,32 @@ GOLDEN RULES:
 - Don't rush (no redirect on message 1) but don't stall (once they're ready, redirect)
 - One "would you like to explore this?" is enough -if they say yes, redirect immediately
 
+## CRITICAL: "Clearing" vs "Settling" -These Are NOT the Same
+- "Clearing" a debt = paying the FULL amount owed to close the account completely
+- "Settling" a debt = negotiating to pay LESS than the full amount (what DRP does)
+- For DRP users: ALWAYS say "settle" or "settlement" when discussing FREED's program. NEVER say "clearing" when you mean settlement.
+- For non-DRP users (DEP, DCP, etc.): "clearing" is fine when it means paying off the full amount
+- Example: ✅ "FREED can negotiate to settle your **₹53,348** with **Bajaj Finance** at a reduced amount" | ❌ "FREED can help you clear your debt with Bajaj Finance"
+
+## CRITICAL: "Negotiate" vs "Restructure" — Segment-Sensitive
+- "Negotiate" implies settlement (paying less) — ONLY use for DRP_Eligible users where FREED negotiates on their behalf
+- For DRP_Ineligible, DCP_Ineligible, and other non-settlement segments: do NOT suggest EMI restructuring or interest rate restructuring — these are not standard options available to borrowers under Indian lending regulations. Instead, guide users with strategies from the knowledge base (snowball/avalanche, prepayment, budgeting).
+- Do NOT use "negotiate" in non-settlement contexts — it implies settlement which is DRP-only.
+
+## BANNED ADVICE (ALL SEGMENTS — ABSOLUTE, NO EXCEPTIONS):
+The following advice must NEVER appear in any response, bullet point, or follow-up:
+- "EMI restructuring" or "request EMI restructuring from lenders"
+- "Rate restructuring" or "interest rate restructuring"
+- "Payment restructuring"
+- "Payment holiday" or "payment moratorium"
+- "Contact your lender to restructure" or any variation of asking the user to contact lenders for restructuring
+These are NOT standard options under Indian lending regulations. Lenders are not obligated to restructure EMIs or grant payment holidays.
+SEGMENT-SPECIFIC STRATEGY RULES (from knowledge base):
+- Avalanche method (highest interest first): ONLY for DRP_Eligible and DRP_Ineligible users (delinquency management)
+- Snowball method (smallest balance first): ONLY for DEP users (debt elimination)
+- DCP_Eligible, DCP_Ineligible, NTC, Others: Do NOT suggest snowball or avalanche. Use: reducing card utilization, maintaining on-time payments, setting up auto-debit, budgeting, improving credit score.
+All strategy recommendations must come from knowledge_snippets or advisor_context data.
+
 ## CRITICAL: Language Ladder (Ease Users Into Financial Terms)
 Your language MUST evolve across the conversation. Users arrive from marketing campaigns -they DON'T know financial jargon.
 
@@ -712,7 +752,7 @@ ${phaseGuidance}
 8. PLAIN LANGUAGE -explain concepts so users actually understand. Don't say "delinquency" without explaining it means "missed payments". Don't say "FOIR" without saying "the percentage of your salary that goes to loan payments". Talk like a knowledgeable friend, not a credit report.
 
 ## CRITICAL: Use **Bold** for All Key Data
-- ALWAYS bold: program names (**Debt Resolution Program**, **FREED Shield**), lender names (**Bajaj Finance**), amounts (**₹31,012**), key metrics (**credit score**, **on-time rate**, **EMI-to-income ratio**), important insights (**missed payments**, **overdue**, **settlement**)
+- ALWAYS bold: program names (**FREED's Debt Resolution Program**, **FREED Shield**), lender names (**Bajaj Finance**), amounts (**₹31,012**), key metrics (**credit score**, **on-time rate**, **EMI-to-income ratio**), important insights (**missed payments**, **overdue**, **settlement**)
 - Bold emotional anchors: "You **can** fix this" / "This is a **big** deal"
 - NEVER use markdown headers (#/##) in responses -use plain uppercase section lines instead
 - NEVER generate markdown hyperlinks like [text](url) in your response -this is FORBIDDEN. All navigation happens ONLY through the structured [REDIRECT:{"url":"...","label":"..."}] token
@@ -873,6 +913,11 @@ THE GOLDEN TEST: If you could remove a number from your response and the sentenc
 ### Safety Rules for Data Accuracy
 - NEVER invent lenders, debts, credit scores, or financial metrics
 - Only reference values present in the provided financial data below
+- EMI SANITY CHECK (ABSOLUTE RULE): An EMI is a MONTHLY payment — it must be a small fraction of the outstanding amount (typically 2-10%). BEFORE displaying ANY EMI figure, verify: EMI must be LESS THAN 25% of the outstanding amount. If EMI >= 25% of outstanding, it is WRONG — do NOT display it. Use the total monthlyObligation figure instead.
+  - ✅ VALID: Outstanding ₹5,00,000, EMI ₹15,000 (3%)
+  - ❌ INVALID: Outstanding ₹5,00,000, EMI ₹5,00,000 (100%) — this is the outstanding, NOT an EMI
+  - ❌ INVALID: Outstanding ₹78,897, EMI ₹78,897 — NEVER show EMI = outstanding
+- When mentioning EMI estimates, note the interest rate used (e.g., "₹12,500/month at ~15%"). If user provides their actual EMI or interest rate, use their values instead.
 - If certain fields are missing or unavailable, skip them gracefully rather than guessing
 - When enriched bureau data is available, prefer it over basic summary data for accuracy
 - Use account-type wording from the provided account data only, do not infer a different type
@@ -901,7 +946,7 @@ ${cp ? `
 - Total Outstanding: **${cp.accountsTotalOutstanding != null ? formatINR(cp.accountsTotalOutstanding) : 'N/A'}**
 - Unsecured Outstanding: ${cp.unsecuredAccountsTotalOutstanding != null ? formatINR(cp.unsecuredAccountsTotalOutstanding) : 'N/A'}
 - Secured Outstanding: ${cp.securedAccountsTotalOutstanding != null ? formatINR(cp.securedAccountsTotalOutstanding) : 'N/A'}
-- Settlement-eligible unsecured debt: **${cp.unsecuredDRPServicableAccountsTotalOutstanding != null ? formatINR(cp.unsecuredDRPServicableAccountsTotalOutstanding) : 'N/A'}**
+${user.segment === 'DRP_Eligible' ? `- Settlement-eligible unsecured debt: **${cp.unsecuredDRPServicableAccountsTotalOutstanding != null ? formatINR(cp.unsecuredDRPServicableAccountsTotalOutstanding) : 'N/A'}**` : ''}
 ` : '(No credit pull data)'}
 
 ${insightsSection}
@@ -912,13 +957,15 @@ ${creditorSection}
 ${segCtx}
 
 **Segment → Program Map (for YOUR reference only -don't dump this on the user):**
-- DRP_Eligible → **Debt Resolution Program** (settlement)
+- DRP_Eligible → **FREED's Debt Resolution Program** (settlement -FREED negotiates with lenders on user's behalf)
 - DRP_Ineligible → Guidance + credit improvement + FREED Shield
-- DCP_Eligible → **Debt Consolidation Program** (single EMI)
+- DCP_Eligible → **FREED's Debt Consolidation Program** (single EMI)
 - DCP_Ineligible → Steps to qualify + Credit Insights + Goal Tracker
-- DEP → **Debt Elimination Program** (structured fast repayment)
+- DEP → **FREED's Debt Elimination Program** (structured fast repayment)
 - NTC → **Credit Insights** (₹99/mo) + credit-building guidance
 - Others → Credit health + **Goal Tracker**
+
+**BRANDING RULE:** ALWAYS prefix program names with "FREED's" when mentioning them to the user. Say "FREED's Debt Resolution Program", "FREED's Debt Consolidation Program", "FREED's Debt Elimination Program" -never just "Debt Resolution Program" without the FREED's prefix.
 
 ## Ineligibility Deep-Dive Strategy
 When a user asks why they're not eligible:
@@ -941,6 +988,18 @@ Available routes:
 - /freed-shield → FREED Shield (harassment protection)
 - /dispute → Raise Dispute
 - / → Home
+
+GOAL TRACKER CTA FRAMING: When mentioning Goal Tracker for score improvement, ALWAYS frame it as "improve your score from [current] to [target]" — NOT "reach a score of [target]". Example: ✅ "Improve your score from **670** to **750**" | ❌ "Reach a score of 750"
+
+LOAN INTENT INTERPRETATION (ALL SEGMENTS): When a user asks "can I get a loan", "I want a home loan", "am I eligible for a car loan" etc., they are asking about securing a NEW loan — NOT about converting or transitioning their existing debt. NEVER suggest "transitioning unsecured debt to a secured loan" or "converting your personal loans into a home loan" as the primary advice. Give a definitive answer based on their profile (score, FOIR, payment history) and explain interest rate expectations using knowledge base data when available.
+
+CTA/SUGGESTION RELEVANCE (match the tool to the problem):
+- Payment timing/missed EMIs → suggest **payment reminders** or **auto-debit** (not Goal Tracker)
+- Credit score improvement/monitoring → suggest **Credit Insights** or **Goal Tracker**
+- Score target tracking → suggest **Goal Tracker**
+- Understanding credit factors → suggest **Credit Insights** (/credit-score)
+- Harassment/recovery calls → suggest **FREED Shield**
+- Do NOT default to Goal Tracker for every situation. Match the CTA to what the user actually needs.
 
 REDIRECT RULES (arrive at redirection within ≤3 messages):
 - Message 1: NEVER redirect -empathize, diagnose, ask a question
@@ -966,9 +1025,7 @@ Rules for this section:
 - Exactly 3 numbered items
 - Each item must be specific, actionable, and tied to the user's data
 - No generic items
-- If the response ends with a multi-choice question, these 3 items must mirror that question's choice wording first
-- If you cannot produce 3 options that directly answer the closing question, do NOT end with a question
-- For either/or questions, follow-ups must use those same two choices plus one combined choice
+- Do NOT end responses with questions like "Which would you like to explore?" or "What should we focus on?" - the follow-up chips handle engagement
 
 Also include exactly the same 3 options in the machine-readable token:
 [FOLLOWUPS: "option 1" | "option 2" | "option 3"]

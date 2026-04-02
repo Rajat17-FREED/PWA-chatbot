@@ -7,7 +7,7 @@ import {
   User,
 } from '../types';
 import { normalizeDebtTypeLabel } from '../utils/debtTypeNormalization';
-import { enrichAccountsWithEMI, projectConsolidation, ConsolidationProjection } from './emiCalculator';
+import { enrichAccountsWithEMI, projectConsolidation, projectConsolidationFromSummary, ConsolidationProjection } from './emiCalculator';
 import { matchServiceableCreditor, isDebtTypeServiceable } from './serviceableCreditorLookup';
 
 function formatINR(value: number | null | undefined): string {
@@ -203,6 +203,7 @@ function accountFromReport(report: EnrichedCreditReport): AdvisorAccountContext[
       creditorCategory: null,
       pressureScore: null,
       isDebarred: false,
+      isEstimatedRate: false,
     };
 
     enrichWithServiceability(normalized);
@@ -247,6 +248,7 @@ function accountFromCreditor(accounts: CreditorAccount[]): AdvisorAccountContext
       creditorCategory: null,
       pressureScore: null,
       isDebarred: false,
+      isEstimatedRate: false,
     };
 
     enrichWithServiceability(normalized);
@@ -602,12 +604,15 @@ function buildCreditPullOpportunityInsights(user: User): AdvisorInsight[] {
     });
   }
 
-  if ((cp.unsecuredDRPServicableAccountsTotalOutstanding ?? 0) > 0 && user.segment === 'DEP') {
-    const total = cp.accountsTotalOutstanding ?? cp.unsecuredDRPServicableAccountsTotalOutstanding ?? 0;
+  // DEP: use total unsecured outstanding (NOT DRP-serviceable subset)
+  // DRP-serviceable is a filtered subset for settlement eligibility — irrelevant for DEP
+  if ((cp.unsecuredAccountsTotalOutstanding ?? 0) > 0 && user.segment === 'DEP') {
+    const total = cp.accountsTotalOutstanding ?? cp.unsecuredAccountsTotalOutstanding ?? 0;
+    const unsecured = cp.unsecuredAccountsTotalOutstanding!;
     insights.push({
       label: 'Debt optimization potential',
-      detail: `Of your total ₹${total.toLocaleString('en-IN')} outstanding, approximately ${formatINR(cp.unsecuredDRPServicableAccountsTotalOutstanding)} is in accounts where accelerated repayment could help you save on interest and pay off debt faster.`,
-      amount: cp.unsecuredDRPServicableAccountsTotalOutstanding,
+      detail: `Of your total ₹${total.toLocaleString('en-IN')} outstanding, approximately ${formatINR(unsecured)} is unsecured debt where accelerated repayment could help you save on interest and pay off debt faster.`,
+      amount: unsecured,
     });
   }
 
@@ -879,8 +884,9 @@ export function buildAdvisorContext(input: {
   const source = report ? 'report' : (creditorAccounts.length > 0 ? 'creditor' : 'general');
   const accounts = report ? accountFromReport(report) : accountFromCreditor(creditorAccounts);
 
-  const activeAccounts = accounts.filter(account => account.status.toUpperCase() === 'ACTIVE' || account.status.trim() === '');
-  const closedAccounts = accounts.filter(account => !activeAccounts.includes(account));
+  // STRICT: only accounts explicitly marked ACTIVE. Empty/null/unknown status = NOT active.
+  const activeAccounts = accounts.filter(account => account.status?.toUpperCase() === 'ACTIVE');
+  const closedAccounts = accounts.filter(account => account.status?.toUpperCase() !== 'ACTIVE');
 
   // ── CreditPull fallback: when we have no account-level data, derive from User object ──
   const cp = user?.creditPull;
@@ -939,7 +945,21 @@ export function buildAdvisorContext(input: {
   // ── Consolidation projection (for DCP-eligible/ineligible segments) ─────
   let consolidationProjection: ConsolidationProjection | null = null;
   if (hasAccountData && activeAccounts.length >= 2) {
-    consolidationProjection = projectConsolidation(activeAccounts);
+    consolidationProjection = projectConsolidation(
+      activeAccounts,
+      undefined, // default consolidated rate
+      undefined, // default consolidated tenure
+      user?.monthlyObligation ?? undefined,
+    );
+  }
+  // Fallback: use CreditPull summary when no account-level data exists
+  if (!consolidationProjection && (hasCreditPullData || (user?.monthlyObligation ?? 0) > 0)) {
+    const totalOutstanding = cp?.accountsTotalOutstanding ?? cp?.unsecuredAccountsTotalOutstanding ?? 0;
+    const monthlyEMI = user?.monthlyObligation ?? 0;
+    const activeCount = cp?.accountsActiveCount ?? cp?.unsecuredAccountsActiveCount ?? 2;
+    if (totalOutstanding > 0 && monthlyEMI > 0 && activeCount >= 2) {
+      consolidationProjection = projectConsolidationFromSummary(totalOutstanding, monthlyEMI, activeCount);
+    }
   }
 
   const dominantAccounts = sortAccountsForDominance(activeAccounts).slice(0, 5);
@@ -1098,6 +1118,21 @@ export function buildAdvisorContext(input: {
     relevantFacts.unshift(...dataWarnings);
   }
 
+  // ── Pre-compute repayment priority orders ────────────────────────────────
+  // Deterministic account ordering so the LLM doesn't re-sort differently each time.
+  const accountsForPriority = activeAccounts.filter(a => (a.outstandingAmount ?? 0) > 0);
+
+  // Avalanche: highest interest rate first (best for minimizing total interest paid)
+  const avalancheOrder = accountsForPriority
+    .filter(a => (a.interestRate ?? 0) > 0)
+    .sort((a, b) => (b.interestRate ?? 0) - (a.interestRate ?? 0) || (b.outstandingAmount ?? 0) - (a.outstandingAmount ?? 0))
+    .map(a => `${a.lenderName} (${a.interestRate}%${a.outstandingAmount ? `, ₹${Math.round(a.outstandingAmount).toLocaleString('en-IN')}` : ''})`);
+
+  // Snowball: lowest outstanding first (best for quick wins and motivation)
+  const snowballOrder = [...accountsForPriority]
+    .sort((a, b) => (a.outstandingAmount ?? 0) - (b.outstandingAmount ?? 0))
+    .map(a => `${a.lenderName} (₹${Math.round(a.outstandingAmount ?? 0).toLocaleString('en-IN')}${a.interestRate ? `, ${a.interestRate}%` : ''})`);
+
   const result: AdvisorContext = {
     source,
     userName: user?.firstName ?? null,
@@ -1147,6 +1182,8 @@ export function buildAdvisorContext(input: {
     serviceableTotalOutstanding,
     nonServiceableTotalOutstanding,
     highPressureLenders,
+    avalancheOrder: avalancheOrder.length > 0 ? avalancheOrder : null,
+    snowballOrder: snowballOrder.length > 0 ? snowballOrder : null,
     drpSettlementEstimate,
   };
 

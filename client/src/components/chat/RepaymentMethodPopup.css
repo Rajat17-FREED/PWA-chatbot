@@ -1,0 +1,285 @@
+/* ── Trigger (clickable bold text in message) ────────────────────────────── */
+.freed-rpm__trigger {
+  font-weight: 700;
+  color: var(--freed-navy, #1a2460);
+  border-bottom: 2px dashed var(--freed-orange, #f07428);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.freed-rpm__trigger:hover {
+  color: var(--freed-orange, #f07428);
+  border-bottom-color: var(--freed-navy, #1a2460);
+}
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.freed-rpm__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 36, 96, 0.35);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rpmFadeIn 0.2s ease-out;
+  padding: 16px;
+}
+
+/* ── Popup ────────────────────────────────────────────────────────────────── */
+.freed-rpm__popup {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(14, 25, 61, 0.25);
+  width: 100%;
+  max-width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: rpmSlideUp 0.25s ease-out;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.freed-rpm__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f0f0f5;
+}
+.freed-rpm__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--freed-navy, #1a2460);
+  margin: 0;
+}
+.freed-rpm__close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #999;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.freed-rpm__close:hover { color: var(--freed-navy, #1a2460); }
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.freed-rpm__tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  border-bottom: 2px solid #f0f0f5;
+}
+.freed-rpm__tab {
+  flex: 1;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: -2px;
+}
+.freed-rpm__tab--active {
+  color: var(--freed-navy, #1a2460);
+  border-bottom-color: var(--freed-orange, #f07428);
+}
+.freed-rpm__tab:hover:not(.freed-rpm__tab--active) {
+  color: var(--freed-navy, #1a2460);
+}
+.freed-rpm__tab-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--freed-orange, #f07428);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* ── Description ─────────────────────────────────────────────────────────── */
+.freed-rpm__description {
+  padding: 14px 20px 8px;
+}
+.freed-rpm__description p {
+  font-size: 12.5px;
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}
+.freed-rpm__recommended-banner {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #fff5ee, #ffecd9);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--freed-orange, #f07428);
+  text-align: center;
+}
+
+/* ── Account list ────────────────────────────────────────────────────────── */
+.freed-rpm__accounts {
+  padding: 8px 20px 12px;
+}
+
+.freed-rpm__account {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fafbff;
+  border-radius: 10px;
+  border: 1px solid #eef0f8;
+  position: relative;
+  transition: border-color 0.15s;
+}
+.freed-rpm__account--first {
+  background: linear-gradient(135deg, #fff5ee, #fff9f4);
+  border-color: var(--freed-orange, #f07428);
+}
+
+/* Step badge */
+.freed-rpm__step-badge {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--freed-navy, #1a2460);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.freed-rpm__account--first .freed-rpm__step-badge {
+  background: var(--freed-orange, #f07428);
+}
+
+/* Account info */
+.freed-rpm__account-info {
+  flex: 1;
+  min-width: 0;
+}
+.freed-rpm__account-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--freed-navy, #1a2460);
+  line-height: 1.3;
+}
+.freed-rpm__account-type {
+  font-size: 10.5px;
+  color: #888;
+  margin-top: 1px;
+}
+.freed-rpm__account-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.freed-rpm__amount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--freed-navy, #1a2460);
+}
+.freed-rpm__rate {
+  font-size: 11px;
+  color: #e67e22;
+  font-weight: 600;
+}
+.freed-rpm__overdue {
+  font-size: 11px;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* Recommended tag */
+.freed-rpm__recommended-tag {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--freed-orange, #f07428);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Connector between accounts */
+.freed-rpm__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0;
+}
+.freed-rpm__connector-line {
+  width: 2px;
+  height: 8px;
+  background: #d0d5e8;
+}
+.freed-rpm__connector-arrow {
+  font-size: 12px;
+  color: #d0d5e8;
+  line-height: 1;
+}
+
+/* ── Summary footer ──────────────────────────────────────────────────────── */
+.freed-rpm__summary {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #f0f0f5;
+  margin-top: 4px;
+}
+.freed-rpm__summary-item {
+  flex: 1;
+  text-align: center;
+}
+.freed-rpm__summary-label {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.freed-rpm__summary-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--freed-navy, #1a2460);
+  margin-top: 2px;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes rpmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rpmSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .freed-rpm__popup {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+  .freed-rpm__overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+}

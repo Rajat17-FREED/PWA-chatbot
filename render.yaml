@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: freed-chatbot
+    runtime: node
+    plan: free
+    buildCommand: cd client && npm install && npm run build && cd ../server && npm install && npx tsc && cp -r src/data dist/ && cp src/evals/golden-dataset.json src/evals/judge-criteria.json dist/evals/ && cp -r public dist/
+    startCommand: cd server && npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false

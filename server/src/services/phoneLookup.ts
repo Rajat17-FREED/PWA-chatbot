@@ -26,7 +26,7 @@ function normalizePhone(phone: string): string {
 export function loadPhoneLookup(validLeadRefIds: Set<string>): void {
   if (phoneIndex) return;
 
-  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'lead-complete.csv');
+  const csvPath = path.join(__dirname, '..', '..', '..', 'dataset', 'lead-phone-trimmed.csv');
 
   if (!fs.existsSync(csvPath)) {
     console.warn('lead-complete.csv not found at', csvPath);

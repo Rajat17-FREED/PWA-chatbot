@@ -4,7 +4,15 @@ dist/
 *.log
 .DS_Store
 FREED designs/
-dataset/
+# Dataset - ignore large raw files, keep trimmed/small files needed by server
+dataset/*
+!dataset/Creditor-trimmed.csv
+!dataset/credit-reports.json
+!dataset/serviceable_creditors.csv
+!dataset/FREED - General Knowledge Base.pdf
+!dataset/FREED — Company Overview.pdf
+!dataset/credit-insights-trimmed.csv
+!dataset/lead-phone-trimmed.csv
 *.md
 .claude/
 .devsquad/
